@@ -16,7 +16,7 @@
 // Project includes
 #include "includes/define.h"
 #include "eigen_solvers_application.h"
-#include "custom_factories/dense_linear_solver_factory.h"
+#include "factories/dense_linear_solver_factory.h"
 
 #include "custom_solvers/eigen_sparse_cg_solver.h"
 #include "custom_solvers/eigen_sparse_lu_solver.h"

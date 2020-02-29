@@ -1,13 +1,14 @@
-/*
-//  KRATOS _______
-//        / ____(_)___ ____  ____
-//       / __/ / / __ `/ _ \/ __ \
-//      / /___/ / /_/ /  __/ / / /
-//     /_____/_/\__, /\___/_/ /_/ SolversApplication
-//             /____/
+//    |  /           |
+//    ' /   __| _` | __|  _ \   __|
+//    . \  |   (   | |   (   |\__ \.
+//   _|\_\_|  \__,_|\__|\___/ ____/
+//                   Multi-Physics
 //
-//  Author: Quirin Aumann
-*/
+//  License:		 BSD License
+//			 Kratos default license: kratos/license.txt
+//
+//  Main authors: Quirin Aumann
+//
 
 #if !defined(KRATOS_DENSE_LINEAR_SOLVER_FACTORY_H_INCLUDED )
 #define  KRATOS_DENSE_LINEAR_SOLVER_FACTORY_H_INCLUDED
@@ -44,7 +45,7 @@ namespace Kratos
 
 /**
  * @class DenseLinearSolverFactory
- * @ingroup EigenSolversApplication
+ * @ingroup KratosCore
  * @brief Here we add the functions needed for the registration of dense linear solvers
  * @details Defines the dense linear solver factory
  * @author Quirin Aumann
@@ -111,7 +112,7 @@ typedef LinearSolverFactory<LocalSparseSpaceType, LocalSparseSpaceType> DenseLin
 #define KRATOS_REGISTER_DENSE_LINEAR_SOLVER(name, reference) ; \
     KratosComponents<DenseLinearSolverFactoryType>::Add(name, reference);
 
-KRATOS_API_EXTERN template class KRATOS_API(EIGENSOLVERS_APPLICATION) KratosComponents<DenseLinearSolverFactoryType>;
+KRATOS_API_EXTERN template class KRATOS_API(KRATOS_CORE) KratosComponents<DenseLinearSolverFactoryType>;
 
 typedef LinearSolverFactory<ComplexLocalSparseSpaceType, ComplexLocalSparseSpaceType> ComplexDenseLinearSolverFactoryType;
 
@@ -121,7 +122,7 @@ typedef LinearSolverFactory<ComplexLocalSparseSpaceType, ComplexLocalSparseSpace
 #define KRATOS_REGISTER_COMPLEX_DENSE_LINEAR_SOLVER(name, reference) ; \
     KratosComponents<ComplexDenseLinearSolverFactoryType>::Add(name, reference);
 
-KRATOS_API_EXTERN template class KRATOS_API(EIGENSOLVERS_APPLICATION) KratosComponents<ComplexDenseLinearSolverFactoryType>;
+KRATOS_API_EXTERN template class KRATOS_API(KRATOS_CORE) KratosComponents<ComplexDenseLinearSolverFactoryType>;
 
 }  // namespace Kratos.
 
