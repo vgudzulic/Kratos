@@ -54,7 +54,7 @@ namespace Kratos
  * @tparam TLinearSolverType The linear solver type
  */
 template <typename TGlobalSpace, typename TLocalSpace, typename TLinearSolverType>
-class KRATOS_API(EIGENSOLVERS_APPLICATION) DenseLinearSolverFactory
+class KRATOS_API(KRATOS_CORE) DenseLinearSolverFactory
     : public LinearSolverFactory<TGlobalSpace,TLocalSpace>
 {
     ///@name Type Definitions
