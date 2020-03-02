@@ -1,6 +1,5 @@
 import KratosMultiphysics
 import numpy as np
-import sympy as sp
 
 ## Import base class file
 from custom_body_force.manufactured_solution import ManufacturedSolution

@@ -3,7 +3,7 @@ from KratosMultiphysics import Vector
 import KratosMultiphysics.SwimmingDEMApplication
 from importlib import import_module
 import swimming_DEM_solver
-import sympy as sp
+
 import numpy as np
 BaseSolver = swimming_DEM_solver.SwimmingDEMSolver
 import L2_error_projection_utility as error_projector

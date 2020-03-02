@@ -1,6 +1,6 @@
 import KratosMultiphysics
 import numpy as np
-import sympy as sp
+
 from KratosMultiphysics.SwimmingDEMApplication import field_utilities
 
 ## Import base class file
