@@ -51,12 +51,21 @@ class ApplyCasasSolutionBodyForceProcess(ApplyCustomBodyForceProcess):
         value_v  = np.array([self.benchmark.Velocity(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
         bf_value = np.array([self.benchmark.BodyForce(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
         p_value  = np.array([self.benchmark.Pressure(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
+        fluid_fraction_list = np.array([self.benchmark.alpha(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
+        fluid_fraction_rate_list = np.array([self.benchmark.dalphat(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
+        fluid_fraction_gradient_list = np.array([[self.benchmark.alpha1(current_time, x, y, z), self.benchmark.alpha2(current_time, x, y, z), self.benchmark.alpha3(current_time, x, y, z)] for x, y, z in zip(self.x, self.y, self.z)])
 
         iterator = 0
         for node in self.model_part.Nodes:
             vel_value = Vector(list(value_v[iterator]))
             b_value   = Vector(list(bf_value[iterator]))
             press_value = p_value[iterator]
+            fluid_fraction = fluid_fraction_list[iterator]
+            fluid_fraction_rate = fluid_fraction_rate_list[iterator]
+            fluid_fraction_gradient = Vector(list(fluid_fraction_gradient_list[iterator]))
+            node.SetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION, fluid_fraction)
+            node.SetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION_RATE, fluid_fraction_rate)
+            node.SetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION_GRADIENT, fluid_fraction_gradient)
             node.SetSolutionStepValue(KratosMultiphysics.VELOCITY, vel_value)
             node.SetSolutionStepValue(KratosMultiphysics.BODY_FORCE, b_value)
             node.SetSolutionStepValue(KratosMultiphysics.SwimmingDEMApplication.EXACT_VELOCITY, vel_value)
