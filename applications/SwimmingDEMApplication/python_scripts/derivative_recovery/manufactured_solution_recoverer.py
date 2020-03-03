@@ -6,6 +6,8 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 import KratosMultiphysics
 import KratosMultiphysics.SwimmingDEMApplication as SDEM
 import numpy as np
+
+from KratosMultiphysics import Vector
 from importlib import import_module
 from . import recoverer
 
@@ -17,9 +19,9 @@ class ManufacturedFluidFractionSolutionRecoverer(ManufacturedSolutionRecoverer):
     def __init__(self, project_parameters, model_part):
         super(ManufacturedFluidFractionSolutionRecoverer, self).__init__(project_parameters, model_part)
         self.model_part = model_part
-        self.fluid_fraction_manufactured_solution = project_parameters["fluid_parameters"]["processes"]["boundary_conditions_process_list"][1]["Parameters"]["benchmark_name"]
+        self.fluid_fraction_manufactured_solution = project_parameters["fluid_parameters"]["processes"]["initial_conditions_process_list"][0]["Parameters"]["benchmark_name"]
         benchmark_module = import_module(self.fluid_fraction_manufactured_solution.GetString())
-        self.settings = project_parameters["fluid_parameters"]["processes"]["boundary_conditions_process_list"][1]["Parameters"]["benchmark_parameters"]
+        self.settings = project_parameters["fluid_parameters"]["processes"]["initial_conditions_process_list"][0]["Parameters"]["benchmark_parameters"]
         self.fluid_fraction_field = benchmark_module.CreateManufacturedSolution(self.settings)
 
     def RecoverFluidFractionGradient(self):
@@ -32,8 +34,6 @@ class ManufacturedFluidFractionSolutionRecoverer(ManufacturedSolutionRecoverer):
         
         iterator = 0
         for node in self.model_part.Nodes:
-            fluid_fraction_gradient_list = fluid_fraction_gradient_field[iterator]
-            node.SetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION_GRADIENT_X, fluid_fraction_gradient_list[0])
-            node.SetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION_GRADIENT_Y, fluid_fraction_gradient_list[1])
-            node.SetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION_GRADIENT_Z, fluid_fraction_gradient_list[2])
+            fluid_fraction_gradient_list = Vector(list(fluid_fraction_gradient_field[iterator]))
+            node.SetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION_GRADIENT, fluid_fraction_gradient_list)
             iterator += 1
