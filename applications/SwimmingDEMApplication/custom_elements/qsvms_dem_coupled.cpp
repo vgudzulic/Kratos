@@ -44,7 +44,7 @@ QSVMSDEMCoupled<TElementData>::QSVMSDEMCoupled(IndexType NewId, GeometryType::Po
 
 template< class TElementData >
 QSVMSDEMCoupled<TElementData>::QSVMSDEMCoupled(IndexType NewId, GeometryType::Pointer pGeometry, Properties::Pointer pProperties):
-     QSVMS<TElementData>(NewId,pGeometry,pProperties)
+    QSVMS<TElementData>(NewId,pGeometry,pProperties)
 {}
 
 ///////////Destructor
@@ -358,31 +358,6 @@ void QSVMSDEMCoupled<TElementData>::CalculateRightHandSide(VectorType& rRightHan
 
             this->AddProjectionToRHS(rRightHandSideVector, convective_velocity, data, tau_one, tau_two, Weight, rCurrentProcessInfo[DELTA_TIME]);
     }
-
-template< class TElementData >
-void QSVMSDEMCoupled<TElementData>::AlgebraicMomentumResidual(
-    const TElementData& rData,
-    const array_1d<double,3> &rConvectionVelocity,
-    array_1d<double,3>& rResidual) const
-{
-    const GeometryType rGeom = this->GetGeometry();
-
-    Vector convection; // u * grad(N)
-    this->ConvectionOperator(convection,rConvectionVelocity,rData.DN_DX);
-
-    const double fluid_fraction = this->GetAtCoordinate(rData.FluidFraction,rData.N);
-    const double density = this->GetAtCoordinate(rData.Density,rData.N);
-    const auto& r_body_forces = rData.BodyForce;
-    const auto& r_velocities = rData.Velocity;
-    const auto& r_pressures = rData.Pressure;
-
-    for (unsigned int i = 0; i < NumNodes; i++) {
-        const array_1d<double,3>& r_acceleration = rGeom[i].FastGetSolutionStepValue(ACCELERATION);
-        for (unsigned int d = 0; d < Dim; d++) {
-            rResidual[d] += density * ( rData.N[i]*(r_body_forces(i,d) - r_acceleration[d]) - convection[i]*r_velocities(i,d)) - rData.DN_DX(i,d)*r_pressures[i];
-        }
-    }
-}
 
 template<class TElementData>
 void QSVMSDEMCoupled<TElementData>::AddMassStabilization(TElementData& rData,
