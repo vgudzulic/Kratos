@@ -122,6 +122,24 @@ public:
 		int inside_nodes_removed = 0;
 		int boundary_nodes_removed = 0;
 
+		bool fixEastLobeVajont = true;
+		bool fixWestLobeVajont = false;
+
+		const ProcessInfo &rCurrentProcessInfo = mrModelPart.GetProcessInfo();
+		double currentTime = rCurrentProcessInfo[TIME];
+		double timeInterval = rCurrentProcessInfo[DELTA_TIME];
+		if (currentTime < 2.0 * timeInterval)
+		{
+			if (fixEastLobeVajont == true)
+			{
+				FixEastLobeInVajontCase();
+			}
+			if (fixWestLobeVajont == true)
+			{
+				FixWestLobeInVajontCase();
+			}
+		}
+
 		//if the remove_node switch is activated, we check if the nodes got too close
 		if (mrRemesh.Refine->RemovingOptions.Is(MesherUtilities::REMOVE_NODES))
 		{
@@ -291,6 +309,44 @@ private:
 
 	//**************************************************************************
 	//**************************************************************************
+
+	void FixEastLobeInVajontCase()
+	{
+		KRATOS_TRY
+		std::cout << "FixEastLobeInVajontCase() " << std::endl;
+		for (ModelPart::NodesContainerType::const_iterator in = mrModelPart.NodesBegin(); in != mrModelPart.NodesEnd(); in++)
+		{
+			double density = in->FastGetSolutionStepValue(DENSITY);
+			double posYtoFix = 1760 - 0.43269 * (in->X0() - 1034);
+			if (((in->Y0() > 1580 && in->X0() > 1450) || (in->Y0() > posYtoFix && in->X0() <= 1450)) && density > 1200)
+			{
+				in->Fix(VELOCITY_X);
+				in->Fix(VELOCITY_Y);
+				in->Fix(VELOCITY_Z);
+			}
+		}
+
+		KRATOS_CATCH(" ")
+	}
+
+	void FixWestLobeInVajontCase()
+	{
+		KRATOS_TRY
+		std::cout << "FixWestLobeInVajontCase() " << std::endl;
+		for (ModelPart::NodesContainerType::const_iterator in = mrModelPart.NodesBegin(); in != mrModelPart.NodesEnd(); in++)
+		{
+			double density = in->FastGetSolutionStepValue(DENSITY);
+			double posYtoFix = 1760 - 0.43269 * (in->X0() - 1034);
+			if (((in->Y0() < 1580 && in->X0() > 1450) || (in->Y0() < posYtoFix && in->X0() <= 1450)) && density > 1200)
+			{
+				in->Fix(VELOCITY_X);
+				in->Fix(VELOCITY_Y);
+				in->Fix(VELOCITY_Z);
+			}
+		}
+
+		KRATOS_CATCH(" ")
+	}
 
 	bool RemoveNodesOnError(int &error_removed_nodes)
 	{
