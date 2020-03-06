@@ -1,6 +1,6 @@
 # Importing the Kratos Library
 import KratosMultiphysics
-import KratosMultiphysics.SwimmingDEMApplication
+import KratosMultiphysics.SwimmingDEMApplication as KratosSDEM
 
 from KratosMultiphysics import Vector
 from importlib import import_module
@@ -37,70 +37,14 @@ class ApplyCasasSolutionBodyForceProcess(ApplyCustomBodyForceProcess):
 
         super(ApplyCasasSolutionBodyForceProcess, self).__init__(model, settings)
 
-        self.x = np.array([node.X for node in self.model_part.Nodes])
-        self.y = np.array([node.Y for node in self.model_part.Nodes])
-        self.z = np.array([node.Z for node in self.model_part.Nodes])
-
-        self.center_x = self.settings["benchmark_parameters"]["center_x1"].GetDouble()
-        self.center_y = self.settings["benchmark_parameters"]["center_x2"].GetDouble()
-        self.radius   = np.array([np.sqrt((x - self.center_x)**2 + (y - self.center_y)**2) for x, y, z in zip(self.x, self.y, self.z)])
+        self.CasasSolutionBodyForceProcess = KratosSDEM.CasasSolutionBodyForceProcess(self.model_part, settings)
 
     def ExecuteBeforeSolutionLoop(self):
-        current_time = 0.0
+        self.CasasSolutionBodyForceProcess.ExecuteBeforeSolutionLoop()
 
-        value_v  = np.array([self.benchmark.Velocity(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
-        bf_value = np.array([self.benchmark.BodyForce(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
-        p_value  = np.array([self.benchmark.Pressure(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
-        fluid_fraction_list = np.array([self.benchmark.alpha(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
-        fluid_fraction_rate_list = np.array([self.benchmark.dalphat(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
-        fluid_fraction_gradient_list = np.array([[self.benchmark.alpha1(current_time, x, y, z), self.benchmark.alpha2(current_time, x, y, z), self.benchmark.alpha3(current_time, x, y, z)] for x, y, z in zip(self.x, self.y, self.z)])
-
-        iterator = 0
-        for node in self.model_part.Nodes:
-            vel_value = Vector(list(value_v[iterator]))
-            b_value   = Vector(list(bf_value[iterator]))
-            press_value = p_value[iterator]
-            fluid_fraction = fluid_fraction_list[iterator]
-            fluid_fraction_rate = fluid_fraction_rate_list[iterator]
-            fluid_fraction_gradient = Vector(list(fluid_fraction_gradient_list[iterator]))
-            node.SetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION, fluid_fraction)
-            node.SetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION_RATE, fluid_fraction_rate)
-            node.SetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION_GRADIENT, fluid_fraction_gradient)
-            node.SetSolutionStepValue(KratosMultiphysics.VELOCITY, vel_value)
-            node.SetSolutionStepValue(KratosMultiphysics.BODY_FORCE, b_value)
-            node.SetSolutionStepValue(KratosMultiphysics.SwimmingDEMApplication.EXACT_VELOCITY, vel_value)
-            node.SetSolutionStepValue(KratosMultiphysics.SwimmingDEMApplication.EXACT_PRESSURE, press_value)
-            iterator += 1
 
     def ExecuteInitializeSolutionStep(self):
-        self._SetBodyForceAndPorosityField()
+        self.CasasSolutionBodyForceProcess.ExecuteInitializeSolutionStep()
 
     def ExecuteFinalizeSolutionStep(self):
         pass
-
-    def _SetBodyForceAndPorosityField(self):
-        current_time = self.model_part.ProcessInfo[KratosMultiphysics.TIME]
-
-        self.bf_value = np.array([self.benchmark.BodyForce(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
-        self.value_v  = np.array([self.benchmark.Velocity(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
-        self.value_p  = np.array([self.benchmark.Pressure(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
-
-        self.fluid_fraction_list = np.array([self.benchmark.alpha(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
-        self.fluid_fraction_rate_list = np.array([self.benchmark.dalphat(current_time, x, y, z) for x, y, z in zip(self.x, self.y, self.z)])
-
-        iterator = 0
-        for node in self.model_part.Nodes:
-            #Set BodyForce field
-            bodf_value = Vector(list(self.bf_value[iterator]))
-            vel_value  = Vector(list(self.value_v[iterator]))
-            press_value = self.value_p[iterator]
-            node.SetSolutionStepValue(self.variable, bodf_value)
-            #Update BCs
-            node.SetSolutionStepValue(KratosMultiphysics.SwimmingDEMApplication.EXACT_PRESSURE, press_value)
-            node.SetSolutionStepValue(KratosMultiphysics.SwimmingDEMApplication.EXACT_VELOCITY, vel_value)
-            #Set Porosity field
-            fluid_fraction = self.fluid_fraction_list[iterator]
-            fluid_fraction_rate = self.fluid_fraction_rate_list[iterator]
-            node.SetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION, fluid_fraction)
-            node.SetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION_RATE, fluid_fraction_rate)
-            iterator += 1

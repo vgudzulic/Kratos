@@ -45,10 +45,6 @@ class FluidFractionTestAnalysis(SwimmingDEMAnalysis):
                                                 self._GetDEMAnalysis()._GetSolver(),
                                                 self.vars_man)
 
-    def SetUpResultsDatabase(self):
-        #pass
-        self._GetSolver().SetUpResultsDatabase()
-
     def FinalizeSolutionStep(self):
         # printing if required
         if self._GetSolver().CannotIgnoreFluidNow():

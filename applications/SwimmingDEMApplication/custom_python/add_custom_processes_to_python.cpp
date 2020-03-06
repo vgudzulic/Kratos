@@ -14,12 +14,14 @@
 // External includes
 
 // Project includes
+#include "containers/model.h"
 #include "includes/model_part.h"
 #include "processes/process.h"
 #include "custom_python/add_custom_processes_to_python.h"
 #include "includes/kratos_parameters.h"
 
 #include "custom_processes/apply_rigid_rotation_process.hpp"
+#include "custom_processes/casas_solution_body_force_process.h"
 
 namespace Kratos
 {
@@ -34,6 +36,13 @@ void  AddCustomProcessesToPython(pybind11::module& m)
     py::class_<ApplyRigidRotationProcess, ApplyRigidRotationProcess::Pointer, Process>
     (m, "ApplyRigidRotationProcess")
     .def( py::init< ModelPart&, Parameters&>());
+
+    py::class_<CasasSolutionBodyForceProcess, CasasSolutionBodyForceProcess::Pointer, Process>
+    (m, "CasasSolutionBodyForceProcess")
+    .def(py::init< ModelPart&, const double, const double, const double, const double, const double, const double, const double, const double>())
+    .def(py::init< ModelPart&, Parameters& >())
+    .def(py::init< Model&, Parameters& >())
+    ;
 }
 
 }  // namespace Python.

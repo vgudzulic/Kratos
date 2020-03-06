@@ -31,9 +31,6 @@ class FluidFractionTestSolver(BaseSolver):
             node.SetSolutionStepValue(Kratos.VELOCITY_Z, 0.0)
             node.Fix(Kratos.VELOCITY_Z)
 
-    def SetUpResultsDatabase(self):
-        pass
-
     def ConstructL2ErrorProjector(self):
         self.L2_error_projector = error_projector.L2ErrorProjectionUtility(self.fluid_solver.main_model_part)
 
