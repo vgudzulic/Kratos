@@ -32,7 +32,6 @@
 #include "custom_conditions/evm_k_epsilon/rans_evm_k_epsilon_epsilon_wall.h"
 #include "custom_conditions/evm_k_epsilon/rans_evm_k_epsilon_vms_monolithic_wall.h"
 #include "custom_conditions/potential_flow/incompressible_velocity_potential_condition.h"
-#include "custom_conditions/potential_flow/incompressible_pressure_condition.h"
 
 // Adjoint element includes
 #include "custom_elements/evm_k_epsilon/rans_evm_epsilon_adjoint.h"
@@ -194,8 +193,6 @@ private:
     /// Potential flow conditions
     const IncompressibleVelocityPotentialCondition<2, 2> mIncompressibleVelocityPotentialCondition2D2N;
     const IncompressibleVelocityPotentialCondition<3, 3> mIncompressibleVelocityPotentialCondition3D3N;
-    const IncompressiblePressureCondition<2, 2> mIncompressiblePressureCondition2D2N;
-    const IncompressiblePressureCondition<3, 3> mIncompressiblePressureCondition3D3N;
 
     /// k-epsilon turbulence model elements
     const RansEvmKEpsilonLowReKElement<2, 3> mRansEvmKEpsilonLowReK2D;

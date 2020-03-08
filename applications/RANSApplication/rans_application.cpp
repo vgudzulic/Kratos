@@ -45,14 +45,6 @@ KratosRANSApplication::KratosRANSApplication()
           0,
           Element::GeometryType::Pointer(
               new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
-      mIncompressiblePressureCondition2D2N(
-          0,
-          Element::GeometryType::Pointer(
-              new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
-      mIncompressiblePressureCondition3D3N(
-          0,
-          Element::GeometryType::Pointer(
-              new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
       mRansEvmKEpsilonLowReK2D(0,
                        Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(
                            Element::GeometryType::PointsArrayType(3)))),
@@ -220,8 +212,6 @@ void KratosRANSApplication::Register()
     // Register conditions
     KRATOS_REGISTER_CONDITION("RansIncompressibleVelocityPotentialCondition2D2N", mIncompressibleVelocityPotentialCondition2D2N);
     KRATOS_REGISTER_CONDITION("RansIncompressibleVelocityPotentialCondition3D3N", mIncompressibleVelocityPotentialCondition3D3N);
-    KRATOS_REGISTER_CONDITION("RansIncompressiblePressureCondition2D2N", mIncompressiblePressureCondition2D2N);
-    KRATOS_REGISTER_CONDITION("RansIncompressiblePressureCondition3D3N", mIncompressiblePressureCondition3D3N);
 
     KRATOS_REGISTER_CONDITION("RansEvmKEpsilonEpsilonWall2D2N", mRansEvmKEpsilonEpsilonWall2D2N);
     KRATOS_REGISTER_CONDITION("RansEvmKEpsilonEpsilonWall3D3N", mRansEvmKEpsilonEpsilonWall3D3N);

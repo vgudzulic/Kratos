@@ -8,20 +8,21 @@ from KratosMultiphysics.RANSApplication.model_part_factory import CreateDuplicat
 
 from KratosMultiphysics import IsDistributedRun
 from KratosMultiphysics import IntegrationValuesExtrapolationToNodesProcess as extrapolation_process
-from KratosMultiphysics import ResidualBasedIncrementalUpdateStaticScheme as scheme
+
+
 from KratosMultiphysics.kratos_utilities import CheckIfApplicationsAvailable
 
 if (IsDistributedRun()
         and CheckIfApplicationsAvailable("TrilinosApplication")):
     from KratosMultiphysics.TrilinosApplication import trilinos_linear_solver_factory as linear_solver_factory
-    from KratosMultiphysics.TrilinosApplication import TrilinosResidualCriteria as residual_criteria
-    from KratosMultiphysics.TrilinosApplication import TrilinosNewtonRaphsonStrategy as newton_raphson_strategy
+    from KratosMultiphysics.TrilinosApplication import TrilinosLinearStrategy as residual_based_linear_strategy
+    from KratosMultiphysics.TrilinosApplication import TrilinosResidualBasedIncrementalUpdateStaticScheme as scheme
     from KratosMultiphysics.RANSApplication.block_builder_and_solvers import TrilinosBlockBuilderAndSolver as block_builder_and_solver
 elif (not IsDistributedRun()):
+    from Kratos import ResidualBasedLinearStrategy as residual_based_linear_strategy
     from KratosMultiphysics import python_linear_solver_factory as linear_solver_factory
-    from Kratos import ResidualCriteria as residual_criteria
-    from Kratos import ResidualBasedNewtonRaphsonStrategy as newton_raphson_strategy
     from KratosMultiphysics.RANSApplication.block_builder_and_solvers import BlockBuilderAndSolver as block_builder_and_solver
+    from KratosMultiphysics import ResidualBasedIncrementalUpdateStaticScheme as scheme
 else:
     raise Exception("Distributed run requires TrilinosApplication")
 
@@ -104,7 +105,7 @@ class IncompressiblePotentialFlowSolver(PythonSolver):
             element_name, condition_name, original_condition_name)
 
         element_name = "RansPressurePotentialElement" + element_suffix
-        condition_name = "RansIncompressiblePressureCondition" + condition_suffix
+        condition_name = "Condition" + condition_suffix
         self.pressure_model_part = CreateDuplicateModelPart(
             self.fluid_model_part, "IncompressiblePotentialFlow_Pressure",
             element_name, condition_name, original_condition_name)
@@ -125,12 +126,10 @@ class IncompressiblePotentialFlowSolver(PythonSolver):
             solver_settings["linear_solver_settings"])
         builder_and_solver = block_builder_and_solver(linear_solver,
                                                       self.EpetraCommunicator)
-        convergence_criteria = residual_criteria(1e-12, 1e-12)
-        self.velocity_strategy = newton_raphson_strategy(
+        self.velocity_strategy = residual_based_linear_strategy(
             self.velocity_model_part, scheme(), linear_solver,
-            convergence_criteria, builder_and_solver, 2,
-            solver_settings["compute_reactions"].GetBool(),
-            solver_settings["reform_dofs_at_each_step"].GetBool(),
+            builder_and_solver, solver_settings["compute_reactions"].GetBool(),
+            solver_settings["reform_dofs_at_each_step"].GetBool(), False,
             solver_settings["move_mesh_flag"].GetBool())
 
         # solving for pressure
@@ -139,12 +138,10 @@ class IncompressiblePotentialFlowSolver(PythonSolver):
             solver_settings["linear_solver_settings"])
         builder_and_solver = block_builder_and_solver(linear_solver,
                                                       self.EpetraCommunicator)
-        convergence_criteria = residual_criteria(1e-12, 1e-12)
-        self.pressure_strategy = newton_raphson_strategy(
+        self.pressure_strategy = residual_based_linear_strategy(
             self.pressure_model_part, scheme(), linear_solver,
-            convergence_criteria, builder_and_solver, 2,
-            solver_settings["compute_reactions"].GetBool(),
-            solver_settings["reform_dofs_at_each_step"].GetBool(),
+            builder_and_solver, solver_settings["compute_reactions"].GetBool(),
+            solver_settings["reform_dofs_at_each_step"].GetBool(), False,
             solver_settings["move_mesh_flag"].GetBool())
 
         self.velocity_strategy.Initialize()
