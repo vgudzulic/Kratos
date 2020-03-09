@@ -7,7 +7,7 @@
 //  License:         BSD License
 //                   Kratos default license: kratos/license.txt
 //
-//  Main authors:    Ruben Zorrilla
+//  Main authors:    Joaquin Gonzalez-Usua
 //
 //
 
@@ -52,8 +52,6 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-/// Utility to modify the distances of an embedded object in order to avoid bad intersections
-/// Besides, it also deactivate the full negative distance elements
 class KRATOS_API(SWIMMING_DEM_APPLICATION) CasasSolutionBodyForceProcess : public Process
 {
 public:
@@ -171,20 +169,10 @@ private:
     ///@name Private Operations
     ///@{
     void CheckDefaultsAndProcessSettings(Parameters &rParameters);
-    /**
-     * @brief Initialize the EMBEDDED_IS_ACTIVE variable
-     * This method initializes the non historical variable EMBEDDED_IS_ACTIVE.
-     * It needs to be called in the constructor to do a threadsafe initialization
-     * of such nodal variable before any other operation is done.
-     */
-    void SetBodyForceAndPorosityField();
 
-    /**
-     * @brief Reads the variables list specified in the Parameters to be fixed in the elements
-     * that are fully negative, storing them in mDoubleVariablesList and mComponentVariablesList.
-     * It also checks that the variables and the DOFs are defined in the rmModelPart.
-     * @param rVariableStringArray Array containing the variables to be fixed in the full negative elements
-    */
+    void SetInitialBodyForceAndPorosityField();
+
+    void SetBodyForceAndPorosityField();
 
     ///@}
     ///@name Private  Access
