@@ -51,7 +51,6 @@ CasasSolutionBodyForceProcess::CasasSolutionBodyForceProcess(
     mAlpha0 = Alpha0;
     mDeltaAlpha = DeltaAlpha;
     mAlphaMin = AlphaMin;
-    mPeriod =  Period;
     mCenterx1 = Centerx1;
     mCenterx2 = Centerx2;
 

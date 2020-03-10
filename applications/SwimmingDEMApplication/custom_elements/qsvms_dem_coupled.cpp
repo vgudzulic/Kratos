@@ -573,7 +573,8 @@ void QSVMSDEMCoupled<TElementData>::AddMassRHS(VectorType& F,
                                             const double& DeltaTime,
                                             TElementData& rData)
     {
-        const double fluid_fraction_rate = this->GetAtCoordinate(rData.FluidFractionRate, rData.N);
+        double fluid_fraction_rate = 0.0;
+        fluid_fraction_rate = this->GetAtCoordinate(rData.FluidFractionRate, rData.N);
       // Add the results to the pressure components (Local Dofs are vx, vy, [vz,] p for each node)
         int LocalIndex = Dim;
         for (unsigned int i = 0; i < NumNodes; ++i){
@@ -729,7 +730,7 @@ void QSVMSDEMCoupled<TElementData>::AddVelocitySystem(TElementData& rData,
         {
             rLocalRHS[row+d] += rData.Weight * rData.N[i] * body_force[d]; // v*BodyForce
             rLocalRHS[row+d] += rData.Weight * tau_one * AGradN[i] * (body_force[d] - momentum_projection[d]); // ( a * Grad(v) ) * tau_one * (Density * BodyForce)
-            rLocalRHS[row+d] -= rData.Weight * tau_two * rData.DN_DX(i,d) * (mass_projection + fluid_fraction_rate);
+            //rLocalRHS[row+d] -= rData.Weight * tau_two * rData.DN_DX(i,d) * (mass_projection + fluid_fraction_rate);
             forcing += (body_force[d] - momentum_projection[d]) * (fluid_fraction * rData.DN_DX(i,d) + fluid_fraction_gradient[d] * rData.N[i]);
 
         }
