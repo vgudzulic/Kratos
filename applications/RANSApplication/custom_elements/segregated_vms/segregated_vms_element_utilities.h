@@ -10,8 +10,8 @@
 //  Main authors:    Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 
-#if !defined(KRATOS_SEGREGATED_VMS_MONOLITHIC_UTILITIES_H_INCLUDED)
-#define KRATOS_SEGREGATED_VMS_MONOLITHIC_UTILITIES_H_INCLUDED
+#if !defined(KRATOS_SEGREGATED_VMS_ELEMENT_UTILITIES_H_INCLUDED)
+#define KRATOS_SEGREGATED_VMS_ELEMENT_UTILITIES_H_INCLUDED
 
 // System includes
 #include <cmath>
@@ -26,7 +26,7 @@ namespace Kratos
 ///@name Kratos Globals
 ///@{
 
-namespace SegregatedVMSMonolithicUtilities
+namespace SegregatedVMSElementUtilities
 {
 /// Node type
 using NodeType = ModelPart::NodeType;
@@ -38,27 +38,6 @@ using GeometryType = Geometry<NodeType>;
 
 using IndexType = unsigned int;
 using SizeType = std::size_t;
-
-void CalculateElementGeometryData(const GeometryType& rGeometry,
-                                  const GeometryData::IntegrationMethod& rIntegrationMethod,
-                                  Vector& rGaussWeights,
-                                  Matrix& rNContainer,
-                                  GeometryType::ShapeFunctionsGradientsType& rDN_DX);
-
-void CalculateConditionGeometryData(const GeometryType& rGeometry,
-                                    const GeometryData::IntegrationMethod& rIntegrationMethod,
-                                    Vector& rGaussWeights,
-                                    Matrix& rNContainer);
-
-double EvaluateInPoint(const GeometryType& rGeometry,
-                       const Variable<double>& rVariable,
-                       const Vector& rShapeFunction,
-                       const int Step = 0);
-
-array_1d<double, 3> EvaluateInPoint(const GeometryType& rGeometry,
-                                    const Variable<array_1d<double, 3>>& rVariable,
-                                    const Vector& rShapeFunction,
-                                    const int Step = 0);
 
 template <unsigned int TDim, unsigned int TNumNodes>
 BoundedVector<double, TNumNodes> GetConvectionOperator(const array_1d<double, 3>& rVector,
@@ -106,10 +85,10 @@ BoundedVector<double, TSize> GetValuesVector(const GeometryType& rGeometry,
                                              const Variable<TDataType>& rVariable,
                                              const int Step = 0);
 
-} // namespace SegregatedVMSMonolithicUtilities
+} // namespace SegregatedVMSElementUtilities
 
 ///@}
 
 } // namespace Kratos
 
-#endif // KRATOS_SEGREGATED_VMS_MONOLITHIC_UTILITIES_H_INCLUDED defined
+#endif // KRATOS_SEGREGATED_VMS_ELEMENT_UTILITIES_H_INCLUDED defined

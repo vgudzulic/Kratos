@@ -27,6 +27,8 @@
 #include "custom_elements/evm_k_epsilon/rans_evm_k_epsilon_low_re_k.h"
 #include "custom_elements/potential_flow/incompressible_velocity_potential_element.h"
 #include "custom_elements/potential_flow/pressure_potential_element.h"
+#include "custom_elements/segregated_vms/segregated_vms_velocity_element.h"
+#include "custom_elements/segregated_vms/segregated_vms_pressure_element.h"
 
 // Condition includes
 #include "custom_conditions/evm_k_epsilon/rans_evm_k_epsilon_epsilon_wall.h"
@@ -184,6 +186,12 @@ private:
     ///@}
     ///@name Member Variables
     ///@{
+
+    /// Segregated VMS elements
+    const SegregatedVMSVelocityElement<2> mSegregatedVMSVelocity2D3N;
+    const SegregatedVMSVelocityElement<3> mSegregatedVMSVelocity3D4N;
+    const SegregatedVMSPressureElement<2> mSegregatedVMSPressure2D3N;
+    const SegregatedVMSPressureElement<3> mSegregatedVMSPressure3D4N;
 
     /// Potential flow elements
     const IncompressibleVelocityPotentialElement<2, 3> mIncompressibleVelocityPotentialElement2D;

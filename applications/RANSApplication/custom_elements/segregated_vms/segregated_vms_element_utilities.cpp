@@ -16,122 +16,12 @@
 // Application includes
 
 // Include base h
-#include "segregated_vms_monolithic_utilities.h"
+#include "segregated_vms_element_utilities.h"
 
 namespace Kratos
 {
-namespace SegregatedVMSMonolithicUtilities
+namespace SegregatedVMSElementUtilities
 {
-void CalculateElementGeometryData(const GeometryType& rGeometry,
-                                  const GeometryData::IntegrationMethod& rIntegrationMethod,
-                                  Vector& rGaussWeights,
-                                  Matrix& rNContainer,
-                                  GeometryType::ShapeFunctionsGradientsType& rDN_DX)
-{
-    const IndexType number_of_gauss_points =
-        rGeometry.IntegrationPointsNumber(rIntegrationMethod);
-
-    Vector DetJ;
-    rGeometry.ShapeFunctionsIntegrationPointsGradients(rDN_DX, DetJ, rIntegrationMethod);
-
-    const SizeType number_of_nodes = rGeometry.PointsNumber();
-
-    if (rNContainer.size1() != number_of_gauss_points || rNContainer.size2() != number_of_nodes)
-    {
-        rNContainer.resize(number_of_gauss_points, number_of_nodes, false);
-    }
-    rNContainer = rGeometry.ShapeFunctionsValues(rIntegrationMethod);
-
-    const GeometryType::IntegrationPointsArrayType& IntegrationPoints =
-        rGeometry.IntegrationPoints(rIntegrationMethod);
-
-    if (rGaussWeights.size() != number_of_gauss_points)
-    {
-        rGaussWeights.resize(number_of_gauss_points, false);
-    }
-
-    for (IndexType g = 0; g < number_of_gauss_points; ++g)
-        rGaussWeights[g] = DetJ[g] * IntegrationPoints[g].Weight();
-}
-
-void CalculateConditionGeometryData(const GeometryType& rGeometry,
-                                    const GeometryData::IntegrationMethod& rIntegrationMethod,
-                                    Vector& rGaussWeights,
-                                    Matrix& rNContainer)
-{
-    const GeometryType::IntegrationPointsArrayType& integration_points =
-        rGeometry.IntegrationPoints(rIntegrationMethod);
-
-    const SizeType number_of_integration_points = integration_points.size();
-    const int dimension = rGeometry.WorkingSpaceDimension();
-    const double domain_size = rGeometry.DomainSize();
-
-    if (rGaussWeights.size() != number_of_integration_points)
-    {
-        rGaussWeights.resize(number_of_integration_points, false);
-    }
-
-    rNContainer = rGeometry.ShapeFunctionsValues(rIntegrationMethod);
-
-    // CAUTION: "Jacobian" is 2.0*A for triangles but 0.5*A for lines
-    double det_J = (dimension == 2) ? 0.5 * domain_size : 2.0 * domain_size;
-
-    for (IndexType g = 0; g < number_of_integration_points; g++)
-    {
-        rGaussWeights[g] = det_J * integration_points[g].Weight();
-    }
-}
-
-double EvaluateInPoint(const GeometryType& rGeometry,
-                       const Variable<double>& rVariable,
-                       const Vector& rShapeFunction,
-                       const int Step)
-{
-    KRATOS_TRY
-
-    const IndexType number_of_nodes = rGeometry.PointsNumber();
-
-    KRATOS_DEBUG_ERROR_IF(number_of_nodes != rShapeFunction.size())
-        << "Shape function size and number of nodes mismatch [ "
-        << rShapeFunction.size() << " != " << number_of_nodes << " ].\n";
-
-    double value = 0.0;
-    for (IndexType i_node = 0; i_node < number_of_nodes; ++i_node)
-    {
-        value += rShapeFunction[i_node] *
-                 rGeometry[i_node].FastGetSolutionStepValue(rVariable, Step);
-    }
-
-    return value;
-
-    KRATOS_CATCH("");
-}
-
-array_1d<double, 3> EvaluateInPoint(const GeometryType& rGeometry,
-                                    const Variable<array_1d<double, 3>>& rVariable,
-                                    const Vector& rShapeFunction,
-                                    const int Step)
-{
-    KRATOS_TRY
-
-    const IndexType number_of_nodes = rGeometry.PointsNumber();
-
-    KRATOS_DEBUG_ERROR_IF(number_of_nodes != rShapeFunction.size())
-        << "Shape function size and number of nodes mismatch [ "
-        << rShapeFunction.size() << " != " << number_of_nodes << " ].\n";
-
-    array_1d<double, 3> value = ZeroVector(3);
-    for (IndexType i_node = 0; i_node < number_of_nodes; ++i_node)
-    {
-        value += rShapeFunction[i_node] *
-                 rGeometry[i_node].FastGetSolutionStepValue(rVariable, Step);
-    }
-
-    return value;
-
-    KRATOS_CATCH("");
-}
-
 template <IndexType TDim, IndexType TNumNodes>
 BoundedVector<double, TNumNodes> GetConvectionOperator(const array_1d<double, 3>& rVector,
                                                        const Matrix& rShapeDerivatives)
@@ -578,7 +468,7 @@ template BoundedMatrix<double, 6, 3> CalculateVelocityPressureMatrixGaussPointCo
 template BoundedMatrix<double, 12, 4> CalculateVelocityPressureMatrixGaussPointContributions<3, 4>(
     const double, const double, const BoundedVector<double, 4>&, const Vector&, const Matrix&, const double);
 
-} // namespace SegregatedVMSMonolithicUtilities
+} // namespace SegregatedVMSElementUtilities
 ///@}
 
 } // namespace Kratos

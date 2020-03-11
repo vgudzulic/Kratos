@@ -24,128 +24,45 @@
 namespace Kratos
 {
 KratosRANSApplication::KratosRANSApplication()
-    : KratosApplication("RANSApplication"),
-      mIncompressibleVelocityPotentialElement2D(0,
-                       Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(
-                           Element::GeometryType::PointsArrayType(3)))),
-      mIncompressibleVelocityPotentialElement3D(0,
-                       Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(
-                           Element::GeometryType::PointsArrayType(4)))),
-      mPressurePotentialElement2D(0,
-                       Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(
-                           Element::GeometryType::PointsArrayType(3)))),
-      mPressurePotentialElement3D(0,
-                       Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(
-                           Element::GeometryType::PointsArrayType(4)))),
-      mIncompressibleVelocityPotentialCondition2D2N(
-          0,
-          Element::GeometryType::Pointer(
-              new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
-      mIncompressibleVelocityPotentialCondition3D3N(
-          0,
-          Element::GeometryType::Pointer(
-              new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
-      mIncompressiblePressureCondition2D2N(
-          0,
-          Element::GeometryType::Pointer(
-              new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
-      mIncompressiblePressureCondition3D3N(
-          0,
-          Element::GeometryType::Pointer(
-              new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
-      mRansEvmKEpsilonLowReK2D(0,
-                       Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(
-                           Element::GeometryType::PointsArrayType(3)))),
-      mRansEvmKEpsilonLowReK3D(0,
-                       Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(
-                           Element::GeometryType::PointsArrayType(4)))),
-      mRansEvmKEpsilonLowReEpsilon2D(0,
-                             Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(
-                                 Element::GeometryType::PointsArrayType(3)))),
-      mRansEvmKEpsilonLowReEpsilon3D(0,
-                             Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(
-                                 Element::GeometryType::PointsArrayType(4)))),
-      mRansEvmKEpsilonK2D(0,
-                  Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(
-                      Element::GeometryType::PointsArrayType(3)))),
-      mRansEvmKEpsilonK3D(0,
-                  Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(
-                      Element::GeometryType::PointsArrayType(4)))),
-      mRansEvmKEpsilonEpsilon2D(0,
-                        Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(
-                            Element::GeometryType::PointsArrayType(3)))),
-      mRansEvmKEpsilonEpsilon3D(0,
-                        Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(
-                            Element::GeometryType::PointsArrayType(4)))),
-      mRansEvmKEpsilonEpsilonWall2D2N(
-          0,
-          Element::GeometryType::Pointer(
-              new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
-      mRansEvmKEpsilonEpsilonWall3D3N(
-          0,
-          Element::GeometryType::Pointer(
-              new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
-      mRansEvmKEpsilonVmsMonolithicWall2D2N(
-          0,
-          Element::GeometryType::Pointer(
-              new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
-      mRansEvmKEpsilonVmsMonolithicWall3D3N(
-          0,
-          Element::GeometryType::Pointer(
-              new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
-      mRansEvmEpsilonAdjoint2D3N(0,
-                                 Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(
-                                     Element::GeometryType::PointsArrayType(3)))),
-      mRansEvmEpsilonAdjoint3D4N(
-          0,
-          Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(
-              Element::GeometryType::PointsArrayType(4)))),
-      mRansEvmKAdjoint2D3N(0,
-                           Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(
-                               Element::GeometryType::PointsArrayType(3)))),
-      mRansEvmKAdjoint3D4N(0,
-                           Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(
-                               Element::GeometryType::PointsArrayType(4)))),
-      mRansEvmKEpsilonVMSAdjoint2D3N(
-          0,
-          Element::GeometryType::Pointer(
-              new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
-      mRansEvmKEpsilonVMSAdjoint3D4N(
-          0,
-          Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(
-              Element::GeometryType::PointsArrayType(4)))),
-      mRansEvmMonolithicKEpsilonVMSAdjoint2D(
-          0,
-          Element::GeometryType::Pointer(
-              new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
-      mRansEvmMonolithicKEpsilonVMSAdjoint3D(
-          0,
-          Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(
-              Element::GeometryType::PointsArrayType(4)))),
-      mRansEvmEpsilonAdjointWallCondition2D2N(
-          0,
-          Element::GeometryType::Pointer(
-              new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
-      mRansEvmEpsilonAdjointWallCondition3D3N(
-          0,
-          Element::GeometryType::Pointer(
-              new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
-      mRansEvmVmsMonolithicAdjointWallCondition2D2N(
-          0,
-          Element::GeometryType::Pointer(
-              new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
-      mRansEvmVmsMonolithicAdjointWallCondition3D3N(
-          0,
-          Element::GeometryType::Pointer(
-              new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
-      mRansEvmMonolithicKEpsilonVMSAdjointWallCondition2D2N(
-          0,
-          Element::GeometryType::Pointer(
-              new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
-      mRansEvmMonolithicKEpsilonVMSAdjointWallCondition3D3N(
-          0,
-          Element::GeometryType::Pointer(
-              new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3))))
+    :   KratosApplication("RANSApplication"),
+        mSegregatedVMSVelocity2D3N(0,Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+        mSegregatedVMSVelocity3D4N(0,Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
+        mSegregatedVMSPressure2D3N(0,Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+        mSegregatedVMSPressure3D4N(0,Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
+        mIncompressibleVelocityPotentialElement2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mIncompressibleVelocityPotentialElement3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(Element::GeometryType::PointsArrayType(4)))),
+        mPressurePotentialElement2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mPressurePotentialElement3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(Element::GeometryType::PointsArrayType(4)))),
+        mIncompressibleVelocityPotentialCondition2D2N(0, Element::GeometryType::Pointer(new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
+        mIncompressibleVelocityPotentialCondition3D3N(0, Element::GeometryType::Pointer(new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mIncompressiblePressureCondition2D2N(0, Element::GeometryType::Pointer(new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
+        mIncompressiblePressureCondition3D3N(0, Element::GeometryType::Pointer(new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mRansEvmKEpsilonLowReK2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mRansEvmKEpsilonLowReK3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(Element::GeometryType::PointsArrayType(4)))),
+        mRansEvmKEpsilonLowReEpsilon2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mRansEvmKEpsilonLowReEpsilon3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(Element::GeometryType::PointsArrayType(4)))),
+        mRansEvmKEpsilonK2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mRansEvmKEpsilonK3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(Element::GeometryType::PointsArrayType(4)))),
+        mRansEvmKEpsilonEpsilon2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mRansEvmKEpsilonEpsilon3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(Element::GeometryType::PointsArrayType(4)))),
+        mRansEvmKEpsilonEpsilonWall2D2N(0, Element::GeometryType::Pointer(new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
+        mRansEvmKEpsilonEpsilonWall3D3N(0, Element::GeometryType::Pointer(new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mRansEvmKEpsilonVmsMonolithicWall2D2N(0, Element::GeometryType::Pointer(new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
+        mRansEvmKEpsilonVmsMonolithicWall3D3N(0, Element::GeometryType::Pointer(new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mRansEvmEpsilonAdjoint2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mRansEvmEpsilonAdjoint3D4N(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(Element::GeometryType::PointsArrayType(4)))),
+        mRansEvmKAdjoint2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mRansEvmKAdjoint3D4N(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(Element::GeometryType::PointsArrayType(4)))),
+        mRansEvmKEpsilonVMSAdjoint2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mRansEvmKEpsilonVMSAdjoint3D4N(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(Element::GeometryType::PointsArrayType(4)))),
+        mRansEvmMonolithicKEpsilonVMSAdjoint2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mRansEvmMonolithicKEpsilonVMSAdjoint3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(Element::GeometryType::PointsArrayType(4)))),
+        mRansEvmEpsilonAdjointWallCondition2D2N(0, Element::GeometryType::Pointer(new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
+        mRansEvmEpsilonAdjointWallCondition3D3N(0, Element::GeometryType::Pointer(new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mRansEvmVmsMonolithicAdjointWallCondition2D2N(0, Element::GeometryType::Pointer(new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
+        mRansEvmVmsMonolithicAdjointWallCondition3D3N(0, Element::GeometryType::Pointer(new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mRansEvmMonolithicKEpsilonVMSAdjointWallCondition2D2N(0, Element::GeometryType::Pointer(new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
+        mRansEvmMonolithicKEpsilonVMSAdjointWallCondition3D3N(0, Element::GeometryType::Pointer(new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3))))
 {
 }
 
@@ -202,6 +119,12 @@ void KratosRANSApplication::Register()
     KRATOS_REGISTER_VARIABLE(RANS_AUX_ADJOINT_SCALAR_2)
 
     // Register Elements
+    // Segregated VMS elements
+    KRATOS_REGISTER_ELEMENT("SegregatedVMSVelocity2D3N", mSegregatedVMSVelocity2D3N);
+    KRATOS_REGISTER_ELEMENT("SegregatedVMSVelocity3D4N", mSegregatedVMSVelocity3D4N);
+    KRATOS_REGISTER_ELEMENT("SegregatedVMSPressure2D3N", mSegregatedVMSPressure2D3N);
+    KRATOS_REGISTER_ELEMENT("SegregatedVMSPressure3D4N", mSegregatedVMSPressure3D4N);
+
     KRATOS_REGISTER_ELEMENT("RansIncompressibleVelocityPotentialElement2D3N", mIncompressibleVelocityPotentialElement2D);
     KRATOS_REGISTER_ELEMENT("RansIncompressibleVelocityPotentialElement3D4N", mIncompressibleVelocityPotentialElement3D);
     KRATOS_REGISTER_ELEMENT("RansPressurePotentialElement2D3N", mPressurePotentialElement2D);
