@@ -71,6 +71,8 @@
 #include "custom_elements/compressible_navier_stokes.h"
 #include "custom_elements/two_fluid_navier_stokes.h"
 #include "custom_elements/vms_adjoint_element.h"
+#include "custom_elements/segregated_vms_monolithic/segregated_vms_velocity_element.h"
+#include "custom_elements/segregated_vms_monolithic/segregated_vms_pressure_element.h"
 
 #include "custom_utilities/qsvms_data.h"
 #include "custom_utilities/time_integrated_qsvms_data.h"
@@ -395,6 +397,11 @@ private:
     const NewtonianTwoFluid3DLaw mNewtonianTwoFluid3DLaw;
     const NewtonianTemperatureDependent2DLaw mNewtonianTemperatureDependent2DLaw;
     const NewtonianTemperatureDependent3DLaw mNewtonianTemperatureDependent3DLaw;
+
+    const SegregatedVMSVelocityElement<2> mSegregatedVMSVelocity2D3N;
+    const SegregatedVMSVelocityElement<3> mSegregatedVMSVelocity3D4N;
+    const SegregatedVMSPressureElement<2> mSegregatedVMSPressure2D3N;
+    const SegregatedVMSPressureElement<3> mSegregatedVMSPressure3D4N;
 
     ///@}
     ///@name Private Operators

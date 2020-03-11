@@ -18,6 +18,7 @@ set( KRATOS_FLUID_DYNAMICS_APPLICATION_CORE_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/statistics_record.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/vorticity_utilities.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/acceleration_limitation_utilities.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/segregated_vms_monolithic/segregated_vms_monolithic_utilities.cpp
 
   # elements
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/vms.cpp
@@ -42,6 +43,8 @@ set( KRATOS_FLUID_DYNAMICS_APPLICATION_CORE_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/compressible_navier_stokes3D.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/two_fluid_navier_stokes.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/vms_adjoint_element.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/segregated_vms_monolithic/segregated_vms_velocity_element.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/segregated_vms_monolithic/segregated_vms_pressure_element.cpp
 
   # conditions
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/wall_condition.cpp

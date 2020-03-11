@@ -114,8 +114,11 @@ KratosFluidDynamicsApplication::KratosFluidDynamicsApplication():
     mTwoFluidNavierStokes2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mTwoFluidNavierStokes3D4N(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
     mVMSAdjointElement2D(0,Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
-    mVMSAdjointElement3D(0,Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4))))
-
+    mVMSAdjointElement3D(0,Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
+    mSegregatedVMSVelocity2D3N(0,Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+    mSegregatedVMSVelocity3D4N(0,Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
+    mSegregatedVMSPressure2D3N(0,Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+    mSegregatedVMSPressure3D4N(0,Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4))))
 {}
 
 void KratosFluidDynamicsApplication::Register() {
@@ -263,6 +266,12 @@ void KratosFluidDynamicsApplication::Register() {
     // Adjoint elements
     KRATOS_REGISTER_ELEMENT("VMSAdjointElement2D", mVMSAdjointElement2D);
     KRATOS_REGISTER_ELEMENT("VMSAdjointElement3D", mVMSAdjointElement3D);
+
+    // Segregated VMS elements
+    KRATOS_REGISTER_ELEMENT("SegregatedVMSVelocity2D3N", mSegregatedVMSVelocity2D3N);
+    KRATOS_REGISTER_ELEMENT("SegregatedVMSVelocity3D4N", mSegregatedVMSVelocity3D4N);
+    KRATOS_REGISTER_ELEMENT("SegregatedVMSPressure2D3N", mSegregatedVMSPressure2D3N);
+    KRATOS_REGISTER_ELEMENT("SegregatedVMSPressure3D4N", mSegregatedVMSPressure3D4N);
 
     // Register Conditions
     KRATOS_REGISTER_CONDITION("WallCondition2D2N", mWallCondition2D);  //this is the name the element should have according to the naming convention
