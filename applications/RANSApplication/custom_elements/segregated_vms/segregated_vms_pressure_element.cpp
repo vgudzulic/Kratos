@@ -15,9 +15,9 @@
 // External includes
 
 // Project includes
+#include "includes/cfd_variables.h"
 #include "includes/checks.h"
 #include "includes/variables.h"
-#include "includes/cfd_variables.h"
 
 // Application includes
 #include "custom_utilities/rans_calculation_utilities.h"
@@ -372,14 +372,8 @@ void SegregatedVMSPressureElement<TDim, TNumNodes>::CalculateLocalVelocityContri
         BoundedMatrix<double, velocity_size, LocalSize> approximated_matrix;
         for (IndexType a = 0; a < velocity_size; ++a)
         {
-            // calculating row sum
-            double value = 0.0;
-            for (IndexType b = 0; b < velocity_size; ++b)
-                value += r_velocity_matrix(a, b);
-
-            // assuming row sum is in the diagonal
             for (IndexType b = 0; b < LocalSize; ++b)
-                approximated_matrix(a, b) = r_up_matrix(a, b) / value;
+                approximated_matrix(a, b) = r_up_matrix(a, b) / r_velocity_matrix(a, a);
         }
 
         noalias(rDampingMatrix) += prod(q_u, approximated_matrix);
