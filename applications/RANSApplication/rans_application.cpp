@@ -29,6 +29,8 @@ KratosRANSApplication::KratosRANSApplication()
         mSegregatedVMSVelocity3D4N(0,Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
         mSegregatedVMSPressure2D3N(0,Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
         mSegregatedVMSPressure3D4N(0,Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
+        mSegregatedVMSWallVelocityCondition2D2N(0, Element::GeometryType::Pointer(new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
+        mSegregatedVMSWallVelocityCondition3D3N(0, Element::GeometryType::Pointer(new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
         mIncompressibleVelocityPotentialElement2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
         mIncompressibleVelocityPotentialElement3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(Element::GeometryType::PointsArrayType(4)))),
         mPressurePotentialElement2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
@@ -124,6 +126,10 @@ void KratosRANSApplication::Register()
     KRATOS_REGISTER_ELEMENT("SegregatedVMSVelocity3D4N", mSegregatedVMSVelocity3D4N);
     KRATOS_REGISTER_ELEMENT("SegregatedVMSPressure2D3N", mSegregatedVMSPressure2D3N);
     KRATOS_REGISTER_ELEMENT("SegregatedVMSPressure3D4N", mSegregatedVMSPressure3D4N);
+
+    // Segregated VMS conditions
+    KRATOS_REGISTER_CONDITION("SegregatedVMSWallVelocity2D2N", mSegregatedVMSWallVelocityCondition2D2N);
+    KRATOS_REGISTER_CONDITION("SegregatedVMSWallVelocity3D3N", mSegregatedVMSWallVelocityCondition3D3N);
 
     KRATOS_REGISTER_ELEMENT("RansIncompressibleVelocityPotentialElement2D3N", mIncompressibleVelocityPotentialElement2D);
     KRATOS_REGISTER_ELEMENT("RansIncompressibleVelocityPotentialElement3D4N", mIncompressibleVelocityPotentialElement3D);
