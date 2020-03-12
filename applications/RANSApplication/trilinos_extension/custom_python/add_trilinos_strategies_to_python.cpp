@@ -25,9 +25,11 @@
 #include "trilinos_space.h"
 
 // RANS trilinos extensions
+#include "custom_strategies/segregated_strategy.h"
 #include "custom_strategies/generic_convergence_criteria.h"
 #include "custom_strategies/generic_residual_based_bossak_velocity_scalar_scheme.h"
 #include "custom_strategies/generic_residualbased_simple_steady_scalar_scheme.h"
+#include "custom_strategies/residualbased_simple_steady_velocity_scheme.h"
 
 // Include base h
 #include "add_trilinos_strategies_to_python.h"
@@ -41,12 +43,17 @@ void AddTrilinosStrategiesToPython(pybind11::module& m)
     namespace py = pybind11;
 
     using LocalSpaceType = UblasSpace<double, Matrix, Vector>;
-
     using MPISparseSpaceType = TrilinosSpace<Epetra_FECrsMatrix, Epetra_FEVector>;
-
     using MPIBaseSchemeType = Scheme<MPISparseSpaceType, LocalSpaceType>;
-
     using MPIConvergenceCriteria = ConvergenceCriteria<MPISparseSpaceType, LocalSpaceType>;
+    using MPILinearSolverType = LinearSolver<MPISparseSpaceType, LocalSpaceType>;
+    using MPIBaseSolvingStrategyType = SolvingStrategy<MPISparseSpaceType, LocalSpaceType, MPILinearSolverType>;
+
+    using SegregatedStrategyType = SegregatedStrategy<MPISparseSpaceType, LocalSpaceType, MPILinearSolverType>;
+    py::class_<SegregatedStrategyType, typename SegregatedStrategyType::Pointer, MPIBaseSolvingStrategyType>(m, "MPISegregatedStrategy")
+        .def(py::init<ModelPart&, int>())
+        .def("AddStrategy", &SegregatedStrategyType::AddStrategy)
+        .def("AddAuxiliaryProcess", &SegregatedStrategyType::AddAuxiliaryProcess);
 
     py::class_<GenericConvergenceCriteria<MPISparseSpaceType, LocalSpaceType>,
                typename GenericConvergenceCriteria<MPISparseSpaceType, LocalSpaceType>::Pointer, MPIConvergenceCriteria>(
@@ -63,6 +70,11 @@ void AddTrilinosStrategiesToPython(pybind11::module& m)
                typename GenericResidualBasedSimpleSteadyScalarScheme<MPISparseSpaceType, LocalSpaceType>::Pointer, MPIBaseSchemeType>(
         m, "MPIGenericResidualBasedSimpleSteadyScalarScheme")
         .def(py::init<const double>());
+
+    py::class_<ResidualBasedSimpleSteadyVelocityScheme<MPISparseSpaceType, LocalSpaceType>,
+               typename ResidualBasedSimpleSteadyVelocityScheme<MPISparseSpaceType, LocalSpaceType>::Pointer, MPIBaseSchemeType>(
+        m, "MPIResidualBasedSimpleSteadyVelocityScheme")
+        .def(py::init<const double, const unsigned int>());
 }
 
 } // namespace Python
