@@ -15,18 +15,11 @@
 #define KRATOS_GENERIC_RESIDUALBASED_SIMPLE_STEADY_SCALAR_SCHEME
 
 // Project includes
-#include "containers/array_1d.h"
-#include "includes/cfd_variables.h"
 #include "includes/define.h"
 #include "includes/model_part.h"
-#include "includes/variables.h"
-#include "processes/process.h"
 #include "solving_strategies/schemes/scheme.h"
-#include "utilities/openmp_utils.h"
 
-// debugging
-#include "input_output/vtk_output.h"
-
+// Application includes
 #include "custom_strategies/relaxed_dof_updater.h"
 
 namespace Kratos
@@ -56,14 +49,12 @@ public:
 
     using LocalSystemMatrixType = typename BaseType::LocalSystemMatrixType;
 
-    using GeometryType = Element::GeometryType;
-
     ///@}
     ///@name Life Cycle
     ///@{
 
     GenericResidualBasedSimpleSteadyScalarScheme(const double RelaxationFactor)
-        : mRelaxationFactor(RelaxationFactor)
+        : BaseType(), mRelaxationFactor(RelaxationFactor)
     {
         KRATOS_INFO("GenericResidualBasedSimpleSteadyScalarScheme")
             << " Using residual based simple steady scheme with relaxation "
@@ -76,15 +67,6 @@ public:
     ///@}
     ///@name Operators
     ///@{
-
-    void InitializeSolutionStep(ModelPart& r_model_part,
-                                TSystemMatrixType& A,
-                                TSystemVectorType& Dx,
-                                TSystemVectorType& b) override
-    {
-        BaseType::InitializeSolutionStep(r_model_part, A, Dx, b);
-        mIterationCounter = 0;
-    }
 
     void Update(ModelPart& rModelPart,
                 DofsArrayType& rDofSet,
@@ -190,14 +172,6 @@ protected:
 private:
     ///@name Member Variables
     ///@{
-
-    // TSystemVectorType mPreviousB;
-
-    double mPreviousRelaxationFactor;
-
-    unsigned int mIterationCounter = 0;
-
-    VtkOutput* mVtkOutput;
 
     using DofUpdaterType = RelaxedDofUpdater<TSparseSpace>;
     using DofUpdaterPointerType = typename DofUpdaterType::UniquePointer;
