@@ -887,7 +887,7 @@ protected:
         {
           NormV += Vel[d] * Vel[d];
         }
-        elementalVelocityY += Vel[0] * 0.25;
+        elementalVelocityY += Vel[1] * 0.25;
         elementalVelocityNorm += sqrt(NormV) * 0.25;
 
         double density = geometry(i)->FastGetSolutionStepValue(DENSITY);

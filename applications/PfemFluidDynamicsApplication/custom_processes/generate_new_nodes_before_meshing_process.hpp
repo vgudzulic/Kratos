@@ -977,7 +977,7 @@ private:
 		unsigned int freesurfaceNodes = 0;
 		unsigned int inletNodes = 0;
 		bool toEraseNodeFound = false;
-
+		bool notAddInVajontLobe = false;
 		for (unsigned int pn = 0; pn < nds; pn++)
 		{
 			if (Element[pn].Is(RIGID))
@@ -996,6 +996,19 @@ private:
 			{
 				inletNodes++;
 			}
+
+			double density = Element[pn].FastGetSolutionStepValue(DENSITY);
+			double posYtoFix = 1760 - 0.43269 * (Element[pn].X() - 1034);
+			//// east lobe ////
+			if (((Element[pn].Y() > 1580 && Element[pn].X() > 1450) || (Element[pn].Y() > posYtoFix && Element[pn].X() <= 1450)) && density > 1200)
+			{
+				notAddInVajontLobe = true;
+			}
+			// //// west lobe ////
+			// if (((Element[pn].Y() < 1580 && Element[pn].X() > 1450) || (Element[pn].Y() < posYtoFix && Element[pn].X() <= 1450)) && density > 1200)
+			// {
+			// 	notAddInVajontLobe = true;
+			// }
 		}
 
 		double limitEdgeLength = 1.25 * mrRemesh.Refine->CriticalRadius;
@@ -1018,6 +1031,10 @@ private:
 			penalization = 0.95;
 		}
 
+		if (notAddInVajontLobe == true)
+		{
+			penalization = 0;
+		}
 		// if(freesurfaceNodes>2){
 		//   penalization=0.6;
 		// }
@@ -1873,19 +1890,19 @@ private:
 				posZ = 700;
 				if (posX < 800)
 				{
-					NewPositions[addedNodes][0] = posX + 0.75 + 0.000001*masterNodeId;
+					NewPositions[addedNodes][0] = posX + 0.75 + 0.000001 * masterNodeId;
 				}
 				else
 				{
-					NewPositions[addedNodes][0] = posX - 0.75 - 0.000001*masterNodeId;
+					NewPositions[addedNodes][0] = posX - 0.75 - 0.000001 * masterNodeId;
 				}
 				if (posY < 2000)
 				{
-					NewPositions[addedNodes][1] = posY + 0.75 + 0.000001*masterNodeId;
+					NewPositions[addedNodes][1] = posY + 0.75 + 0.000001 * masterNodeId;
 				}
 				else
 				{
-					NewPositions[addedNodes][1] = posY - 0.75 - 0.000001*masterNodeId;
+					NewPositions[addedNodes][1] = posY - 0.75 - 0.000001 * masterNodeId;
 				}
 				if (posY > 4199)
 				{
@@ -2145,6 +2162,9 @@ private:
 			(*it)->Set(FLUID);
 			// (*it)->Set(ACTIVE);
 			(*it)->Reset(TO_ERASE);
+			(*it)->Free(VELOCITY_X);
+			(*it)->Free(VELOCITY_Y);
+			(*it)->Free(VELOCITY_Z);
 			// std::cout<<"velocity_x "<<(*it)->FastGetSolutionStepValue(VELOCITY_X,0)<<std::endl;
 			// std::cout<<"velocity_x "<<(*it)->FastGetSolutionStepValue(VELOCITY_X,1)<<std::endl;
 			// std::cout<<"velocity_x "<<(*it)->FastGetSolutionStepValue(VELOCITY_X,2)<<std::endl;
