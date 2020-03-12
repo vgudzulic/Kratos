@@ -1,6 +1,15 @@
 import KratosMultiphysics as Kratos
 from KratosMultiphysics.RANSApplication import RansVariableUtilities
 
+from KratosMultiphysics import IsDistributedRun
+from KratosMultiphysics.kratos_utilities import CheckIfApplicationsAvailable
+
+if (IsDistributedRun()):
+    if (CheckIfApplicationsAvailable("TrilinosApplication")):
+        import KratosMultiphysics.TrilinosApplication as KratosTrilinos
+        from KratosMultiphysics.mpi.distributed_import_model_part_utility import DistributedImportModelPartUtility
+    else:
+        raise Exception("Distributed run requires TrilinosApplication")
 
 def CreateDuplicateModelPart(origin_modelpart, destination_modelpart_name,
                              element_name, condition_name,
@@ -30,6 +39,8 @@ def CreateDuplicateModelPart(origin_modelpart, destination_modelpart_name,
 
         connectivity_preserve_modeler.GenerateModelPart(
             origin_modelpart, model_part, element_name, condition_name)
+        RansVariableUtilities.InitializeDuplicatedModelPart(
+            origin_modelpart, model_part)
 
     Kratos.Logger.PrintInfo("RANSModelPartFactory",
                             "Created " + destination_modelpart_name)
