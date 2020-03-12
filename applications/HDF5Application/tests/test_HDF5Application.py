@@ -1,5 +1,6 @@
 import subprocess
 from os.path import dirname
+from os.path import abspath
 
 
 import KratosMultiphysics.KratosUnittest as KratosUnittest
@@ -12,6 +13,7 @@ from test_hdf5_xdmf import TestTryOpenH5File
 from test_hdf5_xdmf import TestCreateXdmfSpatialGrid
 from test_hdf5_xdmf import TestXdmfNodalResults
 from test_hdf5_xdmf import TestXdmfElementResults
+from test_hdf5_xdmf import TestXdmfConditionResults
 from test_hdf5_xdmf import TestXdmfResults
 from test_hdf5_xdmf import TestTimeLabel
 from test_hdf5_xdmf import TestFindMatchingFiles
@@ -30,6 +32,7 @@ def AssembleTestSuites():
     smallSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TestCreateXdmfSpatialGrid]))
     smallSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TestXdmfNodalResults]))
     smallSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TestXdmfElementResults]))
+    smallSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TestXdmfConditionResults]))
     smallSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TestXdmfResults]))
     smallSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TestTimeLabel]))
     smallSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TestFindMatchingFiles]))
@@ -50,7 +53,7 @@ def run_cpp_unit_tests():
     # We set cwd in case the script is run from another directory. This is needed
     # when testing from the core.
     out_bytes = subprocess.check_output(
-        ['python3', 'run_cpp_unit_tests.py'], cwd=dirname(__file__))
+        ['python3', 'run_cpp_unit_tests.py'], cwd=abspath(dirname(__file__)))
     return out_bytes.decode('utf-8')
 
 

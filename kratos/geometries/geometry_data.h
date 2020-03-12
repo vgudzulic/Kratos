@@ -266,11 +266,10 @@ public:
         const ShapeFunctionsLocalGradientsContainerType& ThisShapeFunctionsLocalGradients)
         : mpGeometryDimension(pThisGeometryDimension)
         , mGeometryShapeFunctionContainer(
-            GeometryShapeFunctionContainer<IntegrationMethod>(
                 ThisDefaultMethod,
                 ThisIntegrationPoints,
                 ThisShapeFunctionsValues,
-                ThisShapeFunctionsLocalGradients))
+                ThisShapeFunctionsLocalGradients)
     {
     }
 
@@ -282,50 +281,43 @@ public:
     *        integration points.
     */
     GeometryData(GeometryDimension const *pThisGeometryDimension,
-        GeometryShapeFunctionContainer<IntegrationMethod>& ThisGeometryShapeFunctionContainer)
+        const GeometryShapeFunctionContainer<IntegrationMethod>& ThisGeometryShapeFunctionContainer)
         : mpGeometryDimension(pThisGeometryDimension)
         , mGeometryShapeFunctionContainer(
-            GeometryShapeFunctionContainer<IntegrationMethod>(
-                ThisGeometryShapeFunctionContainer))
+                ThisGeometryShapeFunctionContainer)
     {
     }
 
-    /*
-    * Copy constructor.
-    * Construct this geometry data as a copy of given geometry data.
-    */
+    /// Copy constructor.
     GeometryData( const GeometryData& rOther )
         : mpGeometryDimension( rOther.mpGeometryDimension)
         , mGeometryShapeFunctionContainer( rOther.mGeometryShapeFunctionContainer)
     {
     }
 
-
-
-    /// Destructor. Do nothing!!!
+    /// Destructor.
     virtual ~GeometryData() {}
-
 
     ///@}
     ///@name Operators
     ///@{
 
-    /** Assignment operator.
-
-    @note This operator don't copy the points and this
-    geometry shares points with given source geometry. It's
-    obvious that any change to this geometry's point affect
-    source geometry's points too.
-
-    @see Clone
-    @see ClonePoints
-    */
+    /// Assignment operator.
     GeometryData& operator=( const GeometryData& rOther )
     {
         mpGeometryDimension = rOther.mpGeometryDimension;
         mGeometryShapeFunctionContainer = rOther.mGeometryShapeFunctionContainer;
 
         return *this;
+    }
+
+    ///@}
+    ///@name GeometryDimension
+    ///@{
+
+    void SetGeometryDimension(GeometryDimension const* pGeometryDimension)
+    {
+        mpGeometryDimension = pGeometryDimension;
     }
 
     ///@}
@@ -556,9 +548,13 @@ public:
     @see ShapeFunctionsLocalGradients
     @see ShapeFunctionLocalGradient
     */
-    double ShapeFunctionValue( IndexType IntegrationPointIndex, IndexType ShapeFunctionIndex,  IntegrationMethod ThisMethod ) const
+    double ShapeFunctionValue(
+        IndexType IntegrationPointIndex,
+        IndexType ShapeFunctionIndex,
+        IntegrationMethod ThisMethod ) const
     {
-        return mGeometryShapeFunctionContainer.ShapeFunctionValue( IntegrationPointIndex, ShapeFunctionIndex, ThisMethod );
+        return mGeometryShapeFunctionContainer.ShapeFunctionValue(
+            IntegrationPointIndex, ShapeFunctionIndex, ThisMethod );
     }
 
     /** This method gives all shape functions gradients evaluated in all
@@ -671,6 +667,21 @@ public:
         return mGeometryShapeFunctionContainer.ShapeFunctionLocalGradient(IntegrationPointIndex, ThisMethod);
     }
 
+    /*
+    * @brief access to the shape function derivatives.
+    * @param DerivativeOrderIndex defines the wanted order of the derivative
+    * @param IntegrationPointIndex the corresponding contorl point of this geometry
+    * @return the shape function or derivative value related to the input parameters
+    *         the matrix is structured: (derivative dN_de / dN_du , the corresponding node)
+    */
+    const Matrix& ShapeFunctionDerivatives(
+        IndexType DerivativeOrderIndex,
+        IndexType IntegrationPointIndex,
+        IntegrationMethod ThisMethod) const
+    {
+        return mGeometryShapeFunctionContainer.ShapeFunctionDerivatives(
+            DerivativeOrderIndex, IntegrationPointIndex, ThisMethod);
+    }
 
     ///@}
     ///@name Input and output
