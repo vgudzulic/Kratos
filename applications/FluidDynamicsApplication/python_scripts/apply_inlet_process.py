@@ -51,10 +51,11 @@ class ApplyInletProcess(KratosMultiphysics.Process):
 
         # Set the INLET flag in the inlet model part nodes and conditions
         self.inlet_model_part = Model[settings["model_part_name"].GetString()]
-        for node in self.inlet_model_part.Nodes:
-            node.Set(KratosMultiphysics.INLET, True)
-        for condition in self.inlet_model_part.Conditions:
-            condition.Set(KratosMultiphysics.INLET, True)
+        if (settings["constrained"].GetBool()):
+            for node in self.inlet_model_part.Nodes:
+                node.Set(KratosMultiphysics.INLET, True)
+            for condition in self.inlet_model_part.Conditions:
+                condition.Set(KratosMultiphysics.INLET, True)
 
         # Construct the base process AssignVectorByDirectionProcess
         self.aux_process = assign_vector_by_direction_process.AssignVectorByDirectionProcess(Model, settings)
