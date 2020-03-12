@@ -97,6 +97,8 @@ public:
 
     void ExecuteInitialize() override;
 
+    void ExecuteInitializeSolutionStep() override;
+
     void Execute() override;
 
     int Check() override;

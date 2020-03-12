@@ -93,6 +93,12 @@ void RansKEpsilonDomainInitializationProcess::ExecuteInitialize()
     variable_utilities.SetVariable(DENSITY, mDensity, r_model_part.Nodes());
     variable_utilities.SetVariable(KINEMATIC_VISCOSITY, mKinematicViscosity,
                                    r_model_part.Nodes());
+    variable_utilities.SetVariable(VISCOSITY, mKinematicViscosity, r_model_part.Nodes());
+}
+
+void RansKEpsilonDomainInitializationProcess::ExecuteInitializeSolutionStep()
+{
+    Execute();
 }
 
 void RansKEpsilonDomainInitializationProcess::Execute()
