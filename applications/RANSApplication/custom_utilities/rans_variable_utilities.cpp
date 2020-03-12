@@ -182,12 +182,42 @@ void GetNodalVariablesVector(Vector& rValues,
 {
     const int number_of_nodes = rNodes.size();
 
-    if (static_cast<int>(rValues.size()) != number_of_nodes)
+    if (static_cast<int>(rValues.size()) < number_of_nodes)
         rValues.resize(number_of_nodes);
 
 #pragma omp parallel for
     for (int i_node = 0; i_node < number_of_nodes; ++i_node)
         rValues[i_node] = (rNodes.begin() + i_node)->FastGetSolutionStepValue(rVariable);
+
+#pragma omp parallel for
+    for (int i = number_of_nodes; i < static_cast<int>(rValues.size()); ++i)
+        rValues[i] = 0.0;
+}
+
+void KRATOS_API(RANS_APPLICATION)
+    GetNodalVariablesVector(Vector& rValues,
+                            const ModelPart::NodesContainerType& rNodes,
+                            const Variable<array_1d<double, 3>>& rVariable)
+{
+    const int number_of_nodes = rNodes.size();
+
+    if (static_cast<int>(rValues.size()) < number_of_nodes)
+        rValues.resize(number_of_nodes * 3);
+
+#pragma omp parallel for
+    for (int i_node = 0; i_node < number_of_nodes; ++i_node)
+    {
+        const unsigned long local_pos = i_node * 3;
+        const array_1d<double, 3>& r_value =
+            (rNodes.begin() + i_node)->FastGetSolutionStepValue(rVariable);
+        rValues[local_pos] = r_value[0];
+        rValues[local_pos + 1] = r_value[1];
+        rValues[local_pos + 2] = r_value[2];
+    }
+
+#pragma omp parallel for
+    for (int i = number_of_nodes * 3; i < static_cast<int>(rValues.size()); ++i)
+        rValues[i] = 0.0;
 }
 
 void GetNodalArray(Vector& rNodalValues, const Element& rElement, const Variable<double>& rVariable)

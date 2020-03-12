@@ -13,6 +13,9 @@
 // System includes
 #include <cmath>
 
+// Project includes
+#include "includes/element.h"
+
 // Application includes
 #include "rans_application_variables.h"
 

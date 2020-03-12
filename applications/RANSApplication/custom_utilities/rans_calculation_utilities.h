@@ -21,6 +21,7 @@
 #include "geometries/geometry_data.h"
 #include "includes/model_part.h"
 #include "utilities/geometrical_sensitivity_utility.h"
+#include "includes/condition.h"
 
 namespace Kratos
 {

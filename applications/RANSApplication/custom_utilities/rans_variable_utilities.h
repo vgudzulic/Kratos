@@ -47,6 +47,10 @@ void KRATOS_API(RANS_APPLICATION) GetNodalVariablesVector(Vector& rValues,
                                                           const ModelPart::NodesContainerType& rNodes,
                                                           const Variable<double>& rVariable);
 
+void KRATOS_API(RANS_APPLICATION) GetNodalVariablesVector(Vector& rValues,
+                                                          const ModelPart::NodesContainerType& rNodes,
+                                                          const Variable<array_1d<double, 3>>& rVariable);
+
 void KRATOS_API(RANS_APPLICATION) GetNodalArray(Vector& rNodalValues,
                                                 const Element& rElement,
                                                 const Variable<double>& rVariable);
