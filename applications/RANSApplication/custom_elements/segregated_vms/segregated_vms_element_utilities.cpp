@@ -72,19 +72,11 @@ double CalculateTauTwo(const double VelocityMagnitude,
 template <>
 void AddViscousTerm<2, 3>(BoundedMatrix<double, 6, 6>& rOutput,
                           const Matrix& rShapeDerivatives,
-                          const double DynamicViscosity)
+                          const double Weight)
 {
     KRATOS_TRY
 
     const IndexType number_of_nodes = 3;
-
-    KRATOS_DEBUG_ERROR_IF(number_of_nodes != rShapeDerivatives.size1())
-        << "Shape derivatives size1 and number of nodes mismatch [ "
-        << rShapeDerivatives.size1() << " != " << number_of_nodes << " ].\n";
-
-    KRATOS_DEBUG_ERROR_IF(rShapeDerivatives.size2() != 2)
-        << "Shape derivatives size2 and dimension mismatch [ "
-        << rShapeDerivatives.size2() << " != 2 ].\n";
 
     const double FourThirds = 4.0 / 3.0;
     const double nTwoThirds = -2.0 / 3.0;
@@ -97,23 +89,19 @@ void AddViscousTerm<2, 3>(BoundedMatrix<double, 6, 6>& rOutput,
         {
             // First Row
             rOutput(FirstRow, FirstCol) +=
-                DynamicViscosity *
-                (FourThirds * rShapeDerivatives(i, 0) * rShapeDerivatives(j, 0) +
-                 rShapeDerivatives(i, 1) * rShapeDerivatives(j, 1));
+                Weight * (FourThirds * rShapeDerivatives(i, 0) * rShapeDerivatives(j, 0) +
+                          rShapeDerivatives(i, 1) * rShapeDerivatives(j, 1));
             rOutput(FirstRow, FirstCol + 1) +=
-                DynamicViscosity *
-                (nTwoThirds * rShapeDerivatives(i, 0) * rShapeDerivatives(j, 1) +
-                 rShapeDerivatives(i, 1) * rShapeDerivatives(j, 0));
+                Weight * (nTwoThirds * rShapeDerivatives(i, 0) * rShapeDerivatives(j, 1) +
+                          rShapeDerivatives(i, 1) * rShapeDerivatives(j, 0));
 
-            // Second Row
+            // // Second Row
             rOutput(FirstRow + 1, FirstCol) +=
-                DynamicViscosity *
-                (nTwoThirds * rShapeDerivatives(i, 1) * rShapeDerivatives(j, 0) +
-                 rShapeDerivatives(i, 0) * rShapeDerivatives(j, 1));
+                Weight * (nTwoThirds * rShapeDerivatives(i, 1) * rShapeDerivatives(j, 0) +
+                          rShapeDerivatives(i, 0) * rShapeDerivatives(j, 1));
             rOutput(FirstRow + 1, FirstCol + 1) +=
-                DynamicViscosity *
-                (FourThirds * rShapeDerivatives(i, 1) * rShapeDerivatives(j, 1) +
-                 rShapeDerivatives(i, 0) * rShapeDerivatives(j, 0));
+                Weight * (FourThirds * rShapeDerivatives(i, 1) * rShapeDerivatives(j, 1) +
+                          rShapeDerivatives(i, 0) * rShapeDerivatives(j, 0));
 
             // Update Counter
             FirstRow += 2;
@@ -128,19 +116,11 @@ void AddViscousTerm<2, 3>(BoundedMatrix<double, 6, 6>& rOutput,
 template <>
 void AddViscousTerm<3, 4>(BoundedMatrix<double, 12, 12>& rOutput,
                           const Matrix& rShapeDerivatives,
-                          const double DynamicViscosity)
+                          const double Weight)
 {
     KRATOS_TRY
 
     const IndexType number_of_nodes = 4;
-
-    KRATOS_DEBUG_ERROR_IF(number_of_nodes != rShapeDerivatives.size1())
-        << "Shape derivatives size1 and number of nodes mismatch [ "
-        << rShapeDerivatives.size1() << " != " << number_of_nodes << " ].\n";
-
-    KRATOS_DEBUG_ERROR_IF(rShapeDerivatives.size2() != 3)
-        << "Shape derivatives size2 and dimension mismatch [ "
-        << rShapeDerivatives.size2() << " != 3 ].\n";
 
     const double OneThird = 1.0 / 3.0;
     const double nTwoThirds = -2.0 / 3.0;
@@ -158,41 +138,35 @@ void AddViscousTerm<3, 4>(BoundedMatrix<double, 12, 12>& rOutput,
 
             // First Row
             rOutput(FirstRow, FirstCol) +=
-                DynamicViscosity *
+                Weight *
                 (OneThird * rShapeDerivatives(i, 0) * rShapeDerivatives(j, 0) + Diag);
             rOutput(FirstRow, FirstCol + 1) +=
-                DynamicViscosity *
-                (nTwoThirds * rShapeDerivatives(i, 0) * rShapeDerivatives(j, 1) +
-                 rShapeDerivatives(i, 1) * rShapeDerivatives(j, 0));
+                Weight * (nTwoThirds * rShapeDerivatives(i, 0) * rShapeDerivatives(j, 1) +
+                          rShapeDerivatives(i, 1) * rShapeDerivatives(j, 0));
             rOutput(FirstRow, FirstCol + 2) +=
-                DynamicViscosity *
-                (nTwoThirds * rShapeDerivatives(i, 0) * rShapeDerivatives(j, 2) +
-                 rShapeDerivatives(i, 2) * rShapeDerivatives(j, 0));
+                Weight * (nTwoThirds * rShapeDerivatives(i, 0) * rShapeDerivatives(j, 2) +
+                          rShapeDerivatives(i, 2) * rShapeDerivatives(j, 0));
 
             // Second Row
             rOutput(FirstRow + 1, FirstCol) +=
-                DynamicViscosity *
-                (nTwoThirds * rShapeDerivatives(i, 1) * rShapeDerivatives(j, 0) +
-                 rShapeDerivatives(i, 0) * rShapeDerivatives(j, 1));
+                Weight * (nTwoThirds * rShapeDerivatives(i, 1) * rShapeDerivatives(j, 0) +
+                          rShapeDerivatives(i, 0) * rShapeDerivatives(j, 1));
             rOutput(FirstRow + 1, FirstCol + 1) +=
-                DynamicViscosity *
+                Weight *
                 (OneThird * rShapeDerivatives(i, 1) * rShapeDerivatives(j, 1) + Diag);
             rOutput(FirstRow + 1, FirstCol + 2) +=
-                DynamicViscosity *
-                (nTwoThirds * rShapeDerivatives(i, 1) * rShapeDerivatives(j, 2) +
-                 rShapeDerivatives(i, 2) * rShapeDerivatives(j, 1));
+                Weight * (nTwoThirds * rShapeDerivatives(i, 1) * rShapeDerivatives(j, 2) +
+                          rShapeDerivatives(i, 2) * rShapeDerivatives(j, 1));
 
             // Third Row
             rOutput(FirstRow + 2, FirstCol) +=
-                DynamicViscosity *
-                (nTwoThirds * rShapeDerivatives(i, 2) * rShapeDerivatives(j, 0) +
-                 rShapeDerivatives(i, 0) * rShapeDerivatives(j, 2));
+                Weight * (nTwoThirds * rShapeDerivatives(i, 2) * rShapeDerivatives(j, 0) +
+                          rShapeDerivatives(i, 0) * rShapeDerivatives(j, 2));
             rOutput(FirstRow + 2, FirstCol + 1) +=
-                DynamicViscosity *
-                (nTwoThirds * rShapeDerivatives(i, 2) * rShapeDerivatives(j, 1) +
-                 rShapeDerivatives(i, 1) * rShapeDerivatives(j, 2));
+                Weight * (nTwoThirds * rShapeDerivatives(i, 2) * rShapeDerivatives(j, 1) +
+                          rShapeDerivatives(i, 1) * rShapeDerivatives(j, 2));
             rOutput(FirstRow + 2, FirstCol + 2) +=
-                DynamicViscosity *
+                Weight *
                 (OneThird * rShapeDerivatives(i, 2) * rShapeDerivatives(j, 2) + Diag);
 
             // Update Counter
@@ -219,18 +193,6 @@ BoundedMatrix<double, TDim * TNumNodes, TDim * TNumNodes> CalculateVelocityMatri
     KRATOS_TRY
 
     constexpr IndexType local_size = TDim * TNumNodes;
-
-    KRATOS_DEBUG_ERROR_IF(rShapeFunctions.size() != TNumNodes)
-        << "Shape functions size and nodes size mismatch [ "
-        << rShapeFunctions.size() << " != " << TNumNodes << " ].\n";
-
-    KRATOS_DEBUG_ERROR_IF(rShapeDerivatives.size1() != TNumNodes)
-        << "Shape function derviatives size1 and nodes size mismatch [ "
-        << rShapeDerivatives.size1() << " != " << TNumNodes << " ].\n";
-
-    KRATOS_DEBUG_ERROR_IF(rShapeDerivatives.size2() != TDim)
-        << "Shape function derviatives size2 and dimension mismatch [ "
-        << rShapeDerivatives.size2() << " != " << TDim << " ].\n";
 
     BoundedMatrix<double, local_size, local_size> output =
         ZeroMatrix(local_size, local_size);
@@ -280,18 +242,6 @@ BoundedMatrix<double, TDim * TNumNodes, TNumNodes> CalculateVelocityPressureMatr
     const double GaussWeight)
 {
     KRATOS_TRY
-
-    KRATOS_DEBUG_ERROR_IF(rShapeFunctions.size() != TNumNodes)
-        << "Shape functions size and nodes size mismatch [ "
-        << rShapeFunctions.size() << " != " << TNumNodes << " ].\n";
-
-    KRATOS_DEBUG_ERROR_IF(rShapeDerivatives.size1() != TNumNodes)
-        << "Shape function derviatives size1 and nodes size mismatch [ "
-        << rShapeDerivatives.size1() << " != " << TNumNodes << " ].\n";
-
-    KRATOS_DEBUG_ERROR_IF(rShapeDerivatives.size2() != TDim)
-        << "Shape function derviatives size2 and dimension mismatch [ "
-        << rShapeDerivatives.size2() << " != " << TDim << " ].\n";
 
     BoundedMatrix<double, TDim * TNumNodes, TNumNodes> output;
 
