@@ -225,18 +225,24 @@ void SegregatedVMSWallVelocityCondition<TDim, TNumNodes>::Initialize()
 
     if (RansCalculationUtilities::IsWall(*this))
     {
-        const array_1d<double, 3>& rNormal =
-            this->GetValue(PARENT_CONDITION_POINTER)->GetValue(NORMAL);
+        const ConditionType& r_parent_condition =
+            *(this->GetValue(PARENT_CONDITION_POINTER));
+
+        const array_1d<double, 3>& rNormal = r_parent_condition.GetValue(NORMAL);
         KRATOS_ERROR_IF(norm_2(rNormal) == 0.0)
             << "NORMAL must be calculated before using this " << this->Info() << "\n";
 
-        KRATOS_ERROR_IF(this->GetValue(PARENT_CONDITION_POINTER)
-                            ->GetValue(NEIGHBOUR_ELEMENTS)
-                            .size() == 0)
+        KRATOS_ERROR_IF(r_parent_condition.GetValue(NEIGHBOUR_ELEMENTS).size() == 0)
             << this->Info() << " cannot find parent element\n";
 
-        mWallHeight = RansCalculationUtilities::CalculateWallHeight(
-            *(this->GetValue(PARENT_CONDITION_POINTER)), rNormal);
+        const double nu = RansCalculationUtilities::EvaluateInParentCenter(
+            KINEMATIC_VISCOSITY, r_parent_condition);
+        KRATOS_ERROR_IF(nu == 0.0)
+            << "KINEMATIC_VISCOSITY is not defined in the parent element of "
+            << this->Info() << "\n.";
+
+        mWallHeight =
+            RansCalculationUtilities::CalculateWallHeight(r_parent_condition, rNormal);
     }
 
     KRATOS_CATCH("");
@@ -338,9 +344,11 @@ void SegregatedVMSWallVelocityCondition<TDim, TNumNodes>::ApplyWallLaw(
     {
         const double eps = std::numeric_limits<double>::epsilon();
 
+        const ConditionType& r_parent_condition =
+            *(this->GetValue(PARENT_CONDITION_POINTER));
+
         const array_1d<double, 3> wall_cell_center_velocity =
-            RansCalculationUtilities::CalculateWallVelocity(
-                *(this->GetValue(PARENT_CONDITION_POINTER)));
+            RansCalculationUtilities::CalculateWallVelocity(r_parent_condition);
         const double wall_cell_center_velocity_magnitude = norm_2(wall_cell_center_velocity);
 
         const double y_plus_limit = rCurrentProcessInfo[RANS_Y_PLUS_LIMIT];
@@ -354,7 +362,7 @@ void SegregatedVMSWallVelocityCondition<TDim, TNumNodes>::ApplyWallLaw(
             const double kappa = rCurrentProcessInfo[WALL_VON_KARMAN];
             const double beta = rCurrentProcessInfo[WALL_SMOOTHNESS_BETA];
             const double nu = RansCalculationUtilities::EvaluateInParentCenter(
-                KINEMATIC_VISCOSITY, *(this->GetValue(PARENT_CONDITION_POINTER)));
+                KINEMATIC_VISCOSITY, r_parent_condition);
 
             double u_tau;
             RansCalculationUtilities::CalculateYPlusAndUtau(
@@ -363,15 +371,11 @@ void SegregatedVMSWallVelocityCondition<TDim, TNumNodes>::ApplyWallLaw(
 
             GeometryType& r_geometry = this->GetGeometry();
 
-            const GeometryType::IntegrationPointsArrayType& integration_points =
-                r_geometry.IntegrationPoints(GeometryData::GI_GAUSS_2);
-            const std::size_t number_of_gauss_points = integration_points.size();
-            MatrixType shape_functions =
-                r_geometry.ShapeFunctionsValues(GeometryData::GI_GAUSS_2);
-
-            const double area = r_geometry.DomainSize();
-            // CAUTION: "Jacobian" is 2.0*A for triangles but 0.5*A for lines
-            double J = (TDim == 2) ? 0.5 * area : 2.0 * area;
+            MatrixType shape_functions;
+            VectorType gauss_weights;
+            RansCalculationUtilities::CalculateConditionGeometryData(
+                r_geometry, GeometryData::GI_GAUSS_2, gauss_weights, shape_functions);
+            const int number_of_gauss_points = gauss_weights.size();
 
             // In the linear region, force the velocity to be in the log region lowest
             // since k - epsilon is only valid in the log region.
@@ -394,10 +398,10 @@ void SegregatedVMSWallVelocityCondition<TDim, TNumNodes>::ApplyWallLaw(
 
             double condition_u_tau = 0.0;
 
-            for (size_t g = 0; g < number_of_gauss_points; ++g)
+            for (int g = 0; g < number_of_gauss_points; ++g)
             {
                 const Vector& gauss_shape_functions = row(shape_functions, g);
-                const double weight = J * integration_points[g].Weight();
+                const double weight = gauss_weights[g];
 
                 const array_1d<double, 3>& r_wall_velocity =
                     RansCalculationUtilities::EvaluateInPoint(
@@ -415,21 +419,21 @@ void SegregatedVMSWallVelocityCondition<TDim, TNumNodes>::ApplyWallLaw(
 
                     condition_u_tau += gauss_u_tau;
 
-                    const double value = rho * std::pow(gauss_u_tau, 2) *
-                                         weight / wall_velocity_magnitude;
+                    const double coeff_1 = rho * std::pow(gauss_u_tau, 2) *
+                                           weight / wall_velocity_magnitude;
 
                     for (IndexType a = 0; a < TNumNodes; ++a)
                     {
-                        for (IndexType dim = 0; dim < TDim; ++dim)
+                        for (IndexType i = 0; i < TDim; ++i)
                         {
                             for (IndexType b = 0; b < TNumNodes; ++b)
                             {
-                                rLocalMatrix(a * block_size + dim, b * block_size + dim) +=
+                                rLocalMatrix(a * block_size + i, b * block_size + i) +=
                                     gauss_shape_functions[a] *
-                                    gauss_shape_functions[b] * value;
+                                    gauss_shape_functions[b] * coeff_1;
                             }
-                            rLocalVector[a * block_size + dim] -=
-                                gauss_shape_functions[a] * value * r_wall_velocity[dim];
+                            rLocalVector[a * block_size + i] -=
+                                gauss_shape_functions[a] * coeff_1 * r_wall_velocity[i];
                         }
                     }
                 }
