@@ -109,11 +109,6 @@ class IncompressiblePotentialFlowSolver(PythonSolver):
             self.fluid_model_part, "IncompressiblePotentialFlow_Pressure",
             element_name, condition_name, original_condition_name)
 
-        RansVariableUtilities.InitializeDuplicatedModelPart(
-            self.fluid_model_part, self.velocity_model_part)
-        RansVariableUtilities.InitializeDuplicatedModelPart(
-            self.fluid_model_part, self.pressure_model_part)
-
         Kratos.Logger.PrintInfo(
             self.__class__.__name__,
             "Created potential flow initialization model parts.")
