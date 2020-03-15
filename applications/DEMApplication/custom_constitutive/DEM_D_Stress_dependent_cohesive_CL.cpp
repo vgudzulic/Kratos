@@ -278,7 +278,7 @@ namespace Kratos {
             }
         }
 
-        const double regularization_number = element1->mNeighbourElements.size() * contact_area / (4.0 * Globals::Pi * element1->GetRadius() * element1->GetRadius());
+        const double regularization_number = 0.25 * element1->mNeighbourElements.size();
 
         const double cohesive_force = equiv_cohesion * contact_area * regularization_number;
 
