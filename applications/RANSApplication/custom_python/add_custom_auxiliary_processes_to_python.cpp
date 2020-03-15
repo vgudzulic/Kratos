@@ -33,6 +33,7 @@
 #include "custom_processes/auxiliary_processes/rans_vector_cell_center_averaging_process.h"
 #include "custom_processes/auxiliary_processes/rans_wall_distance_calculation_process.h"
 #include "custom_processes/auxiliary_processes/rans_k_epsilon_domain_initialization_process.h"
+#include "custom_processes/auxiliary_processes/rans_vtk_output_process.h"
 
 // RANS sensitivity processes
 #include "custom_processes/auxiliary_processes/rans_logarithmic_y_plus_velocity_sensitivities_process.h"
@@ -159,6 +160,11 @@ void AddCustomAuxiliaryProcessesToPython(pybind11::module& m)
     using RansNutYPlusWallFunctionSensitivitiesProcessType = RansNutYPlusWallFunctionSensitivitiesProcess;
     py::class_<RansNutYPlusWallFunctionSensitivitiesProcessType, RansNutYPlusWallFunctionSensitivitiesProcessType::Pointer, Process>(
         m, "RansNutYPlusWallFunctionSensitivitiesProcess")
+        .def(py::init<Model&, Parameters&>());
+
+    using RansVtkOutputProcessType = RansVtkOutputProcess;
+    py::class_<RansVtkOutputProcessType, RansVtkOutputProcessType::Pointer, Process>(
+        m, "RansVtkOutputProcess")
         .def(py::init<Model&, Parameters&>());
 }
 
