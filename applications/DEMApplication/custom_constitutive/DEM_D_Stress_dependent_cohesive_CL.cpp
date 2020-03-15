@@ -278,7 +278,7 @@ namespace Kratos {
             }
         }
 
-        const double cohesive_force = equiv_cohesion * contact_area;
+        const double cohesive_force = equiv_cohesion * (4.0 * Globals::Pi * element1->GetRadius() * element1->GetRadius()) / element1->mNeighbourElements.size();
 
         return cohesive_force;
     }
