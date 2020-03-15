@@ -98,17 +98,6 @@ void IncompressiblePressureCondition<TDim, TNumNodes>::Initialize()
 
     this->CalculateNormal();
 
-    KRATOS_ERROR_IF(!(this->GetValue(PARENT_CONDITION_POINTER)))
-        << "Parent condition not found for duplicated " << this->Info() << "\n";
-
-    const ConditionType& r_parent_condition = *(this->GetValue(PARENT_CONDITION_POINTER));
-
-    KRATOS_ERROR_IF(r_parent_condition.GetValue(NEIGHBOUR_ELEMENTS).size() == 0)
-        << r_parent_condition.Info() << " cannot find parent element\n";
-
-    mNormalLength = RansCalculationUtilities::CalculateWallHeight(
-        r_parent_condition, this->GetValue(NORMAL));
-
     KRATOS_CATCH("");
 }
 
