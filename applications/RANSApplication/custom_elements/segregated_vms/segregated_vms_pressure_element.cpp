@@ -233,55 +233,55 @@ void SegregatedVMSPressureElement<TDim, TNumNodes>::CalculateRightHandSide(
         const double weight = gauss_weights[g];
 
         const double density = this->EvaluateInPoint(DENSITY, gauss_shape_functions);
-        const double dynamic_viscosity =
-            this->EvaluateInPoint(VISCOSITY, gauss_shape_functions) * density;
+        const double dynamic_viscosity = this->EvaluateInPoint(VISCOSITY, gauss_shape_functions) * density;
         const array_1d<double, 3>& r_velocity = this->GetVelocity(gauss_shape_functions);
+        const array_1d<double, 3>& r_body_force = this->EvaluateInPoint(BODY_FORCE, gauss_shape_functions) * density;
         const double velocity_magnitude = norm_2(r_velocity);
-        const double tau_one = SegregatedVMSElementUtilities::CalculateTauOne(
-            velocity_magnitude, element_length, density, dynamic_viscosity,
-            dynamic_tau, delta_time);
-        const array_1d<double, 3>& r_body_force =
-            this->EvaluateInPoint(BODY_FORCE, gauss_shape_functions) * density;
-        const BoundedVector<double, TNumNodes>& r_convective_body_force =
-            this->GetConvectionOperator(r_body_force, r_shape_derivatives);
-        const BoundedVector<double, TNumNodes>& r_convective_velocity =
-            this->GetConvectionOperator(r_velocity, r_shape_derivatives);
+
+        const BoundedVector<double, TNumNodes>& r_convective_velocity = this->GetConvectionOperator(r_velocity, r_shape_derivatives);
+        const BoundedVector<double, TNumNodes>& r_convective_body_force = this->GetConvectionOperator(r_body_force, r_shape_derivatives);
+
+        const double tau_one = SegregatedVMSElementUtilities::CalculateTauOne(velocity_magnitude, element_length, density, dynamic_viscosity, dynamic_tau, delta_time);
+
+        BoundedMatrix<double, TDim, TDim> velocity_gradient;
+        RansCalculationUtilities::CalculateGradient<TDim>(velocity_gradient, this->GetGeometry(), VELOCITY, r_shape_derivatives);
+        const double divergence = RansCalculationUtilities::CalculateMatrixTrace<TDim>(velocity_gradient);
+
+        array_1d<double, 3> pressure_gradient;
+        RansCalculationUtilities::CalculateGradient(pressure_gradient, this->GetGeometry(), PRESSURE, r_shape_derivatives);
+        const BoundedVector<double, TNumNodes>& r_convective_pressure = this->GetConvectionOperator(pressure_gradient, r_shape_derivatives);
+
+        array_1d<double, 3> convective_velocity = ZeroVector(3);
+        for (IndexType i = 0; i < TDim; ++i)
+        {
+            for (IndexType j = 0; j < TDim; ++j)
+            {
+                convective_velocity[i] += r_velocity[j] * velocity_gradient(i, j);
+            }
+        }
+        const BoundedVector<double, TNumNodes>& r_convective_convective_velocity = this->GetConvectionOperator(convective_velocity, r_shape_derivatives);
 
         const double coeff_1 = tau_one * weight;
-        const double coeff_2 = tau_one * density * weight;
+        const double coeff_2 = divergence * weight;
+        const double coeff_3 = tau_one * weight * density;
 
-        // calculating pressure velocity matrix
-        BoundedMatrix<double, LocalSize, velocity_size> pu_matrix;
-
-        // calculating Q_p matrix
-        BoundedMatrix<double, LocalSize, LocalSize> q_p;
-
-        double value;
+        double value = 0.0;
         for (IndexType a = 0; a < TNumNodes; ++a)
         {
-            for (IndexType b = 0; b < TNumNodes; ++b)
-            {
-                IndexType col_index = b * TDim;
-                double dna_dnb = 0.0;
-                for (IndexType d = 0; d < TDim; ++d)
-                {
-                    dna_dnb += r_shape_derivatives(a, d) * r_shape_derivatives(b, d);
+            // adding body force contribution q_f
+            value =  coeff_1 * r_convective_body_force[a];
 
-                    value = weight * gauss_shape_functions[a] * r_shape_derivatives(b, d);
-                    value += coeff_2 * r_shape_derivatives(a, d) *
-                             r_convective_velocity[b];
-                    pu_matrix(a, col_index + d) = value;
-                }
+            // adding -D*u
+            value -= coeff_2 * gauss_shape_functions[a];
 
-                q_p(a, b) = coeff_1 * dna_dnb;
-            }
+            // adding -Q_u*u
+            value -= coeff_3 * r_convective_convective_velocity[a];
 
-            // adding Q_f
-            rRightHandSideVector[a] += coeff_1 * r_convective_body_force[a];
+            // adding -Q_p*p
+            value -= coeff_1 * r_convective_pressure[a];
+
+            rRightHandSideVector[a] += value;
         }
-
-        noalias(rRightHandSideVector) -= prod(pu_matrix, r_nodal_velocity);
-        noalias(rRightHandSideVector) -= prod(q_p, r_nodal_pressure);
     }
 
     KRATOS_CATCH("");
@@ -321,62 +321,58 @@ void SegregatedVMSPressureElement<TDim, TNumNodes>::CalculateLocalVelocityContri
         const double weight = gauss_weights[g];
 
         const double density = this->EvaluateInPoint(DENSITY, gauss_shape_functions);
-        const double dynamic_viscosity =
-            this->EvaluateInPoint(VISCOSITY, gauss_shape_functions) * density;
+        const double dynamic_viscosity = this->EvaluateInPoint(VISCOSITY, gauss_shape_functions) * density;
         const array_1d<double, 3>& r_velocity = this->GetVelocity(gauss_shape_functions);
         const double velocity_magnitude = norm_2(r_velocity);
-        const double tau_one = SegregatedVMSElementUtilities::CalculateTauOne(
-            velocity_magnitude, element_length, density, dynamic_viscosity,
-            dynamic_tau, delta_time);
-        const double tau_two = SegregatedVMSElementUtilities::CalculateTauTwo(
-            velocity_magnitude, element_length, density, dynamic_viscosity);
-        const BoundedVector<double, TNumNodes>& r_convective_velocity =
-            this->GetConvectionOperator(r_velocity, r_shape_derivatives);
+        const BoundedVector<double, TNumNodes>& r_convective_velocity = this->GetConvectionOperator(r_velocity, r_shape_derivatives);
 
-        const double coeff_1 = weight * tau_one;
-        const double coeff_2 = weight * tau_one * density;
+        const double tau_one = SegregatedVMSElementUtilities::CalculateTauOne(velocity_magnitude, element_length, density, dynamic_viscosity, dynamic_tau, delta_time);
+        const double tau_two = SegregatedVMSElementUtilities::CalculateTauTwo(velocity_magnitude, element_length, density, dynamic_viscosity);
 
-        for (IndexType a = 0; a < TNumNodes; ++a)
-        {
-            for (IndexType b = 0; b < TNumNodes; ++b)
-            {
-                double dna_dnb = 0.0;
-                IndexType col_index = b * TDim;
-
-                for (IndexType d = 0; d < TDim; ++d)
-                {
-                    dna_dnb += r_shape_derivatives(a, d) * r_shape_derivatives(b, d);
-                    q_u(a, col_index + d) = (gauss_shape_functions[b] * weight -
-                                             coeff_2 * r_convective_velocity[b]) *
-                                            r_shape_derivatives(a, d);
-                }
-
-                // calculating Q_p
-                rDampingMatrix(a, b) += coeff_1 * dna_dnb;
-            }
-        }
-
-        // Calculating G + S_p matrix
-        const BoundedMatrix<double, velocity_size, LocalSize>& r_up_matrix =
-            SegregatedVMSElementUtilities::CalculateVelocityPressureMatrixGaussPointContributions<TDim, TNumNodes>(
-                density, tau_one, r_convective_velocity, gauss_shape_functions,
-                r_shape_derivatives, weight);
-
-        // Calculating C + K + S_u + H_u matrix
-        const BoundedMatrix<double, velocity_size, velocity_size>& r_velocity_matrix =
+        const BoundedMatrix<double, velocity_size, velocity_size>& r_uu =
             SegregatedVMSElementUtilities::CalculateVelocityMatrixGaussPointContributions<TDim, TNumNodes>(
                 density, dynamic_viscosity, tau_one, tau_two, r_convective_velocity,
                 gauss_shape_functions, r_shape_derivatives, weight);
 
-        // Calculating approximated (C + K + S_u + H_u)^(-1) * (G + S_p)
-        BoundedMatrix<double, velocity_size, LocalSize> approximated_matrix;
-        for (IndexType a = 0; a < velocity_size; ++a)
+        BoundedMatrix<double, velocity_size, LocalSize> a_inv_g_sp;
+        BoundedMatrix<double, LocalSize, velocity_size> pre_multiplier;
+
+        const double coeff_1 = weight * -1.0;
+        const double coeff_2 = density * weight * tau_one ;
+        const double coeff_3 = tau_one * weight;
+
+        double value = 0.0;
+        for (IndexType a = 0; a < TNumNodes; ++a)
         {
-            for (IndexType b = 0; b < LocalSize; ++b)
-                approximated_matrix(a, b) = r_up_matrix(a, b) / r_velocity_matrix(a, a);
+            IndexType row_index = a * TDim;
+            for (IndexType b = 0; b < TNumNodes; ++b)
+            {
+                double dna_dnb = 0.0;
+                IndexType col_index = b * TDim;
+                for (IndexType i = 0; i < TDim; ++i)
+                {
+                    // calculating g_sp matrix elements
+                    value = coeff_1 * r_shape_derivatives(a, i) * gauss_shape_functions[b];
+                    value += coeff_2 * r_convective_velocity[a] *
+                             r_shape_derivatives(b, i);
+                    // calculating r_uu^-1 * q_sp matrix
+                    a_inv_g_sp(row_index + i, b) = value / r_uu(row_index + i, row_index + i);
+
+                    // calculating u' - q_u matrix elements
+                    value = r_shape_derivatives(a, i) * gauss_shape_functions[b] * weight;
+                    value -= coeff_2 * r_convective_velocity[b] * r_shape_derivatives(a, i);
+                    pre_multiplier(a, col_index + i) = value;
+
+                    // calculating q_p matrix elements
+                    dna_dnb += r_shape_derivatives(a, i) * r_shape_derivatives(b, i);
+                }
+
+                // adding q_p matrix element
+                rDampingMatrix(a, b) += coeff_3 * dna_dnb;
+            }
         }
 
-        noalias(rDampingMatrix) += prod(q_u, approximated_matrix);
+        noalias(rDampingMatrix) += prod(pre_multiplier, a_inv_g_sp);
     }
 
     KRATOS_CATCH("");

@@ -306,14 +306,6 @@ void SegregatedVMSVelocityElement<TDim, TNumNodes>::CalculateRightHandSide(
     this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
     const IndexType num_gauss_points = gauss_weights.size();
 
-    const double dynamic_tau = rCurrentProcessInfo[DYNAMIC_TAU];
-    const double delta_time = rCurrentProcessInfo[DELTA_TIME];
-    const double element_length = this->GetGeometry().Length();
-
-    const BoundedVector<double, TNumNodes>& r_pressure =
-        SegregatedVMSElementUtilities::GetValuesVector<double, TNumNodes>(
-            this->GetGeometry(), PRESSURE);
-
     double value = 0.0;
     for (IndexType g = 0; g < num_gauss_points; ++g)
     {
@@ -322,20 +314,9 @@ void SegregatedVMSVelocityElement<TDim, TNumNodes>::CalculateRightHandSide(
         const double weight = gauss_weights[g];
 
         const double density = this->EvaluateInPoint(DENSITY, gauss_shape_functions);
-        const array_1d<double, 3>& r_velocity = this->GetVelocity(gauss_shape_functions);
-        const double velocity_magnitude = norm_2(r_velocity);
-        const double dynamic_viscosity =
-            this->EvaluateInPoint(VISCOSITY, gauss_shape_functions) * density;
+        const double pressure = this->EvaluateInPoint(PRESSURE, gauss_shape_functions);
         const array_1d<double, 3>& r_body_force =
             this->EvaluateInPoint(BODY_FORCE, gauss_shape_functions) * density;
-
-        const double tau_one = SegregatedVMSElementUtilities::CalculateTauOne(
-            velocity_magnitude, element_length, density, dynamic_viscosity,
-            dynamic_tau, delta_time);
-        const BoundedVector<double, TNumNodes>& r_convective_velocity =
-            this->GetConvectionOperator(r_velocity, r_shape_derivatives);
-
-        const double coeff_1 = density * tau_one * weight;
 
         for (IndexType a = 0; a < TNumNodes; ++a)
         {
@@ -343,17 +324,10 @@ void SegregatedVMSVelocityElement<TDim, TNumNodes>::CalculateRightHandSide(
             for (IndexType d = 0; d < TDim; ++d)
             {
                 value = gauss_shape_functions[a] * r_body_force[d] * weight;
-                value += r_convective_velocity[a] * r_body_force[d] * coeff_1;
-
+                value += r_shape_derivatives(a, d) * pressure * weight;
                 rRightHandSideVector[row_index + d] += value;
             }
         }
-
-        const BoundedMatrix<double, LocalSize, TNumNodes>& r_up_block =
-            SegregatedVMSElementUtilities::CalculateVelocityPressureMatrixGaussPointContributions<TDim, TNumNodes>(
-                density, tau_one, r_convective_velocity, gauss_shape_functions,
-                r_shape_derivatives, weight);
-        noalias(rRightHandSideVector) -= prod(r_up_block, r_pressure);
     }
 
     KRATOS_CATCH("");
@@ -406,6 +380,30 @@ void SegregatedVMSVelocityElement<TDim, TNumNodes>::CalculateLocalVelocityContri
             SegregatedVMSElementUtilities::CalculateVelocityMatrixGaussPointContributions<TDim, TNumNodes>(
                 density, dynamic_viscosity, tau_one, tau_two, r_convective_velocity,
                 gauss_shape_functions, r_shape_derivatives, gauss_weights[g]);
+
+        const array_1d<double, 3>& r_body_force =
+            this->EvaluateInPoint(BODY_FORCE, gauss_shape_functions) * density;
+
+        array_1d<double, 3> pressure_gradient;
+        RansCalculationUtilities::CalculateGradient(
+            pressure_gradient, this->GetGeometry(), PRESSURE, r_shape_derivatives);
+
+        noalias(pressure_gradient) -= r_body_force;
+
+        const double coeff_1 = density * tau_one * gauss_weights[g];
+
+        IndexType row_index{0};
+        for (IndexType a = 0; a < TNumNodes; ++a)
+        {
+            row_index = a * TDim;
+            for (IndexType b = 0; b < TNumNodes; ++b)
+            {
+                for (IndexType i = 0; i < TDim; ++i)
+                {
+                    rRightHandSideVector[row_index + i] -= coeff_1 * r_convective_velocity[a] * pressure_gradient[i];
+                }
+            }
+        }
     }
 
     VectorType values;
