@@ -12,6 +12,7 @@ import KratosMultiphysics.RANSApplication as KratosRANS
 # Import application specific modules
 from KratosMultiphysics.RANSApplication.formulation_factory import CreateFormulation
 from KratosMultiphysics.RANSApplication.strategy_factory import CreateStrategy
+from KratosMultiphysics.RANSApplication.incompressible_potential_flow_solver import IncompressiblePotentialFlowSolver
 from KratosMultiphysics.FluidDynamicsApplication.check_and_prepare_model_process_fluid import CheckAndPrepareModelProcess
 
 
@@ -41,7 +42,7 @@ class CoupledRANSSolver(PythonSolver):
             "volume_model_part_name": "volume_model_part",
             "skin_parts"   : [""],
             "no_skin_parts": [""],
-            "assign_neighbour_elements_to_conditions": false,
+            "assign_neighbour_elements_to_conditions": true,
             "time_stepping": {
                 "automatic_time_step" : false,
                 "CFL_number"          : 1,
@@ -57,7 +58,8 @@ class CoupledRANSSolver(PythonSolver):
                 "formulation_type"    : "segregated_vms_k_epsilon_high_re",
                 "max_iterations"      : 10,
                 "formulation_settings": {}
-            }
+            },
+            "potential_flow_initialization": {}
         }""")
 
         default_settings.AddMissingParameters(super(CoupledRANSSolver, cls).GetDefaultSettings())
@@ -88,6 +90,9 @@ class CoupledRANSSolver(PythonSolver):
                                              self.settings["coupling_settings"]["formulation_settings"],
                                              self.settings["scheme_settings"])
 
+        if (not self.settings["potential_flow_initialization"].IsEquivalentTo(KratosMultiphysics.Parameters("{}"))):
+            self.potential_flow_solver = IncompressiblePotentialFlowSolver(self.model, self.settings["potential_flow_initialization"])
+
         scheme_type = self.settings["scheme_settings"]["scheme_type"].GetString()
         if scheme_type == "bossak":
             self.min_buffer_size = 2
@@ -103,10 +108,19 @@ class CoupledRANSSolver(PythonSolver):
 
     def AddVariables(self):
         self.formulation.AddVariables()
+
+        if (hasattr(self, "potential_flow_solver")):
+            self.potential_flow_solver.fluid_model_part = self.main_model_part
+            self.potential_flow_solver.AddVariables()
+
         KratosMultiphysics.Logger.PrintInfo(self.__class__.__name__, "Solver variables added correctly.")
 
     def AddDofs(self):
         self.formulation.AddDofs()
+
+        if (hasattr(self, "potential_flow_solver")):
+            self.potential_flow_solver.AddDofs()
+
         KratosMultiphysics.Logger.PrintInfo(self.__class__.__name__, "Solver dofs added correctly.")
 
     def ImportModelPart(self):
@@ -123,6 +137,9 @@ class CoupledRANSSolver(PythonSolver):
             self._ExecuteCheckAndPrepare()
             ## Set buffer size
             self.main_model_part.SetBufferSize(self.min_buffer_size)
+
+        if (hasattr(self, "potential_flow_solver")):
+            self.potential_flow_solver.PrepareModelPart()
 
         self.formulation.PrepareModelPart()
 
@@ -165,6 +182,9 @@ class CoupledRANSSolver(PythonSolver):
 
         self.solver.Initialize()
 
+        if (hasattr(self, "potential_flow_solver")):
+            self.potential_flow_solver.Initialize()
+
         KratosMultiphysics.Logger.PrintInfo(self.__class__.__name__, "Solver initialization finished.")
 
     def AdvanceInTime(self, current_time):
@@ -179,6 +199,9 @@ class CoupledRANSSolver(PythonSolver):
     def InitializeSolutionStep(self):
         if self._TimeBufferIsInitialized():
             self.solver.InitializeSolutionStep()
+
+        if (hasattr(self, "potential_flow_solver")):
+            self.potential_flow_solver.InitializeSolutionStep()
 
     def SolveSolutionStep(self):
         if self._TimeBufferIsInitialized():
@@ -198,8 +221,14 @@ class CoupledRANSSolver(PythonSolver):
     def Check(self):
         self.solver.Check()
 
+        if (hasattr(self, "potential_flow_solver")):
+            self.potential_flow_solver.Check()
+
     def Clear(self):
         self.solver.Clear()
+
+        # if (hasattr(self, "potential_flow_solver")):
+        #     self.potential_flow_solver.Clear()
 
     def GetComputingModelPart(self):
         if not self.main_model_part.HasSubModelPart("fluid_computational_model_part"):
