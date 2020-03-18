@@ -15,13 +15,13 @@
 // External includes
 
 // Project includes
+#include "includes/cfd_variables.h"
 #include "includes/checks.h"
 #include "includes/variables.h"
-#include "includes/cfd_variables.h"
 
 // Application includes
-#include "segregated_vms_element_utilities.h"
 #include "custom_utilities/rans_calculation_utilities.h"
+#include "segregated_vms_element_utilities.h"
 
 // Include base h
 #include "segregated_vms_velocity_element.h"
@@ -400,7 +400,8 @@ void SegregatedVMSVelocityElement<TDim, TNumNodes>::CalculateLocalVelocityContri
             {
                 for (IndexType i = 0; i < TDim; ++i)
                 {
-                    rRightHandSideVector[row_index + i] -= coeff_1 * r_convective_velocity[a] * pressure_gradient[i];
+                    rRightHandSideVector[row_index + i] -=
+                        coeff_1 * r_convective_velocity[a] * pressure_gradient[i];
                 }
             }
         }
