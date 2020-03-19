@@ -144,6 +144,8 @@ void RansNutYPlusWallFunctionProcess::Execute()
             static_cast<double>(r_node.GetValue(NUMBER_OF_NEIGHBOUR_CONDITIONS));
         r_nut = RansCalculationUtilities::SoftMax(
             r_nut / number_of_neighbour_conditions, mMinValue);
+        r_node.FastGetSolutionStepValue(VISCOSITY) =
+            r_node.FastGetSolutionStepValue(KINEMATIC_VISCOSITY) + r_nut;
     }
 
     KRATOS_CATCH("");
