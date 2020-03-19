@@ -125,14 +125,12 @@ void RansKEpsilonDomainInitializationProcess::Execute()
             double& epsilon =
                 r_node.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
             double& nu_t = r_node.FastGetSolutionStepValue(TURBULENT_VISCOSITY);
-            double& nu = r_node.FastGetSolutionStepValue(VISCOSITY);
 
             tke = std::max(1.5 * std::pow(mTurbulentIntensity * velocity_magnitude, 2),
                            mMinTurbulentKineticEnergy);
             epsilon = std::max(c_mu_75 * std::pow(std::max(tke, 0.0), 1.5) / mTurbulentMixingLength,
                                mMinTurbulentEnergyDissipationRate);
             nu_t = std::max(mCmu * std::pow(tke, 2) / epsilon, mMinTurbulentViscosity);
-            nu = mKinematicViscosity;
         }
 
         KRATOS_INFO(this->Info()) << "Initialized " << this->mModelPartName << ".\n";

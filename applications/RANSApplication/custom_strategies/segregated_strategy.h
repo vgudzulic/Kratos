@@ -174,12 +174,12 @@ public:
             {
                 is_converged = false;
                 mIsStrategyConverged[i] = false;
-                conv_msg << "      " << strategy_name << " : Converged\n";
+                conv_msg << "      " << strategy_name << " : Not Converged\n";
             }
             else
             {
                 mIsStrategyConverged[i] = true;
-                conv_msg << "      " << strategy_name << " : Not converged\n";
+                conv_msg << "      " << strategy_name << " : Converged\n";
             }
         }
 

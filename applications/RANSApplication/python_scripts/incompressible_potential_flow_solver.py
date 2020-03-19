@@ -33,7 +33,7 @@ def CreateSolver(main_model_part, custom_settings):
 class IncompressiblePotentialFlowSolver(PythonSolver):
     def __init__(self, model, settings):
         self._validate_settings_in_baseclass = True  # To be removed eventually
-
+        settings.RecursivelyAddMissingParameters(self.GetDefaultSettings())
         super(IncompressiblePotentialFlowSolver,
               self).__init__(model, settings)
 
