@@ -65,9 +65,11 @@ namespace Kratos {
         const double other_shear_modulus = 0.5 * other_young / (1.0 + other_poisson);
         const double equiv_shear = 1.0 / ((2.0 - my_poisson)/my_shear_modulus + (2.0 - other_poisson)/other_shear_modulus);
 
-        contact_area = Globals::Pi * equiv_radius * equiv_radius;
+        // contact_area = Globals::Pi * equiv_radius * equiv_radius;
 
         const double normalize_dist = radius_sum / (radius_sum - indentation);
+
+        contact_area = Globals::Pi * equiv_radius * equiv_radius * normalize_dist * normalize_dist;
 
         //Normal and Tangent elastic constants
         mKn = 0.5 * Globals::Pi * equiv_young * equiv_radius * normalize_dist;
@@ -158,9 +160,11 @@ namespace Kratos {
         const double walls_shear_modulus = 0.5 * walls_young / (1.0 + walls_poisson);
         const double equiv_shear         = 1.0 / ((2.0 - my_poisson)/my_shear_modulus + (2.0 - walls_poisson)/walls_shear_modulus);
 
-        contact_area = Globals::Pi * effective_radius * effective_radius;
+        // contact_area = Globals::Pi * effective_radius * effective_radius;
 
         const double normalize_dist = my_radius / (my_radius - indentation);
+
+        contact_area = Globals::Pi * effective_radius * effective_radius * normalize_dist * normalize_dist;
 
         mKn = 0.5 * Globals::Pi * equiv_young * effective_radius * normalize_dist;
         // mKt = 8.0 * equiv_shear * equiv_radius;
