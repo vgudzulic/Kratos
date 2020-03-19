@@ -151,7 +151,7 @@ public:
                               NodesArrayType const& ThisNodes,
                               PropertiesType::Pointer pProperties) const override
     {
-        return Kratos::make_intrusive<SegregatedVMSWallVelocityCondition>(
+        return Kratos::make_intrusive<SegregatedVMSWallVelocityCondition<TDim, TNumNodes>>(
             NewId, GetGeometry().Create(ThisNodes), pProperties);
     }
 
@@ -159,7 +159,7 @@ public:
                               GeometryType::Pointer pGeom,
                               PropertiesType::Pointer pProperties) const override
     {
-        return Kratos::make_intrusive<SegregatedVMSWallVelocityCondition>(
+        return Kratos::make_intrusive<SegregatedVMSWallVelocityCondition<TDim, TNumNodes>>(
             NewId, pGeom, pProperties);
     }
 
