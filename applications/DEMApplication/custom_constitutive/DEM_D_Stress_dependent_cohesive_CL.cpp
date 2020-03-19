@@ -68,11 +68,11 @@ namespace Kratos {
         // contact_area = Globals::Pi * equiv_radius * equiv_radius;
 
         const double normalize_dist = radius_sum / (radius_sum - indentation);
-
-        contact_area = Globals::Pi * equiv_radius * equiv_radius * normalize_dist * normalize_dist;
+        contact_area = Globals::Pi * equiv_radius * equiv_radius * normalize_dist;
 
         //Normal and Tangent elastic constants
-        mKn = 0.5 * Globals::Pi * equiv_young * equiv_radius * normalize_dist;
+        // mKn = 0.5 * Globals::Pi * equiv_young * equiv_radius * normalize_dist;
+        mKn = contact_area * equiv_young / (radius_sum - indentation);
         // mKt = 8.0 * equiv_shear * equiv_radius;
         mKt = element1->GetProperties()[KN_KT_FACTOR] * 4.0 * equiv_shear * mKn / equiv_young;
     }
@@ -163,10 +163,9 @@ namespace Kratos {
         // contact_area = Globals::Pi * effective_radius * effective_radius;
 
         const double normalize_dist = my_radius / (my_radius - indentation);
+        contact_area = Globals::Pi * effective_radius * effective_radius * normalize_dist;
 
-        contact_area = Globals::Pi * effective_radius * effective_radius * normalize_dist * normalize_dist;
-
-        mKn = 0.5 * Globals::Pi * equiv_young * effective_radius * normalize_dist;
+        mKn = contact_area * equiv_young / (my_radius - indentation);
         // mKt = 8.0 * equiv_shear * equiv_radius;
         mKt = element->GetProperties()[KN_KT_FACTOR] * 4.0 * equiv_shear * mKn / equiv_young;
     }
