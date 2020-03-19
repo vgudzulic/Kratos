@@ -172,13 +172,11 @@ class CoupledRANSSolver(PythonSolver):
         # adding solving strategies
         for strategy_settings in self.formulation.GetStrategyList():
             strategy = strategy_settings["strategy"]
-            variable_name = strategy_settings["variable_name"]
-            relative_tolerance = strategy_settings["relative_tolerance"]
-            absolute_tolerance = strategy_settings["absolute_tolerance"]
+            strategy_name = strategy_settings["strategy_name"]
 
-            self.solver.AddStrategy(strategy, variable_name, relative_tolerance, absolute_tolerance)
+            self.solver.AddStrategy(strategy, strategy_name)
             for process in strategy_settings["update_processes_list"]:
-                self.solver.AddAuxiliaryProcess(process, variable_name)
+                self.solver.AddAuxiliaryProcess(process, strategy_name)
 
         self.solver.Initialize()
 

@@ -64,8 +64,6 @@ class Formulation(ABC):
             raise Exception("Currently only steady schemes are supported")
 
         default_strategy_settings = Kratos.Parameters(r'''{
-            "relative_tolerance": 1e-3,
-            "absolute_tolerance": 1e-5,
             "update_processes": [],
             "strategy_settings": {}
         }''')
@@ -82,10 +80,7 @@ class Formulation(ABC):
                                                          self.variable_list[i][0],
                                                          self.variable_list[i][1],
                                                          self.variable_list[i][2])
-
-            solver_strategy["relative_tolerance"] = settings["relative_tolerance"].GetDouble()
-            solver_strategy["absolute_tolerance"] = settings["absolute_tolerance"].GetDouble()
-            solver_strategy["variable_name"] = self.variable_list[i][0].Name()
+            solver_strategy["strategy_name"] = self.variable_list[i][0].Name()
 
             factory = KratosProcessFactory(self.base_model_part.GetModel())
             solver_strategy["update_processes_list"] = factory.ConstructListOfProcesses(settings["update_processes"])
@@ -119,11 +114,10 @@ class SegregatedVMSKEpsilonHighRe(Formulation):
                 "c1"                      : 1.44,
                 "c2"                      : 1.92,
                 "sigma_k"                 : 1.0,
-                "sigma_epsilon"           : 1.3
+                "sigma_epsilon"           : 1.3,
+                "dynamic_tau"             : 0.0
             },
             "velocity_solver_settings": {
-                "relative_tolerance": 1e-3,
-                "absolute_tolerance": 1e-5,
                 "update_processes": [],
                 "strategy_settings": {
                     "is_periodic"           : false,
@@ -142,8 +136,6 @@ class SegregatedVMSKEpsilonHighRe(Formulation):
                 }
             },
             "pressure_solver_settings": {
-                "relative_tolerance": 1e-3,
-                "absolute_tolerance": 1e-5,
                 "update_processes": [],
                 "strategy_settings": {
                     "is_periodic"           : false,
@@ -162,8 +154,6 @@ class SegregatedVMSKEpsilonHighRe(Formulation):
                 }
             },
             "turbulent_kinetic_energy_solver_settings": {
-                "relative_tolerance": 1e-3,
-                "absolute_tolerance": 1e-5,
                 "update_processes": [],
                 "strategy_settings": {
                     "is_periodic"           : false,
@@ -182,8 +172,6 @@ class SegregatedVMSKEpsilonHighRe(Formulation):
                 }
             },
             "turbulent_energy_dissipation_rate_solver_settings": {
-                "relative_tolerance": 1e-3,
-                "absolute_tolerance": 1e-5,
                 "update_processes": [],
                 "strategy_settings": {
                     "is_periodic"           : false,
@@ -266,7 +254,7 @@ class SegregatedVMSKEpsilonHighRe(Formulation):
 
         # preparing pressure model part
         element_name = "SegregatedVMSPressure" + element_suffix
-        condition_name = "Condition" + condition_suffix
+        condition_name = "SegregatedVMSWallPressure" + condition_suffix
         modelpart_name = self.base_model_part.Name + "_" + element_name + "_" + condition_name
         self.model_part_list.append(CreateDuplicateModelPart(self.base_model_part, modelpart_name,
                                                             element_name, condition_name, ""))
@@ -288,6 +276,7 @@ class SegregatedVMSKEpsilonHighRe(Formulation):
     def Initialize(self):
         # update model constants
         constants = self.settings["constants"]
+        self.base_model_part.ProcessInfo[Kratos.DYNAMIC_TAU] = constants["dynamic_tau"].GetDouble()
         self.base_model_part.ProcessInfo[KratosRANS.WALL_SMOOTHNESS_BETA] = constants["wall_smoothness_beta"].GetDouble()
         self.base_model_part.ProcessInfo[KratosRANS.WALL_VON_KARMAN] = constants["von_karman"].GetDouble()
         self.base_model_part.ProcessInfo[KratosRANS.TURBULENCE_RANS_C_MU] = constants["c_mu"].GetDouble()

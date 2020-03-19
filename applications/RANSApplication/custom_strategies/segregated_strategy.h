@@ -85,15 +85,10 @@ public:
     ///@name Operations
     ///@{
 
-    void AddStrategy(typename BaseType::Pointer pStrategy,
-                     const std::string& rVariableName,
-                     const double RelativeTolerance = 1e-3,
-                     const double AbsoluteTolerance = 1e-5)
+    void AddStrategy(typename BaseType::Pointer pStrategy, const std::string& rStrategyName)
     {
         mSolvingStrategiesList.push_back(pStrategy);
-        mSolvingVariableNamesList.push_back(rVariableName);
-        mSolvingVariableRelativeToleranceList.push_back(RelativeTolerance);
-        mSolvingVariableAbsoluteToleranceList.push_back(AbsoluteTolerance);
+        mSolvingStrategyNamesList.push_back(rStrategyName);
         mIsStrategyConverged.push_back(false);
     }
 
@@ -105,7 +100,7 @@ public:
         int current_strategy_index = -1;
         for (int i = 0; i < number_of_processes; ++i)
         {
-            if (mSolvingVariableNamesList[i] == rVariableName)
+            if (mSolvingStrategyNamesList[i] == rVariableName)
             {
                 current_strategy_index = i;
                 break;
@@ -141,13 +136,6 @@ public:
     {
         KRATOS_TRY;
 
-        for (auto variable_name : mSolvingVariableNamesList)
-        {
-            KRATOS_ERROR_IF((!KratosComponents<Variable<double>>::Has(variable_name) &&
-                             !KratosComponents<Variable<array_1d<double, 3>>>::Has(variable_name)))
-                << variable_name << " not found in either double or 3d variables list.\n";
-        }
-
         for (auto process : mAuxiliaryProcessList)
             process->Check();
 
@@ -172,35 +160,31 @@ public:
 
         bool is_converged = true;
         const int number_of_solving_strategies = this->mSolvingStrategiesList.size();
+
+        std::stringstream conv_msg;
+        conv_msg << "[Itr.#" << std::setw(iteration_format_length) << iteration
+                 << "/" << this->mMaxIterations << "] CONVERGENCE CHECK: \n";
+
         for (int i = 0; i < number_of_solving_strategies; ++i)
         {
             auto p_solving_strategy = this->mSolvingStrategiesList[i];
-            auto variable_name = this->mSolvingVariableNamesList[i];
+            const auto& strategy_name = this->mSolvingStrategyNamesList[i];
 
             if (!p_solving_strategy->IsConverged())
             {
-                std::stringstream conv_msg;
-                conv_msg << "[Itr.#" << std::setw(iteration_format_length)
-                         << iteration << "/" << this->mMaxIterations
-                         << "] CONVERGENCE CHECK: " << variable_name
-                         << " CONVERGENCE IS NOT ACHIEVED\n";
-                KRATOS_INFO_IF(this->Info(), this->GetEchoLevel() > 1)
-                    << conv_msg.str();
                 is_converged = false;
                 mIsStrategyConverged[i] = false;
+                conv_msg << "      " << strategy_name << " : Converged\n";
             }
             else
             {
-                std::stringstream conv_msg;
-                conv_msg << "[Itr.#" << std::setw(iteration_format_length)
-                         << iteration << "/" << this->mMaxIterations
-                         << "] CONVERGENCE CHECK: " << variable_name
-                         << " *** CONVERGENCE IS ACHIEVED ***\n";
-                KRATOS_INFO_IF(this->Info(), this->GetEchoLevel() > 1)
-                    << conv_msg.str();
                 mIsStrategyConverged[i] = true;
+                conv_msg << "      " << strategy_name << " : Not converged\n";
             }
         }
+
+        KRATOS_INFO_IF(this->Info(), this->GetEchoLevel() > 1) << conv_msg.str();
+
         return is_converged;
     }
 
@@ -213,12 +197,6 @@ public:
 
         const int number_of_solving_strategies = this->mSolvingStrategiesList.size();
 
-        for (auto p_solving_strategy : this->mSolvingStrategiesList)
-        {
-            p_solving_strategy->InitializeSolutionStep();
-            p_solving_strategy->Predict();
-        }
-
         bool is_converged = false;
         int& iteration = r_current_process_info[COUPLING_ITERATION];
         iteration = 1;
@@ -228,7 +206,7 @@ public:
             for (int i = 0; i < number_of_solving_strategies; ++i)
             {
                 auto p_solving_strategy = this->mSolvingStrategiesList[i];
-                auto variable_name = this->mSolvingVariableNamesList[i];
+                auto variable_name = this->mSolvingStrategyNamesList[i];
 
                 if (!mIsStrategyConverged[i])
                 {
@@ -246,9 +224,6 @@ public:
             is_converged = this->IsConverged();
             ++iteration;
         }
-
-        for (auto p_solving_strategy : this->mSolvingStrategiesList)
-            p_solving_strategy->FinalizeSolutionStep();
 
         KRATOS_INFO_IF(this->Info(), !is_converged && this->GetEchoLevel() > 0)
             << "\n-------------------------------------------------------"
@@ -271,12 +246,24 @@ public:
         for (auto process : mAuxiliaryProcessList)
             process->ExecuteInitializeSolutionStep();
 
+        for (auto p_solving_strategy : this->mSolvingStrategiesList)
+            p_solving_strategy->InitializeSolutionStep();
+
         KRATOS_CATCH("");
+    }
+
+    void Predict() override
+    {
+        for (auto p_solving_strategy : this->mSolvingStrategiesList)
+            p_solving_strategy->Predict();
     }
 
     void FinalizeSolutionStep() override
     {
         KRATOS_TRY
+
+        for (auto p_solving_strategy : this->mSolvingStrategiesList)
+            p_solving_strategy->FinalizeSolutionStep();
 
         for (auto process : mAuxiliaryProcessList)
             process->ExecuteFinalizeSolutionStep();
@@ -373,9 +360,7 @@ private:
     int iteration;
 
     std::vector<typename BaseType::Pointer> mSolvingStrategiesList;
-    std::vector<std::string> mSolvingVariableNamesList;
-    std::vector<double> mSolvingVariableRelativeToleranceList;
-    std::vector<double> mSolvingVariableAbsoluteToleranceList;
+    std::vector<std::string> mSolvingStrategyNamesList;
     std::vector<Process::Pointer> mAuxiliaryProcessList;
     std::vector<int> mAuxiliaryProcessStrategyId;
     std::vector<bool> mIsStrategyConverged;
@@ -403,7 +388,7 @@ private:
 
         KRATOS_INFO_IF(this->Info(), this->GetEchoLevel() > 1)
             << "Executed update processes for "
-            << mSolvingVariableNamesList[StrategyId] << ".\n";
+            << mSolvingStrategyNamesList[StrategyId] << ".\n";
 
         KRATOS_CATCH("");
     }
@@ -414,12 +399,12 @@ private:
         buffer << "SegregatedStrategy with followings:\n";
         buffer << "    Strategies list:\n";
 
-        const int number_of_strategies = mSolvingVariableNamesList.size();
+        const int number_of_strategies = mSolvingStrategyNamesList.size();
         for (int i = 0; i < number_of_strategies; ++i)
         {
             buffer << "        Strategy id    : " << i << "\n";
-            buffer << "            Variable name     : "
-                   << mSolvingVariableNamesList[i] << "\n";
+            buffer << "            Strategy name     : "
+                   << mSolvingStrategyNamesList[i] << "\n";
             buffer << "            Model part name   : "
                    << mSolvingStrategiesList[i]->GetModelPart().Name() << "\n";
             buffer << "            Element type      : "
@@ -429,10 +414,6 @@ private:
                 << "            Condition type    : "
                 << mSolvingStrategiesList[i]->GetModelPart().ConditionsBegin()->Info()
                 << "\n";
-            buffer << "            Relative tolerance: "
-                   << mSolvingVariableRelativeToleranceList[i] << "\n";
-            buffer << "            Absolute tolerance: "
-                   << mSolvingVariableAbsoluteToleranceList[i] << "\n";
         }
 
         buffer << "    Update process list:\n";
