@@ -227,72 +227,72 @@ void SegregatedVMSWallPressureCondition<TDim, TNumNodes>::CalculateRightHandSide
 
     noalias(rRightHandSideVector) = ZeroVector(TNumNodes);
 
-    // if (RansCalculationUtilities::IsInlet(*this))
-    // {
-    //     // calculates parent element pressure gradient
-    //     const ConditionType& r_parent_condition =
-    //         *(this->GetValue(PARENT_CONDITION_POINTER));
-    //     const ModelPart::ElementType& r_parent_element =
-    //         r_parent_condition.GetValue(NEIGHBOUR_ELEMENTS)[0];
-    //     const GeometryType& r_parent_geometry = r_parent_element.GetGeometry();
+    if (RansCalculationUtilities::IsInlet(*this))
+    {
+        // calculates parent element pressure gradient
+        const ConditionType& r_parent_condition =
+            *(this->GetValue(PARENT_CONDITION_POINTER));
+        const ModelPart::ElementType& r_parent_element =
+            r_parent_condition.GetValue(NEIGHBOUR_ELEMENTS)[0];
+        const GeometryType& r_parent_geometry = r_parent_element.GetGeometry();
 
-    //     // Get Shape function data
-    //     Vector parent_element_gauss_weights;
-    //     Matrix parent_element_shape_functions;
-    //     ShapeFunctionDerivativesArrayType parent_element_shape_derivatives;
-    //     RansCalculationUtilities::CalculateGeometryData(
-    //         r_parent_geometry, GeometryData::GI_GAUSS_1, parent_element_gauss_weights,
-    //         parent_element_shape_functions, parent_element_shape_derivatives);
+        // Get Shape function data
+        Vector parent_element_gauss_weights;
+        Matrix parent_element_shape_functions;
+        ShapeFunctionDerivativesArrayType parent_element_shape_derivatives;
+        RansCalculationUtilities::CalculateGeometryData(
+            r_parent_geometry, GeometryData::GI_GAUSS_1, parent_element_gauss_weights,
+            parent_element_shape_functions, parent_element_shape_derivatives);
 
-    //     array_1d<double, 3> pressure_gradient;
-    //     const Matrix& r_parent_element_shape_derivatives =
-    //         parent_element_shape_derivatives[0];
-    //     const Vector parent_elemnet_gauss_shape_functions =
-    //         row(parent_element_shape_functions, 0);
+        array_1d<double, 3> pressure_gradient;
+        const Matrix& r_parent_element_shape_derivatives =
+            parent_element_shape_derivatives[0];
+        const Vector parent_elemnet_gauss_shape_functions =
+            row(parent_element_shape_functions, 0);
 
-    //     const double density = RansCalculationUtilities::EvaluateInPoint(
-    //         r_parent_geometry, PRESSURE, parent_elemnet_gauss_shape_functions);
-    //     const array_1d<double, 3>& r_body_force =
-    //         RansCalculationUtilities::EvaluateInPoint(
-    //             r_parent_geometry, BODY_FORCE, parent_elemnet_gauss_shape_functions) *
-    //         density;
-    //     const array_1d<double, 3>& r_velocity = RansCalculationUtilities::EvaluateInPoint(
-    //         r_parent_geometry, VELOCITY, parent_elemnet_gauss_shape_functions);
-    //     BoundedMatrix<double, TDim, TDim> velocity_gradient;
-    //     RansCalculationUtilities::CalculateGradient<TDim>(
-    //         velocity_gradient, r_parent_geometry, VELOCITY, r_parent_element_shape_derivatives);
+        const double density = RansCalculationUtilities::EvaluateInPoint(
+            r_parent_geometry, PRESSURE, parent_elemnet_gauss_shape_functions);
+        const array_1d<double, 3>& r_body_force =
+            RansCalculationUtilities::EvaluateInPoint(
+                r_parent_geometry, BODY_FORCE, parent_elemnet_gauss_shape_functions) *
+            density;
+        const array_1d<double, 3>& r_velocity = RansCalculationUtilities::EvaluateInPoint(
+            r_parent_geometry, VELOCITY, parent_elemnet_gauss_shape_functions);
+        BoundedMatrix<double, TDim, TDim> velocity_gradient;
+        RansCalculationUtilities::CalculateGradient<TDim>(
+            velocity_gradient, r_parent_geometry, VELOCITY, r_parent_element_shape_derivatives);
 
-    //     noalias(pressure_gradient) = r_body_force;
-    //     for (IndexType i = 0; i < TDim; ++i)
-    //     {
-    //         for (IndexType j = 0; j < TDim; ++j)
-    //         {
-    //             pressure_gradient[i] -=
-    //                 density * r_velocity[j] * velocity_gradient(i, j);
-    //         }
-    //     }
+        noalias(pressure_gradient) = r_body_force;
+        for (IndexType i = 0; i < TDim; ++i)
+        {
+            for (IndexType j = 0; j < TDim; ++j)
+            {
+                pressure_gradient[i] -=
+                    density * r_velocity[j] * velocity_gradient(i, j);
+            }
+        }
 
-    //     const array_1d<double, 3>& r_normal = this->GetValue(NORMAL);
-    //     const double pressure_gradient_normal = inner_prod(pressure_gradient, r_normal);
+        const array_1d<double, 3>& r_normal = this->GetValue(NORMAL);
+        const double pressure_gradient_normal = inner_prod(pressure_gradient, r_normal);
 
-    //     // Get Shape function data
-    //     MatrixType shape_functions;
-    //     VectorType gauss_weights;
-    //     RansCalculationUtilities::CalculateConditionGeometryData(
-    //         this->GetGeometry(), GeometryData::GI_GAUSS_2, gauss_weights, shape_functions);
-    //     const IndexType number_of_gauss_points = gauss_weights.size();
+        // Get Shape function data
+        MatrixType shape_functions;
+        VectorType gauss_weights;
+        RansCalculationUtilities::CalculateConditionGeometryData(
+            this->GetGeometry(), GeometryData::GI_GAUSS_2, gauss_weights, shape_functions);
+        const IndexType number_of_gauss_points = gauss_weights.size();
 
-    //     for (IndexType g = 0; g < number_of_gauss_points; ++g)
-    //     {
-    //         const Vector& gauss_shape_functions = row(shape_functions, g);
-    //         const double coeff_1 = gauss_weights[g] * pressure_gradient_normal;
+        for (IndexType g = 0; g < number_of_gauss_points; ++g)
+        {
+            const Vector& gauss_shape_functions = row(shape_functions, g);
+            const double coeff_1 = gauss_weights[g] * pressure_gradient_normal;
 
-    //         for (IndexType a = 0; a < TNumNodes; ++a)
-    //         {
-    //             rRightHandSideVector[a] += gauss_shape_functions[a] * coeff_1;
-    //         }
-    //     }
-    // }
+            for (IndexType a = 0; a < TNumNodes; ++a)
+            {
+                rRightHandSideVector[a] += gauss_shape_functions[a] * coeff_1;
+            }
+        }
+    }
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
