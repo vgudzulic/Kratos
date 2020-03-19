@@ -48,7 +48,10 @@ namespace Kratos {
                                                             const double indentation) {
 
         //Get equivalent Radius
-        const double equiv_radius    = 0.5 * (element1->GetRadius() + element2->GetRadius());
+        const double my_radius       = element1->GetRadius();
+        const double other_radius    = element2->GetRadius();
+        const double radius_sum      = my_radius + other_radius;
+        const double equiv_radius    = 0.5 * (my_radius + other_radius);
 
         //Get equivalent Young's Modulus
         const double my_young        = element1->GetYoung();
@@ -64,8 +67,10 @@ namespace Kratos {
 
         contact_area = Globals::Pi * equiv_radius * equiv_radius;
 
+        const double normalize_dist = radius_sum / (radius_sum - indentation);
+
         //Normal and Tangent elastic constants
-        mKn = 0.5 * Globals::Pi * equiv_young * equiv_radius;
+        mKn = 0.5 * Globals::Pi * equiv_young * equiv_radius * normalize_dist;
         // mKt = 8.0 * equiv_shear * equiv_radius;
         mKt = element1->GetProperties()[KN_KT_FACTOR] * 4.0 * equiv_shear * mKn / equiv_young;
     }
@@ -138,7 +143,8 @@ namespace Kratos {
                                                                    const double ini_delta) {
 
         //Get effective Radius
-        const double effective_radius    = element->GetRadius() - ini_delta;
+        const double my_radius           = element->GetRadius(); //Get equivalent Radius
+        const double effective_radius    = my_radius - ini_delta;
 
         //Get equivalent Young's Modulus
         const double my_young            = element->GetYoung();
@@ -154,7 +160,9 @@ namespace Kratos {
 
         contact_area = Globals::Pi * effective_radius * effective_radius;
 
-        mKn = 0.5 * Globals::Pi * equiv_young * effective_radius;
+        const double normalize_dist = my_radius / (my_radius - indentation);
+
+        mKn = 0.5 * Globals::Pi * equiv_young * effective_radius * normalize_dist;
         // mKt = 8.0 * equiv_shear * equiv_radius;
         mKt = element->GetProperties()[KN_KT_FACTOR] * 4.0 * equiv_shear * mKn / equiv_young;
     }
