@@ -574,12 +574,17 @@ void QSVMSDEMCoupled<TElementData>::AddMassRHS(VectorType& F,
                                             TElementData& rData)
     {
         double fluid_fraction_rate = 0.0;
+        double mass_source = 0.0;
         fluid_fraction_rate = this->GetAtCoordinate(rData.FluidFractionRate, rData.N);
-      // Add the results to the pressure components (Local Dofs are vx, vy, [vz,] p for each node)
+        for (unsigned int i = 0; i < NumNodes; ++i)
+        {
+            mass_source += rData.N[i] * this->GetGeometry()[i].FastGetSolutionStepValue(MASS_SOURCE);
+        }
+        // Add the results to the pressure components (Local Dofs are vx, vy, [vz,] p for each node)
         int LocalIndex = Dim;
         for (unsigned int i = 0; i < NumNodes; ++i){
             for (unsigned int d = 0; d < Dim;++d)
-                F[LocalIndex] -= rData.Weight * rData.N[i] * fluid_fraction_rate;
+                F[LocalIndex] -= rData.Weight * rData.N[i] * (fluid_fraction_rate - mass_source);
             LocalIndex += Dim + 1;
         }
 

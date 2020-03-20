@@ -72,11 +72,9 @@ public:
         const double Period,
         const double Density,
         const double Viscosity,
-        const double Alpha0,
         const double DeltaAlpha,
-        const double AlphaMin,
-        const double Centerx1,
-        const double Centerx2);
+        const double Length,
+        const double MaxSqueezeFraction);
 
     /// Constructor with Kratos parameters.
     CasasSolutionBodyForceProcess(
@@ -154,11 +152,9 @@ private:
     double                                               mPeriod;
     double                                              mDensity;
     double                                            mViscosity;
-    double                                               mAlpha0;
-    double                                             mAlphaMin;
-    double                                             mCenterx1;
-    double                                             mCenterx2;
     double                                           mDeltaAlpha;
+    double                                               mLength;
+    double                                   mMaxSqueezeFraction;
     double                                                mOmega;
 
     ///@}

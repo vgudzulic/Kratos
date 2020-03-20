@@ -2,9 +2,8 @@
 import KratosMultiphysics
 import KratosMultiphysics.SwimmingDEMApplication as KratosSDEM
 
-from KratosMultiphysics import Vector
 from importlib import import_module
-from apply_custom_body_force_process import ApplyCustomBodyForceProcess
+from KratosMultiphysics.SwimmingDEMApplication.apply_custom_body_force_process import ApplyCustomBodyForceProcess
 
 def Factory(settings, Model):
     if not isinstance(settings, KratosMultiphysics.Parameters):
