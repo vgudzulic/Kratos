@@ -74,7 +74,7 @@ namespace Kratos {
         // mKn = 0.5 * Globals::Pi * equiv_young * equiv_radius * normalize_dist;
         mKn = contact_area * equiv_young / (radius_sum - indentation);
         // mKt = 8.0 * equiv_shear * equiv_radius;
-        mKt = element1->GetProperties()[KN_KT_FACTOR] * 4.0 * equiv_shear * mKn / equiv_young;
+        mKt = 4.0 * equiv_shear * mKn / equiv_young;
     }
 
     void DEM_D_Stress_Dependent_Cohesive::CalculateForces(const ProcessInfo& r_process_info,
@@ -167,7 +167,7 @@ namespace Kratos {
 
         mKn = contact_area * equiv_young / (my_radius - indentation);
         // mKt = 8.0 * equiv_shear * equiv_radius;
-        mKt = element->GetProperties()[KN_KT_FACTOR] * 4.0 * equiv_shear * mKn / equiv_young;
+        mKt = 4.0 * equiv_shear * mKn / equiv_young;
     }
 
     void DEM_D_Stress_Dependent_Cohesive::CalculateForcesWithFEM(ProcessInfo& r_process_info,
@@ -337,13 +337,6 @@ namespace Kratos {
                                                                                 double& AuxElasticShearForce,
                                                                                 double& MaximumAdmisibleShearForce) {
 
-        double share_of_max_contact_stress = 1.0;
-        double critical_contact_force = element->GetParticleCohesion() * contact_area;
-
-        if (normal_contact_force < critical_contact_force) {
-            share_of_max_contact_stress = pow((normal_contact_force / critical_contact_force), element->GetProperties()[CONICAL_DAMAGE_GAMMA]);
-        }
-
         LocalElasticContactForce[0] = OldLocalElasticContactForce[0] - mKt * LocalDeltDisp[0];
         LocalElasticContactForce[1] = OldLocalElasticContactForce[1] - mKt * LocalDeltDisp[1];
 
@@ -351,11 +344,11 @@ namespace Kratos {
 
         const double my_tg_of_static_friction_angle        = element->GetProperties()[PARTICLE_STATIC_FRICTION_COEF];
         const double neighbour_tg_of_static_friction_angle = neighbour->GetProperties()[PARTICLE_STATIC_FRICTION_COEF];
-        const double equiv_tg_of_static_fri_ang            = 0.5 * share_of_max_contact_stress * (my_tg_of_static_friction_angle + neighbour_tg_of_static_friction_angle);
+        const double equiv_tg_of_static_fri_ang            = 0.5 * (my_tg_of_static_friction_angle + neighbour_tg_of_static_friction_angle);
 
         const double my_tg_of_dynamic_friction_angle        = element->GetProperties()[PARTICLE_DYNAMIC_FRICTION_COEF];
         const double neighbour_tg_of_dynamic_friction_angle = neighbour->GetProperties()[PARTICLE_DYNAMIC_FRICTION_COEF];
-        const double equiv_tg_of_dynamic_fri_ang            = 0.5 * share_of_max_contact_stress * (my_tg_of_dynamic_friction_angle + neighbour_tg_of_dynamic_friction_angle);
+        const double equiv_tg_of_dynamic_fri_ang            = 0.5 * (my_tg_of_dynamic_friction_angle + neighbour_tg_of_dynamic_friction_angle);
 
         if(equiv_tg_of_static_fri_ang < 0.0 || equiv_tg_of_dynamic_fri_ang < 0.0) {
             KRATOS_ERROR << "The averaged friction is negative for one contact of element with Id: "<< element->Id()<<std::endl;
