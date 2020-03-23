@@ -92,7 +92,8 @@ void CasasSolutionBodyForceProcess::CheckDefaultsAndProcessSettings(Parameters &
                                                 "alpha_min"   : 0.5,
                                                 "period"      : 0.1,
                                                 "delta_alpha" : 0.25,
-                                                "max_squeeze_fraction" : 0.5
+                                                "max_squeeze_fraction" : 0.5,
+                                                "omega" : 5.0
                 },
                 "compute_nodal_error"      : true,
                 "print_convergence_output" : false,
@@ -106,9 +107,9 @@ void CasasSolutionBodyForceProcess::CheckDefaultsAndProcessSettings(Parameters &
     mViscosity   = rParameters["benchmark_parameters"]["viscosity"].GetDouble();
     mDeltaAlpha  = rParameters["benchmark_parameters"]["delta_alpha"].GetDouble();
     mLength      = rParameters["benchmark_parameters"]["length"].GetDouble();
+    mOmega       = rParameters["benchmark_parameters"]["omega"].GetDouble();
     mMaxSqueezeFraction = rParameters["benchmark_parameters"]["max_squeeze_fraction"].GetDouble();
 
-    mOmega = 2 * M_PI / mPeriod;
 }
 
 void CasasSolutionBodyForceProcess::Execute()
@@ -301,8 +302,8 @@ void CasasSolutionBodyForceProcess::SetBodyForceAndPorosityField() {
             
         const double x1 = mrModelPart.GetNode(it_node).X();
         const double x2 = mrModelPart.GetNode(it_node).Y();
-        
-        if ((x1-L/2) <= L_x1/2 && (x1-L/2) >= -L_x1/2 && (x2-L/2) <= L_x2/2 && (x2-L/2) >= -L_x2/2){
+            
+        if (x1 <= (L + L_x1)/2 && x1 >= (L - L_x1)/2 && x2 <= (L + L_x2)/2 && x2 >= (L - L_x2)/2){
             
             u1 = 100*std::pow(x1, 2)*std::pow((1 - x1), 2)*(100*std::pow(x2, 2)*(2*x2 - 2) + 200*x2*std::pow((1 - x2), 2))*std::exp(-time)*std::cos(M_PI*time)/(1 - 16*delta_alpha*(-L/2 - L/(4*(max_squeeze_fraction*std::sin(omega*time) + 1)) + x2)*(-L/2 + L/(4*(max_squeeze_fraction*std::sin(omega*time) + 1)) + x2)*(-L*(max_squeeze_fraction*std::sin(omega*time) + 1)/4 - L/2 + x1)*(L*(max_squeeze_fraction*std::sin(omega*time) + 1)/4 - L/2 + x1)/std::pow(L, 4));
     

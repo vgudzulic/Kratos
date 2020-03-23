@@ -22,7 +22,8 @@ class CasasFluidFractionSolution(ManufacturedSolution):
                     "damping"     : 1.0,
                     "period"      : 0.1,
                     "delta_alpha" : 0.25,
-                    "max_squeeze_fraction" : 0.5
+                    "max_squeeze_fraction" : 0.5,
+                    "omega"       : 0.0
             }
             """
             )
