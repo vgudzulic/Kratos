@@ -371,6 +371,97 @@ void CalculateMagnitudeSquareFor3DVariable(ModelPart& rModelPart,
     }
 }
 
+template <>
+bool CalculateTransientVariableConvergence(const ModelPart& rModelPart,
+                                           const Variable<double>& rVariable,
+                                           const double RelativeTolerance,
+                                           const double AbsoluteTolerance,
+                                           const int EchoLevel)
+{
+    KRATOS_TRY
+
+    const Communicator& r_communicator = rModelPart.GetCommunicator();
+    const ModelPart::NodesContainerType& r_nodes = r_communicator.LocalMesh().Nodes();
+    const int number_of_nodes = r_nodes.size();
+
+    double dx = 0.0;
+    double number_of_dofs = 0.0;
+    double solution = 0.0;
+#pragma omp parallel for reduction(+ : dx, number_of_dofs, solution)
+    for (int i_node = 0; i_node < number_of_nodes; ++i_node)
+    {
+        const ModelPart::NodeType& r_node = *(r_nodes.begin() + i_node);
+        const double old_value = r_node.FastGetSolutionStepValue(rVariable, 1);
+        const double new_value = r_node.FastGetSolutionStepValue(rVariable);
+        dx += std::pow(new_value - old_value, 2);
+        solution += std::pow(new_value, 2);
+        number_of_dofs += (r_node.HasDofFor(rVariable) && !r_node.IsFixed(rVariable));
+    }
+
+    dx = std::sqrt(r_communicator.GetDataCommunicator().SumAll(dx));
+    solution = std::sqrt(r_communicator.GetDataCommunicator().SumAll(solution));
+    number_of_dofs = r_communicator.GetDataCommunicator().SumAll(number_of_dofs);
+    number_of_dofs = std::max(1.0, number_of_dofs);
+    solution = std::max(1.0, solution);
+
+    const double relative_error = dx / solution;
+    const double absolute_error = dx / number_of_dofs;
+
+    KRATOS_INFO_IF("TransientVariableConvergence", EchoLevel > 0)
+        << rVariable.Name() << " ratio: " << relative_error
+        << " abs: " << absolute_error << std::endl;
+
+    return (relative_error < RelativeTolerance || absolute_error < AbsoluteTolerance);
+
+    KRATOS_CATCH("");
+}
+
+template <>
+bool CalculateTransientVariableConvergence(const ModelPart& rModelPart,
+                                           const Variable<array_1d<double, 3>>& rVariable,
+                                           const double RelativeTolerance,
+                                           const double AbsoluteTolerance,
+                                           const int EchoLevel)
+{
+    KRATOS_TRY
+
+    const Communicator& r_communicator = rModelPart.GetCommunicator();
+    const ModelPart::NodesContainerType& r_nodes = r_communicator.LocalMesh().Nodes();
+    const int number_of_nodes = r_nodes.size();
+
+    double dx = 0.0;
+    double number_of_dofs = 0.0;
+    double solution = 0.0;
+#pragma omp parallel for reduction(+ : dx, number_of_dofs, solution)
+    for (int i_node = 0; i_node < number_of_nodes; ++i_node)
+    {
+        const ModelPart::NodeType& r_node = *(r_nodes.begin() + i_node);
+        const array_1d<double, 3>& r_old_value =
+            r_node.FastGetSolutionStepValue(rVariable, 1);
+        const array_1d<double, 3>& r_new_value = r_node.FastGetSolutionStepValue(rVariable);
+        dx += std::pow(norm_2(r_new_value - r_old_value), 2);
+        solution += std::pow(norm_2(r_new_value), 2);
+        number_of_dofs += (r_node.HasDofFor(rVariable) && !r_node.IsFixed(rVariable));
+    }
+
+    dx = std::sqrt(r_communicator.GetDataCommunicator().SumAll(dx));
+    solution = std::sqrt(r_communicator.GetDataCommunicator().SumAll(solution));
+    number_of_dofs = r_communicator.GetDataCommunicator().SumAll(number_of_dofs);
+    number_of_dofs = std::max(1.0, number_of_dofs);
+    solution = std::max(1.0, solution);
+
+    const double relative_error = dx / solution;
+    const double absolute_error = dx / number_of_dofs;
+
+    KRATOS_INFO_IF("TransientVariableConvergence", EchoLevel > 0)
+        << rVariable.Name() << " ratio: " << relative_error
+        << " abs: " << absolute_error << std::endl;
+
+    return (relative_error < RelativeTolerance || absolute_error < AbsoluteTolerance);
+
+    KRATOS_CATCH("");
+}
+
 template void CopyFlaggedVariableFromNonHistorical<double>(ModelPart&,
                                                            const Variable<double>&,
                                                            const Flags&,

@@ -37,6 +37,7 @@
 #include "custom_conditions/potential_flow/incompressible_pressure_condition.h"
 #include "custom_conditions/segregated_vms/segregated_vms_wall_velocity_condition.h"
 #include "custom_conditions/segregated_vms/segregated_vms_wall_pressure_condition.h"
+#include "custom_conditions/fractional_step/fs_high_re_k_wall_condition.h"
 
 // Adjoint element includes
 #include "custom_elements/evm_k_epsilon/rans_evm_epsilon_adjoint.h"
@@ -200,6 +201,10 @@ private:
     const SegregatedVMSWallVelocityCondition<3> mSegregatedVMSWallVelocityCondition3D3N;
     const SegregatedVMSWallPressureCondition<2> mSegregatedVMSWallPressureCondition2D2N;
     const SegregatedVMSWallPressureCondition<3> mSegregatedVMSWallPressureCondition3D3N;
+
+    /// Fractional step wall condition
+    const FSHighReKWallCondition<2> mFSHighReKWallCondition2D2N;
+    const FSHighReKWallCondition<3> mFSHighReKWallCondition3D3N;
 
     /// Potential flow elements
     const IncompressibleVelocityPotentialElement<2, 3> mIncompressibleVelocityPotentialElement2D;

@@ -165,7 +165,7 @@ public:
         conv_msg << "[Itr.#" << std::setw(iteration_format_length) << iteration
                  << "/" << this->mMaxIterations << "] CONVERGENCE CHECK: \n";
 
-        for (int i = 0; i < number_of_solving_strategies; ++i)
+        for (int i = 1; i < number_of_solving_strategies; ++i)
         {
             auto p_solving_strategy = this->mSolvingStrategiesList[i];
             const auto& strategy_name = this->mSolvingStrategyNamesList[i];
@@ -208,7 +208,7 @@ public:
                 auto p_solving_strategy = this->mSolvingStrategiesList[i];
                 auto variable_name = this->mSolvingStrategyNamesList[i];
 
-                if (!mIsStrategyConverged[i])
+                if (!mIsStrategyConverged[i] || i==0)
                 {
                     p_solving_strategy->SolveSolutionStep();
                     ExecuteStrategyUpdateProcesses(i);
@@ -248,6 +248,10 @@ public:
 
         for (auto p_solving_strategy : this->mSolvingStrategiesList)
             p_solving_strategy->InitializeSolutionStep();
+
+        const int number_of_solving_strategies = this->mIsStrategyConverged.size();
+        for (int i = 0; i < number_of_solving_strategies; ++i)
+            mIsStrategyConverged[i] = false;
 
         KRATOS_CATCH("");
     }

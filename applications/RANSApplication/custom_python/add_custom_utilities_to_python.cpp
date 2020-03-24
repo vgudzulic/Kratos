@@ -36,6 +36,8 @@ void AddCustomUtilitiesToPython(pybind11::module& m)
         .def("CopyNodalSolutionStepVariablesList",
              &RansVariableUtilities::CopyNodalSolutionStepVariablesList)
         .def("InitializeDuplicatedModelPart", &RansVariableUtilities::InitializeDuplicatedModelPart)
+        .def("CalculateTransientVariableConvergence", &RansVariableUtilities::CalculateTransientVariableConvergence<double>)
+        .def("CalculateTransientVariableConvergence", &RansVariableUtilities::CalculateTransientVariableConvergence<array_1d<double, 3>>)
         .def("CalculateMagnitudeSquareFor3DVariable", &RansVariableUtilities::CalculateMagnitudeSquareFor3DVariable)
         .def("FixFlaggedDofs", &RansVariableUtilities::FixFlaggedDofs, py::arg("model_part"), py::arg("variable"), py::arg("check_flag"), py::arg("check_value") = true)
         .def("CopyFlaggedVariableToNonHistorical", &RansVariableUtilities::CopyFlaggedVariableToNonHistorical<double>, py::arg("model_part"), py::arg("variable"), py::arg("check_flag"), py::arg("check_value") = true)

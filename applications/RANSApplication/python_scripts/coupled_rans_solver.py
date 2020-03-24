@@ -96,8 +96,10 @@ class CoupledRANSSolver(PythonSolver):
         scheme_type = self.settings["scheme_settings"]["scheme_type"].GetString()
         if scheme_type == "bossak":
             self.min_buffer_size = 2
+        elif scheme_type == "bdf3":
+            self.min_buffer_size = 3
         elif scheme_type == "steady":
-            self.min_buffer_size = 1
+            self.min_buffer_size = 3
         else:
             msg  = "Unknown time_scheme option found in project parameters:\n"
             msg += "\"" + scheme_type + "\"\n"

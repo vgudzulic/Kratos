@@ -86,6 +86,13 @@ void KRATOS_API(RANS_APPLICATION) CalculateMagnitudeSquareFor3DVariable(ModelPar
                                                                         const Variable<array_1d<double, 3>>& r3DVariable,
                                                                         const Variable<double>& rOutputVariable);
 
+template<typename TDataType>
+bool KRATOS_API(RANS_APPLICATION) CalculateTransientVariableConvergence(const ModelPart& rModelPart,
+                                                                        const Variable<TDataType>& rVariable,
+                                                                        const double RelativeTolerance,
+                                                                        const double AbsoluteTolerance,
+                                                                        const int EchoLevel);
+
 ///@}
 } // namespace RansVariableUtilities
 

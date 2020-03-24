@@ -33,6 +33,8 @@ KratosRANSApplication::KratosRANSApplication()
         mSegregatedVMSWallVelocityCondition3D3N(0, Element::GeometryType::Pointer(new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
         mSegregatedVMSWallPressureCondition2D2N(0, Element::GeometryType::Pointer(new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
         mSegregatedVMSWallPressureCondition3D3N(0, Element::GeometryType::Pointer(new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
+        mFSHighReKWallCondition2D2N(0, Element::GeometryType::Pointer(new Line2D2<Node<3>>(Element::GeometryType::PointsArrayType(2)))),
+        mFSHighReKWallCondition3D3N(0, Element::GeometryType::Pointer(new Triangle3D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
         mIncompressibleVelocityPotentialElement2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
         mIncompressibleVelocityPotentialElement3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(Element::GeometryType::PointsArrayType(4)))),
         mPressurePotentialElement2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(Element::GeometryType::PointsArrayType(3)))),
@@ -135,6 +137,10 @@ void KratosRANSApplication::Register()
     KRATOS_REGISTER_CONDITION("SegregatedVMSWallVelocity3D3N", mSegregatedVMSWallVelocityCondition3D3N);
     KRATOS_REGISTER_CONDITION("SegregatedVMSWallPressure2D2N", mSegregatedVMSWallPressureCondition2D2N);
     KRATOS_REGISTER_CONDITION("SegregatedVMSWallPressure3D3N", mSegregatedVMSWallPressureCondition3D3N);
+
+    // Fractional step wall conditions
+    KRATOS_REGISTER_CONDITION("FSHighReKWall2D2N", mFSHighReKWallCondition2D2N);
+    KRATOS_REGISTER_CONDITION("FSHighReKWall3D3N", mFSHighReKWallCondition3D3N);
 
     KRATOS_REGISTER_ELEMENT("RansIncompressibleVelocityPotentialElement2D3N", mIncompressibleVelocityPotentialElement2D);
     KRATOS_REGISTER_ELEMENT("RansIncompressibleVelocityPotentialElement3D4N", mIncompressibleVelocityPotentialElement3D);
