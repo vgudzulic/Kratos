@@ -24,8 +24,11 @@
 // TrilinosApplication dependencies
 #include "trilinos_space.h"
 
+// strategies
+#include "custom_strategies/coupled_strategy.h"
+#include "custom_strategies/coupled_strategy_item.h"
+
 // RANS trilinos extensions
-#include "custom_strategies/segregated_strategy.h"
 #include "custom_strategies/generic_convergence_criteria.h"
 #include "custom_strategies/generic_residual_based_bossak_velocity_scalar_scheme.h"
 #include "custom_strategies/generic_residualbased_simple_steady_scalar_scheme.h"
@@ -47,13 +50,29 @@ void AddTrilinosStrategiesToPython(pybind11::module& m)
     using MPIBaseSchemeType = Scheme<MPISparseSpaceType, LocalSpaceType>;
     using MPIConvergenceCriteria = ConvergenceCriteria<MPISparseSpaceType, LocalSpaceType>;
     using MPILinearSolverType = LinearSolver<MPISparseSpaceType, LocalSpaceType>;
-    using MPIBaseSolvingStrategyType = SolvingStrategy<MPISparseSpaceType, LocalSpaceType, MPILinearSolverType>;
+    using MPIBaseSolvingStrategyType =
+        SolvingStrategy<MPISparseSpaceType, LocalSpaceType, MPILinearSolverType>;
 
-    using SegregatedStrategyType = SegregatedStrategy<MPISparseSpaceType, LocalSpaceType, MPILinearSolverType>;
-    py::class_<SegregatedStrategyType, typename SegregatedStrategyType::Pointer, MPIBaseSolvingStrategyType>(m, "MPISegregatedStrategy")
-        .def(py::init<ModelPart&, int>())
-        .def("AddStrategy", &SegregatedStrategyType::AddStrategy)
-        .def("AddAuxiliaryProcess", &SegregatedStrategyType::AddAuxiliaryProcess);
+    // Add coupled strategy item
+    using MPICoupledStrategyItemType =
+        CoupledStrategyItem<MPISparseSpaceType, LocalSpaceType, MPILinearSolverType>;
+    py::class_<MPICoupledStrategyItemType, typename MPICoupledStrategyItemType::Pointer>(
+        m, "MPICoupledStrategyItem")
+        .def(py::init<MPIBaseSolvingStrategyType::Pointer, std::string, int>())
+        .def("AddAuxiliaryProcess", &MPICoupledStrategyItemType::AddAuxiliaryProcess)
+        .def("GetName", &MPICoupledStrategyItemType::GetName)
+        .def("GetStrategy", &MPICoupledStrategyItemType::GetStrategy)
+        .def("GetAuxiliaryProcessList", &MPICoupledStrategyItemType::GetStrategy)
+        .def("GetStrategyInfo", &MPICoupledStrategyItemType::GetStrategyInfo);
+
+    // Add strtegies
+    using MPICoupledStrategyType =
+        CoupledStrategy<MPISparseSpaceType, LocalSpaceType, MPILinearSolverType>;
+    py::class_<MPICoupledStrategyType, typename MPICoupledStrategyType::Pointer, MPIBaseSolvingStrategyType>(
+        m, "MPICoupledStrategy")
+        .def(py::init<ModelPart&, bool, bool, bool, int>())
+        .def("AddStrategyItem", &MPICoupledStrategyType::AddStrategyItem)
+        .def("AddConvergenceCheckVariable", &MPICoupledStrategyType::AddConvergenceCheckVariable);
 
     py::class_<GenericConvergenceCriteria<MPISparseSpaceType, LocalSpaceType>,
                typename GenericConvergenceCriteria<MPISparseSpaceType, LocalSpaceType>::Pointer, MPIConvergenceCriteria>(

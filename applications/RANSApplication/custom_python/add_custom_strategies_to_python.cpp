@@ -18,11 +18,12 @@
 // Project includes
 #include "custom_python/add_custom_strategies_to_python.h"
 #include "includes/define_python.h"
-#include "spaces/ublas_space.h"
 #include "linear_solvers/linear_solver.h"
+#include "spaces/ublas_space.h"
 
 // strategies
-#include "custom_strategies/segregated_strategy.h"
+#include "custom_strategies/coupled_strategy.h"
+#include "custom_strategies/coupled_strategy_item.h"
 
 // schemes
 #include "custom_strategies/generic_residual_based_bossak_velocity_scalar_scheme.h"
@@ -44,14 +45,29 @@ void AddCustomStrategiesToPython(pybind11::module& m)
     using SparseSpaceType = UblasSpace<double, CompressedMatrix, Vector>;
     using BaseSchemeType = Scheme<SparseSpaceType, LocalSpaceType>;
     using LinearSolverType = LinearSolver<SparseSpaceType, LocalSpaceType>;
-    using BaseSolvingStrategyType = SolvingStrategy<SparseSpaceType, LocalSpaceType, LinearSolverType>;
+    using BaseSolvingStrategyType =
+        SolvingStrategy<SparseSpaceType, LocalSpaceType, LinearSolverType>;
+
+    // Add coupled strategy item
+    using CoupledStrategyItemType =
+        CoupledStrategyItem<SparseSpaceType, LocalSpaceType, LinearSolverType>;
+    py::class_<CoupledStrategyItemType, typename CoupledStrategyItemType::Pointer>(
+        m, "CoupledStrategyItem")
+        .def(py::init<BaseSolvingStrategyType::Pointer, std::string, int>())
+        .def("AddAuxiliaryProcess", &CoupledStrategyItemType::AddAuxiliaryProcess)
+        .def("GetName", &CoupledStrategyItemType::GetName)
+        .def("GetStrategy", &CoupledStrategyItemType::GetStrategy)
+        .def("GetAuxiliaryProcessList", &CoupledStrategyItemType::GetStrategy)
+        .def("GetStrategyInfo", &CoupledStrategyItemType::GetStrategyInfo);
 
     // Add strtegies
-    using SegregatedStrategyType = SegregatedStrategy<SparseSpaceType, LocalSpaceType, LinearSolverType>;
-    py::class_<SegregatedStrategyType, typename SegregatedStrategyType::Pointer, BaseSolvingStrategyType>(m, "SegregatedStrategy")
-        .def(py::init<ModelPart&, int>())
-        .def("AddStrategy", &SegregatedStrategyType::AddStrategy)
-        .def("AddAuxiliaryProcess", &SegregatedStrategyType::AddAuxiliaryProcess);
+    using CoupledStrategyType =
+        CoupledStrategy<SparseSpaceType, LocalSpaceType, LinearSolverType>;
+    py::class_<CoupledStrategyType, typename CoupledStrategyType::Pointer, BaseSolvingStrategyType>(
+        m, "CoupledStrategy")
+        .def(py::init<ModelPart&, bool, bool, bool, int>())
+        .def("AddStrategyItem", &CoupledStrategyType::AddStrategyItem)
+        .def("AddConvergenceCheckVariable", &CoupledStrategyType::AddConvergenceCheckVariable);
 
     // Convergence criteria
     py::class_<GenericConvergenceCriteria<SparseSpaceType, LocalSpaceType>,
