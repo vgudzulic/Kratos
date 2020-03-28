@@ -278,7 +278,7 @@ class CoupledRANSSolver(PythonSolver):
                 Kratos.Logger.PrintWarning(self.__class__.__name__, msg)
             return is_converged
         else:
-            return True
+            return not self.formulation.IsSolvingForSteadyState()
 
     def FinalizeSolutionStep(self):
         if self._TimeBufferIsInitialized():
