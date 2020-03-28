@@ -9,7 +9,7 @@ if (IsDistributedRun()
     from KratosMultiphysics.TrilinosApplication import trilinos_linear_solver_factory as linear_solver_factory
     from KratosMultiphysics.RANSApplication.TrilinosExtension import MPIGenericResidualBasedSimpleSteadyScalarScheme as steady_scheme
     from KratosMultiphysics.RANSApplication.TrilinosExtension import MPIResidualBasedSimpleSteadyVelocityScheme as steady_velocity_scheme
-    from KratosMultiphysics.RANSApplication.TrilinosExtension import MPIGenericResidualBasedBossakVelocityDynamicScalarScheme as dynamic_scheme
+    from KratosMultiphysics.RANSApplication.TrilinosExtension import MPIGenericResidualBasedBossakVelocityDynamicScalarScheme as bossak_scheme
     from KratosMultiphysics.RANSApplication.TrilinosExtension import MPIGenericScalarConvergenceCriteria as scalar_convergence_criteria
     from KratosMultiphysics.TrilinosApplication import TrilinosResidualCriteria as residual_criteria
     from KratosMultiphysics.TrilinosApplication import TrilinosNewtonRaphsonStrategy as newton_raphson_strategy
@@ -19,7 +19,7 @@ elif (not IsDistributedRun()):
     from KratosMultiphysics import python_linear_solver_factory as linear_solver_factory
     from KratosMultiphysics.RANSApplication import GenericResidualBasedSimpleSteadyScalarScheme as steady_scheme
     from KratosMultiphysics.RANSApplication import ResidualBasedSimpleSteadyVelocityScheme as steady_velocity_scheme
-    from KratosMultiphysics.RANSApplication import GenericResidualBasedBossakVelocityDynamicScalarScheme as dynamic_scheme
+    from KratosMultiphysics.RANSApplication import GenericResidualBasedBossakVelocityDynamicScalarScheme as bossak_scheme
     from KratosMultiphysics.RANSApplication import GenericScalarConvergenceCriteria as scalar_convergence_criteria
     from Kratos import ResidualCriteria as residual_criteria
     from Kratos import ResidualBasedNewtonRaphsonStrategy as newton_raphson_strategy
@@ -50,7 +50,7 @@ def CreateStrategy(solver_settings, scheme_settings, model_part,
 
     default_scheme_settings = Kratos.Parameters(r'''{
         "scheme_type": "bossak",
-        "alpha_bossak": -0.3
+        "scheme_settings": {}
     }''')
 
     solver_settings.ValidateAndAssignDefaults(default_solver_settings)
@@ -85,7 +85,7 @@ def CreateStrategy(solver_settings, scheme_settings, model_part,
 
     builder_and_solver = CreateBuilderAndSolver(linear_solver, is_periodic, communicator)
 
-    if (scheme_settings["scheme_type"].GetString() == "bossak"):
+    if (scheme_settings["scheme_type"].GetString() == "transient"):
         convergence_criteria_type = scalar_convergence_criteria
     elif (scheme_settings["scheme_type"].GetString() == "steady"):
         convergence_criteria_type = residual_criteria
@@ -94,25 +94,16 @@ def CreateStrategy(solver_settings, scheme_settings, model_part,
         solver_settings["relative_tolerance"].GetDouble(),
         solver_settings["absolute_tolerance"].GetDouble())
 
-    if (scheme_settings["scheme_type"].GetString() == "bossak"):
-        time_scheme = dynamic_scheme(scheme_settings["alpha_bossak"].GetDouble(),
+    if (scheme_settings["scheme_type"].GetString() == "transient"):
+        time_scheme = bossak_scheme(scheme_settings["alpha_bossak"].GetDouble(),
                                      solver_settings["relaxation_factor"].GetDouble(),
                                      variable,
                                      variable_rate,
                                      relaxed_variable_rate)
     elif (scheme_settings["scheme_type"].GetString() == "steady"):
-        if variable == Kratos.VELOCITY:
-            time_scheme = steady_velocity_scheme(solver_settings["relaxation_factor"].GetDouble(),
-                                                 base_model_part.ProcessInfo[Kratos.DOMAIN_SIZE])
-        else:
-            time_scheme = steady_scheme(solver_settings["relaxation_factor"].GetDouble())
-        base_model_part.ProcessInfo[Kratos.BOSSAK_ALPHA] = scheme_settings["alpha_bossak"].GetDouble()
+        base_model_part.ProcessInfo[Kratos.BOSSAK_ALPHA] = 0.0
         base_model_part.ProcessInfo[KratosRANS.IS_CO_SOLVING_PROCESS_ACTIVE] = True
-        if (base_model_part.ProcessInfo[Kratos.DYNAMIC_TAU] != 0.0):
-            Kratos.Logger.PrintWarning(
-                "",
-                "Steady solution doesn't have zero DYNAMIC_TAU [ DYNAMIC_TAU = "
-                + str(base_model_part.ProcessInfo[Kratos.DYNAMIC_TAU]) + " ].")
+        time_scheme = steady_scheme(solver_settings["relaxation_factor"].GetDouble())
     else:
         raise Exception("Unknown scheme_type = \"" +
                         scheme_settings["scheme_type"] + "\"")
@@ -124,10 +115,9 @@ def CreateStrategy(solver_settings, scheme_settings, model_part,
         solver_settings["reform_dofs_at_each_step"].GetBool(),
         solver_settings["move_mesh_flag"].GetBool())
 
-    strategy.SetEchoLevel(solver_settings["echo_level"].GetInt() - 2)
-    builder_and_solver.SetEchoLevel(solver_settings["echo_level"].GetInt() - 3)
-    convergence_criteria.SetEchoLevel(solver_settings["echo_level"].GetInt() -
-                                      1)
+    builder_and_solver.SetEchoLevel(solver_settings["echo_level"].GetInt() - 4)
+    strategy.SetEchoLevel(solver_settings["echo_level"].GetInt() - 3)
+    convergence_criteria.SetEchoLevel(solver_settings["echo_level"].GetInt() - 2)
 
     if (is_periodic):
         Kratos.Logger.PrintInfo(
@@ -147,6 +137,21 @@ def CreateBuilderAndSolver(linear_solver, is_periodic, communicator):
     else:
         return block_builder_and_solver(linear_solver, communicator)
 
+def CreateLinearSolver(solver_settings):
+    return linear_solver_factory.ConstructSolver(solver_settings)
+
+def CreateScalarScheme(scheme_settings, relaxation_rate, scalar_variable, scalar_variable_rate, relaxed_scalar_variable_rate):
+    scheme_type = scheme_settings["scheme_type"].GetString()
+    if (scheme_type == "bossak"):
+        return bossak_scheme(scheme_settings["scheme_settings"]["alpha_bossak"].GetDouble(),
+                             relaxation_rate,
+                             scalar_variable,
+                             scalar_variable_rate,
+                             relaxed_scalar_variable_rate)
+    elif (scheme_type == "steady"):
+        return steady_scheme(relaxation_rate)
+    else:
+        raise Exception("Unsupported scheme type. [ scheme_type = \"" + scheme_type + "\" ]")
 
 def InitializePeriodicConditions(model_part, base_model_part, variable):
     properties = model_part.CreateNewProperties(

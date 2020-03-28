@@ -11,13 +11,11 @@ from KratosMultiphysics.RANSApplication.model_part_factory import CreateDuplicat
 from KratosMultiphysics.RANSApplication.strategy_factory import CreateStrategy
 from KratosMultiphysics.RANSApplication import RansCalculationUtilities
 
-from KratosMultiphysics.RANSApplication.formulation_fractional_step_k_epsilon_high_re import FractionalStepKEpsilonHighRe
-from KratosMultiphysics.RANSApplication.formulation_segregated_vms_k_epsilon_high_re import SegregatedVMSKEpsilonHighRe
+from KratosMultiphysics.RANSApplication.formulation_fractional_step_k_epsilon_high_re import FractionalStepKEpsilonHighReFormulation
 
-def CreateFormulation(model_part, formulation_name, settings, scheme_settings):
+def CreateFormulation(formulation_name, model_part, settings):
     formulations_list = [
-        ["segregated_vms_k_epsilon_high_re", SegregatedVMSKEpsilonHighRe],
-        ["fractional_step_k_epsilon_high_re", FractionalStepKEpsilonHighRe]
+        ["fractional_step_k_epsilon_high_re", FractionalStepKEpsilonHighReFormulation]
     ]
 
     formulation_names_list = [formulations_list[i][0] for i in range(len(formulations_list))]
@@ -28,7 +26,7 @@ def CreateFormulation(model_part, formulation_name, settings, scheme_settings):
         msg += "\n    ".join(sorted(formulation_names_list))
         raise Exception(msg + "\n")
 
-    current_formulation = formulation_list[formulation_names_list.index(formulation_name)](model_part, settings, scheme_settings)
+    current_formulation = formulation_list[formulation_names_list.index(formulation_name)](model_part, settings)
 
     Kratos.Logger.PrintInfo("RANSFormulationFactory", "Created " + formulation_name + " formulation.")
 

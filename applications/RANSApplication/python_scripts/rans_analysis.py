@@ -13,28 +13,18 @@ class RANSAnalysis(FluidDynamicsAnalysis):
     def __init__(self, model, parameters):
         super(RANSAnalysis, self).__init__(model, parameters)
 
-    def KeepAdvancingSolutionLoop(self):
-        velocity_convergence = False
-        pressure_convergence = False
-        if self._GetSolver()._TimeBufferIsInitialized():
-            velocity_convergence = RansVariableUtilities.CalculateTransientVariableConvergence(
-                self._GetSolver().GetComputingModelPart(), Kratos.VELOCITY,
-                1e-3, 1e-5, 1)
-            pressure_convergence = RansVariableUtilities.CalculateTransientVariableConvergence(
-                self._GetSolver().GetComputingModelPart(), Kratos.PRESSURE,
-                1e-3, 1e-5, 1)
-            tke_convergence = RansVariableUtilities.CalculateTransientVariableConvergence(
-                self._GetSolver().GetComputingModelPart(), KratosRANS.TURBULENT_KINETIC_ENERGY,
-                1e-3, 1e-5, 1)
-            epsilon_convergence = RansVariableUtilities.CalculateTransientVariableConvergence(
-                self._GetSolver().GetComputingModelPart(), KratosRANS.TURBULENT_ENERGY_DISSIPATION_RATE,
-                1e-3, 1e-5, 1)
-
-            if (velocity_convergence and pressure_convergence and tke_convergence and epsilon_convergence):
-                Kratos.Logger.PrintInfo(self.__class__.__name__,
-                                        "Steady state solution reached.")
-        return ((self.time < self.end_time)
-                and not (velocity_convergence and pressure_convergence and tke_convergence and epsilon_convergence))
+    def RunSolutionLoop(self):
+        """This function executes the solution loop of the AnalysisStage
+        It can be overridden by derived classes
+        """
+        is_converged = False
+        while (self.KeepAdvancingSolutionLoop() and not is_converged):
+            self.time = self._GetSolver().AdvanceInTime(self.time)
+            self.InitializeSolutionStep()
+            self._GetSolver().Predict()
+            is_converged = self._GetSolver().SolveSolutionStep()
+            self.FinalizeSolutionStep()
+            self.OutputSolutionStep()
 
     def _GetSimulationName(self):
         return "RANS Analysis"

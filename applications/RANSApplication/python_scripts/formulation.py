@@ -2,15 +2,12 @@ from abc import ABC, abstractmethod
 
 
 class Formulation(ABC):
-    def __init__(self, base_model_part, coupling_settings, scheme_settings):
-        self.settings = coupling_settings
-        self.scheme_settings = scheme_settings
-        self.base_model_part = base_model_part
-        self.strategy_list = []
+    def __init__(self, base_computing_model_part, settings):
+        self.settings = settings
+        self.base_computing_model_part = base_computing_model_part
         self.communicator = None
-        self.solver_names_list = []
-        self.variable_list = []
-        self.model_part_list = []
+        self.is_periodic = False
+        self.move_mesh = False
 
     @abstractmethod
     def AddVariables(self):
@@ -29,14 +26,41 @@ class Formulation(ABC):
         pass
 
     @abstractmethod
-    def IsPeriodic(self):
+    def GetMinimumBufferSize(self):
+        return 0
+
+    @abstractmethod
+    def Finalize(self):
         pass
+
+    @abstractmethod
+    def IsSolvingForSteadyState(self):
+        return False
+
+    @abstractmethod
+    def GetCoupledStrategyItems(self):
+        return None
+
+    def IsPeriodic(self):
+        return self.is_periodic
+
+    def SetIsPeriodic(self, value):
+        self.is_periodic = value
 
     def SetCommunicator(self, communicator):
         self.communicator = communicator
 
-    def GetBaseModelPart(self):
-        return self.base_model_part
+    def SetMoveMeshFlag(self, value):
+        self.move_mesh = value
 
-    def GetStrategyList(self):
-        return self.strategy_list
+    def GetMoveMeshFlag(self):
+        return self.move_mesh
+
+    def GetCommunicator(self):
+        return self.communicator
+
+    def GetBaseModelPart(self):
+        return self.base_computing_model_part
+
+
+

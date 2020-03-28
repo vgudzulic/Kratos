@@ -8,7 +8,6 @@ from KratosMultiphysics.RANSApplication.model_part_factory import CreateDuplicat
 
 from KratosMultiphysics import IsDistributedRun
 from KratosMultiphysics import IntegrationValuesExtrapolationToNodesProcess as extrapolation_process
-from KratosMultiphysics import ResidualBasedIncrementalUpdateStaticScheme as scheme
 from KratosMultiphysics.kratos_utilities import CheckIfApplicationsAvailable
 
 if (IsDistributedRun()
@@ -16,12 +15,14 @@ if (IsDistributedRun()
     from KratosMultiphysics.TrilinosApplication import trilinos_linear_solver_factory as linear_solver_factory
     from KratosMultiphysics.TrilinosApplication import TrilinosResidualCriteria as residual_criteria
     from KratosMultiphysics.TrilinosApplication import TrilinosNewtonRaphsonStrategy as newton_raphson_strategy
+    from KratosMultiphysics.TrilinosApplication import TrilinosResidualBasedIncrementalUpdateStaticScheme as scheme
     from KratosMultiphysics.RANSApplication.block_builder_and_solvers import TrilinosBlockBuilderAndSolver as block_builder_and_solver
 elif (not IsDistributedRun()):
     from KratosMultiphysics import python_linear_solver_factory as linear_solver_factory
     from Kratos import ResidualCriteria as residual_criteria
     from Kratos import ResidualBasedNewtonRaphsonStrategy as newton_raphson_strategy
     from KratosMultiphysics.RANSApplication.block_builder_and_solvers import BlockBuilderAndSolver as block_builder_and_solver
+    from KratosMultiphysics import ResidualBasedIncrementalUpdateStaticScheme as scheme
 else:
     raise Exception("Distributed run requires TrilinosApplication")
 
@@ -52,7 +53,8 @@ class IncompressiblePotentialFlowSolver(PythonSolver):
                 "reform_dofs_at_each_step": true,
                 "move_mesh_strategy": 0,
                 "move_mesh_flag": false,
-                "compute_reactions": false
+                "compute_reactions": false,
+                "echo_level": 0
             },
             "pressure_potential_flow_settings":
             {
@@ -62,15 +64,16 @@ class IncompressiblePotentialFlowSolver(PythonSolver):
                 "reform_dofs_at_each_step": true,
                 "move_mesh_strategy": 0,
                 "move_mesh_flag": false,
-                "compute_reactions": false
+                "compute_reactions": false,
+                "echo_level": 0
             },
             "echo_level" : 0
         }''')
 
     def AddVariables(self):
-        self.fluid_model_part.AddNodalSolutionStepVariable(
+        self.parent_model_part.AddNodalSolutionStepVariable(
             KratosRANS.VELOCITY_POTENTIAL)
-        self.fluid_model_part.AddNodalSolutionStepVariable(
+        self.parent_model_part.AddNodalSolutionStepVariable(
             KratosRANS.PRESSURE_POTENTIAL)
 
         Kratos.Logger.PrintInfo(
@@ -79,15 +82,15 @@ class IncompressiblePotentialFlowSolver(PythonSolver):
 
     def AddDofs(self):
         Kratos.VariableUtils().AddDof(KratosRANS.VELOCITY_POTENTIAL,
-                                      self.fluid_model_part)
+                                      self.parent_model_part)
         Kratos.VariableUtils().AddDof(KratosRANS.PRESSURE_POTENTIAL,
-                                      self.fluid_model_part)
+                                      self.parent_model_part)
 
         Kratos.Logger.PrintInfo(self.__class__.__name__,
                                 "Added potential flow initialization dofs.")
 
     def PrepareModelPart(self):
-        self.domain_size = self.fluid_model_part.ProcessInfo[
+        self.domain_size = self.parent_model_part.ProcessInfo[
             Kratos.DOMAIN_SIZE]
 
         element_suffix = str(
@@ -100,13 +103,13 @@ class IncompressiblePotentialFlowSolver(PythonSolver):
         element_name = "RansIncompressibleVelocityPotentialElement" + element_suffix
         condition_name = "RansIncompressibleVelocityPotentialCondition" + condition_suffix
         self.velocity_model_part = CreateDuplicateModelPart(
-            self.fluid_model_part, "IncompressiblePotentialFlow_Velocity",
+            self.parent_model_part, "IncompressiblePotentialFlow_Velocity",
             element_name, condition_name, original_condition_name)
 
         element_name = "RansPressurePotentialElement" + element_suffix
         condition_name = "RansIncompressiblePressureCondition" + condition_suffix
         self.pressure_model_part = CreateDuplicateModelPart(
-            self.fluid_model_part, "IncompressiblePotentialFlow_Pressure",
+            self.parent_model_part, "IncompressiblePotentialFlow_Pressure",
             element_name, condition_name, original_condition_name)
 
         Kratos.Logger.PrintInfo(
@@ -128,6 +131,10 @@ class IncompressiblePotentialFlowSolver(PythonSolver):
             solver_settings["reform_dofs_at_each_step"].GetBool(),
             solver_settings["move_mesh_flag"].GetBool())
 
+        builder_and_solver.SetEchoLevel(solver_settings["echo_level"].GetInt() - 3)
+        self.velocity_strategy.SetEchoLevel(solver_settings["echo_level"].GetInt() - 2)
+        convergence_criteria.SetEchoLevel(solver_settings["echo_level"].GetInt() - 1)
+
         # solving for pressure
         solver_settings = self.settings["pressure_potential_flow_settings"]
         linear_solver = linear_solver_factory.ConstructSolver(
@@ -142,6 +149,10 @@ class IncompressiblePotentialFlowSolver(PythonSolver):
             solver_settings["reform_dofs_at_each_step"].GetBool(),
             solver_settings["move_mesh_flag"].GetBool())
 
+        builder_and_solver.SetEchoLevel(solver_settings["echo_level"].GetInt() - 3)
+        self.pressure_strategy.SetEchoLevel(solver_settings["echo_level"].GetInt() - 2)
+        convergence_criteria.SetEchoLevel(solver_settings["echo_level"].GetInt() - 1)
+
         self.velocity_strategy.Initialize()
         self.pressure_strategy.Initialize()
 
@@ -150,6 +161,9 @@ class IncompressiblePotentialFlowSolver(PythonSolver):
 
     def SetCommunicator(self, epetra_communicator):
         self.EpetraCommunicator = epetra_communicator
+
+    def SetParentModelPart(self, parent_model_part):
+        self.parent_model_part = parent_model_part
 
     def InitializeSolutionStep(self):
         if (not hasattr(self, "is_initialized")):
