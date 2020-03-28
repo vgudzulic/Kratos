@@ -602,6 +602,7 @@ protected:
 
         // 2. Pressure solution (store pressure variation in PRESSURE_OLD_IT)
         rModelPart.GetProcessInfo().SetValue(FRACTIONAL_STEP,5);
+        const double eta = rModelPart.GetProcessInfo()[PRESSURE_COEFFICIENT];
 
 #pragma omp parallel
         {
@@ -612,7 +613,7 @@ protected:
             for (ModelPart::NodeIterator itNode = NodesBegin; itNode != NodesEnd; ++itNode)
             {
                 const double OldPress = itNode->FastGetSolutionStepValue(PRESSURE);
-                itNode->FastGetSolutionStepValue(PRESSURE_OLD_IT) = -OldPress;
+                itNode->FastGetSolutionStepValue(PRESSURE_OLD_IT) = -eta * OldPress;
             }
         }
 
