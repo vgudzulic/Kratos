@@ -19,8 +19,8 @@ def CreateSolverByParameters(model, solver_settings, parallelism):
             msg += "Please re-install/re-compile with RANSApplication."
             raise Exception(msg)
 
-        from KratosMultiphysics.RANSApplication.coupled_rans_solver import CreateSolver
-        return CreateSolver(model, solver_settings)
+        from KratosMultiphysics.RANSApplication.rans_solver_factory import CreateSolver
+        return CreateSolver(solver_type, model, solver_settings)
 
     # Solvers for OpenMP parallelism
     if (parallelism == "OpenMP"):
