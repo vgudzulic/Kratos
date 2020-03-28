@@ -395,7 +395,8 @@ bool CalculateTransientVariableConvergence(const ModelPart& rModelPart,
         const double new_value = r_node.FastGetSolutionStepValue(rVariable);
         dx += std::pow(new_value - old_value, 2);
         solution += std::pow(new_value, 2);
-        number_of_dofs += (r_node.HasDofFor(rVariable) && !r_node.IsFixed(rVariable));
+        number_of_dofs += ((r_node.HasDofFor(rVariable) && !r_node.IsFixed(rVariable)) ||
+                           !r_node.HasDofFor(rVariable));
     }
 
     dx = std::sqrt(r_communicator.GetDataCommunicator().SumAll(dx));
@@ -407,9 +408,13 @@ bool CalculateTransientVariableConvergence(const ModelPart& rModelPart,
     const double relative_error = dx / solution;
     const double absolute_error = dx / number_of_dofs;
 
-    KRATOS_INFO_IF("TransientVariableConvergence", EchoLevel > 0)
-        << rVariable.Name() << " ratio: " << relative_error
-        << " abs: " << absolute_error << std::endl;
+    std::stringstream buffer;
+    buffer << std::scientific << std::setprecision(6) << " [ Obtained ratio: " << relative_error
+           << "; Expected ratio: " << RelativeTolerance
+           << "; Absolute norm: " << absolute_error << "; Expected norm: " << AbsoluteTolerance
+           << " ] - " << rVariable.Name() << std::endl;
+
+    KRATOS_INFO_IF("TransientVariableConvergence", EchoLevel > 0) << buffer.str();
 
     return (relative_error < RelativeTolerance || absolute_error < AbsoluteTolerance);
 
@@ -441,7 +446,8 @@ bool CalculateTransientVariableConvergence(const ModelPart& rModelPart,
         const array_1d<double, 3>& r_new_value = r_node.FastGetSolutionStepValue(rVariable);
         dx += std::pow(norm_2(r_new_value - r_old_value), 2);
         solution += std::pow(norm_2(r_new_value), 2);
-        number_of_dofs += (r_node.HasDofFor(rVariable) && !r_node.IsFixed(rVariable));
+        number_of_dofs += ((r_node.HasDofFor(rVariable) && !r_node.IsFixed(rVariable)) ||
+                           !r_node.HasDofFor(rVariable));
     }
 
     dx = std::sqrt(r_communicator.GetDataCommunicator().SumAll(dx));
@@ -453,9 +459,13 @@ bool CalculateTransientVariableConvergence(const ModelPart& rModelPart,
     const double relative_error = dx / solution;
     const double absolute_error = dx / number_of_dofs;
 
-    KRATOS_INFO_IF("TransientVariableConvergence", EchoLevel > 0)
-        << rVariable.Name() << " ratio: " << relative_error
-        << " abs: " << absolute_error << std::endl;
+    std::stringstream buffer;
+    buffer << std::scientific << std::setprecision(6) << " [ Obtained ratio: " << relative_error
+           << "; Expected ratio: " << RelativeTolerance
+           << "; Absolute norm: " << absolute_error << "; Expected norm: " << AbsoluteTolerance
+           << " ] - " << rVariable.Name() << std::endl;
+
+    KRATOS_INFO_IF("TransientVariableConvergence", EchoLevel > 0) << buffer.str();
 
     return (relative_error < RelativeTolerance || absolute_error < AbsoluteTolerance);
 
