@@ -247,6 +247,7 @@ void RansEvmKEpsilonEpsilonWall<TDim, TNumNodes>::AddLocalVelocityContribution(
     KRATOS_TRY
 
     const GeometryType& r_geometry = this->GetGeometry();
+
     // Get Shape function data
     const GeometryType::IntegrationPointsArrayType& integration_points =
         r_geometry.IntegrationPoints(GeometryData::GI_GAUSS_2);
@@ -254,6 +255,7 @@ void RansEvmKEpsilonEpsilonWall<TDim, TNumNodes>::AddLocalVelocityContribution(
     MatrixType shape_functions = r_geometry.ShapeFunctionsValues(GeometryData::GI_GAUSS_2);
 
     const double area = r_geometry.DomainSize();
+
     // CAUTION: "Jacobian" is 2.0*A for triangles but 0.5*A for lines
     double J = (TNumNodes == 2) ? 0.5 * area : 2.0 * area;
 
@@ -274,10 +276,10 @@ void RansEvmKEpsilonEpsilonWall<TDim, TNumNodes>::AddLocalVelocityContribution(
             r_geometry, KINEMATIC_VISCOSITY, gauss_shape_functions);
         const double nu_t = RansCalculationUtilities::EvaluateInPoint(
             r_geometry, TURBULENT_VISCOSITY, gauss_shape_functions);
-        const double epsilon = RansCalculationUtilities::EvaluateInPoint(
-            r_geometry, TURBULENT_ENERGY_DISSIPATION_RATE, gauss_shape_functions);
         const double tke = RansCalculationUtilities::EvaluateInPoint(
             r_geometry, TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
+        const double epsilon = RansCalculationUtilities::EvaluateInPoint(
+            r_geometry, TURBULENT_ENERGY_DISSIPATION_RATE, gauss_shape_functions);
         const double u_tau = c_mu_25 * std::sqrt(std::max(tke, 0.0));
 
         if (y_plus > eps)
