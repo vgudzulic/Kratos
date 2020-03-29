@@ -180,13 +180,13 @@ class CoupledRANSSolver(PythonSolver):
             ## Set buffer size
             self.main_model_part.SetBufferSize(self.min_buffer_size)
 
+        if (IsDistributedRun()):
+            self.distributed_model_part_importer.CreateCommunicators()
+
         if (hasattr(self, "potential_flow_solver")):
             self.potential_flow_solver.PrepareModelPart()
 
         self.formulation.PrepareModelPart()
-
-        if (IsDistributedRun()):
-            self.distributed_model_part_importer.CreateCommunicators()
 
         Kratos.Logger.PrintInfo(self.__class__.__name__,
                                             "Model reading finished.")
@@ -206,12 +206,13 @@ class CoupledRANSSolver(PythonSolver):
         return self.min_buffer_size
 
     def Initialize(self):
-        self.computing_model_part = self.GetComputingModelPart()
         if (IsDistributedRun()):
             self.EpetraComm = KratosTrilinos.CreateCommunicator()
             self.formulation.SetCommunicator(self.EpetraComm)
             if (hasattr(self, "potential_flow_solver")):
                 self.potential_flow_solver.SetCommunicator(self.EpetraComm)
+
+        self.computing_model_part = self.GetComputingModelPart()
 
         # If needed, create the estimate time step utility
         if (self.settings["time_stepping"]["automatic_time_step"].GetBool()):
