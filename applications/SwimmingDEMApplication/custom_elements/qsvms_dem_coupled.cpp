@@ -397,7 +397,7 @@ void QSVMSDEMCoupled<TElementData>::AddMassStabilization(TElementData& rData,
 
                 for (unsigned int d = 0; d < Dim; ++d) // iterate over dimensions for velocity Dofs in this node combination
                 {
-                    rMassMatrix(row+d, col+d) +=  K;
+                    rMassMatrix(row+d, col+d) += K;
                     rMassMatrix(row+Dim,col+d) += weight * fluid_fraction * rData.DN_DX(i,d) * rData.N[j];
                     rMassMatrix(row+Dim,col+d) += weight * fluid_fraction_gradient[d] * rData.N[i] * rData.N[j]; // Delta(u) * TauOne * alpha * Grad(q)
                 }

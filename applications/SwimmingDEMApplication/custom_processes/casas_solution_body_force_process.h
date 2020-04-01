@@ -69,12 +69,13 @@ public:
     /// Constructor.
     CasasSolutionBodyForceProcess(
         ModelPart& rModelPart,
-        const double Period,
         const double Density,
         const double Viscosity,
         const double DeltaAlpha,
         const double Length,
-        const double MaxSqueezeFraction);
+        const double SqueezeAmplitude,
+        const double X1Origin,
+        const double X2Origin);
 
     /// Constructor with Kratos parameters.
     CasasSolutionBodyForceProcess(
@@ -149,14 +150,15 @@ private:
     ///@{
 
     ModelPart&                                       mrModelPart;
-    double                                               mPeriod;
     double                                              mDensity;
     double                                            mViscosity;
     double                                           mDeltaAlpha;
     double                                               mLength;
     double                                   mMaxSqueezeFraction;
     double                                                mOmega;
-
+    double                                     mSqueezeAmplitude;
+    double                                             mX1Origin;
+    double                                             mX2Origin;
     ///@}
     ///@name Protected Operators
     ///@{

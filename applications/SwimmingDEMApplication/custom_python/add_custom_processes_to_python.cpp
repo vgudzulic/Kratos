@@ -40,7 +40,7 @@ void  AddCustomProcessesToPython(pybind11::module& m)
 
     py::class_<CasasSolutionBodyForceProcess, CasasSolutionBodyForceProcess::Pointer, Process>
     (m, "CasasSolutionBodyForceProcess")
-    .def(py::init< ModelPart&, const double, const double, const double, const double, const double, const double>())
+    .def(py::init< ModelPart&, const double, const double, const double, const double, const double, const double, const double>())
     .def(py::init< ModelPart&, Parameters& >())
     .def(py::init< Model&, Parameters& >())
     ;
