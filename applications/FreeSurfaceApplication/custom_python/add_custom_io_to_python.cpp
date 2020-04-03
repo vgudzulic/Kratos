@@ -38,25 +38,25 @@ void WriteMesh( GidIOType& dummy, GidIOType::MeshType& rThisMesh )
     dummy.WriteMesh( rThisMesh );
 }
 
-void BoolPrintOnGaussPoints( GidIO<>& dummy, const Variable<bool>& rVariable,
+void BoolPrintOnGaussPoints( GidIOType& dummy, const Variable<bool>& rVariable,
                                ModelPart& rModelPart, double SolutionTag )
 {
     dummy.PrintOnGaussPoints( rVariable, rModelPart, SolutionTag );
 }
 
-void DoublePrintOnGaussPoints( GidIO<>& dummy, const Variable<double>& rVariable,
+void DoublePrintOnGaussPoints( GidIOType& dummy, const Variable<double>& rVariable,
                                ModelPart& rModelPart, double SolutionTag )
 {
     dummy.PrintOnGaussPoints( rVariable, rModelPart, SolutionTag );
 }
 
-void VectorPrintOnGaussPoints( GidIO<>& dummy, const Variable<Vector>& rVariable,
+void VectorPrintOnGaussPoints( GidIOType& dummy, const Variable<Vector>& rVariable,
                                ModelPart& rModelPart, double SolutionTag )
 {
     dummy.PrintOnGaussPoints( rVariable, rModelPart, SolutionTag );
 }
 
-void MatrixPrintOnGaussPoints( GidIO<>& dummy, const Variable<Matrix>& rVariable,
+void MatrixPrintOnGaussPoints( GidIOType& dummy, const Variable<Matrix>& rVariable,
                                ModelPart& rModelPart, double SolutionTag )
 {
     dummy.PrintOnGaussPoints( rVariable, rModelPart, SolutionTag );
@@ -134,8 +134,6 @@ void  AddCustomIOToPython(pybind11::module& pymodule)
 }
 }  // namespace Python.
 
-template class GidIO<EdgebasedGidGaussPointsContainer,EdgebasedGidMeshContainer>;
-template class GidIO<>;
 
 } // Namespace Kratos
 
