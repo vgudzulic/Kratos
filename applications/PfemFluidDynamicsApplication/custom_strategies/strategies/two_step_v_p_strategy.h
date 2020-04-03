@@ -851,6 +851,7 @@ protected:
     long double boxMaxZ = 3000;
 
     double totalVolume = 0;
+    double totalVelocityX = 0;
     double totalVelocityY = 0;
     double totalVelocityNorm = 0;
     // double nodeInBox = 0.0;
@@ -870,6 +871,7 @@ protected:
       long double bariPosY = 0;
       long double bariPosZ = 0;
       double elementalDensity = 2400;
+      double elementalVelocityX = 0;
       double elementalVelocityY = 0;
       double elementalVelocityNorm = 0;
       for (unsigned int i = 0; i < geometry.size(); i++)
@@ -887,6 +889,7 @@ protected:
         {
           NormV += Vel[d] * Vel[d];
         }
+        elementalVelocityX += Vel[0] * 0.25;
         elementalVelocityY += Vel[1] * 0.25;
         elementalVelocityNorm += sqrt(NormV) * 0.25;
 
@@ -901,6 +904,7 @@ protected:
       {
         overtoppingElements += 1.0;
         totalVolume += geometry.Volume();
+        totalVelocityX += elementalVelocityX;
         totalVelocityY += elementalVelocityY;
         totalVelocityNorm += elementalVelocityNorm;
       }
@@ -964,6 +968,7 @@ protected:
     {
       overtoppingElements = 1.0;
     }
+    double meanVelocityX = totalVelocityX / overtoppingElements;
     double meanVelocityY = totalVelocityY / overtoppingElements;
     double meanVelocityNorm = totalVelocityNorm / overtoppingElements;
 
@@ -971,6 +976,11 @@ protected:
     myfileVolume.open("VolumeInBoxFile.txt", std::ios::app);
     myfileVolume << currentTime << "\t" << totalVolume << "\n";
     myfileVolume.close();
+
+    std::ofstream myfileVelocityX;
+    myfileVelocityX.open("VelocityXInBoxFile.txt", std::ios::app);
+    myfileVelocityX << currentTime << "\t" << meanVelocityX << "\n";
+    myfileVelocityX.close();
 
     std::ofstream myfileVelocityY;
     myfileVelocityY.open("VelocityYInBoxFile.txt", std::ios::app);
