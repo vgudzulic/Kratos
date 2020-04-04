@@ -641,9 +641,9 @@ public:
 
             for (Node < 3 > ::DofsContainerType::iterator iii = reference_dofs.begin(); iii != reference_dofs.end(); iii++)
             {
-                Node < 3 > ::DofType& rDof = *iii;
+                Node < 3 > ::DofType& rDof = **iii;
                 Node < 3 > ::DofType::Pointer p_new_dof = pnode->pAddDof(rDof);
-                if (it_node1->IsFixed(iii->GetVariable()) == true && it_node2->IsFixed(iii->GetVariable()) == true)
+                if (it_node1->IsFixed(rDof.GetVariable()) == true && it_node2->IsFixed(rDof.GetVariable()) == true)
                     (p_new_dof)->FixDof();
                 else
                 {
@@ -996,7 +996,7 @@ protected:
          double area_child  = geom_child.Area();
          values[0][4]       = (area_child/area_father) * values[0][4];
          */
-        child_elem->SetValueOnIntegrationPoints(INTERNAL_VARIABLES, values, rCurrentProcessInfo);
+        child_elem->SetValuesOnIntegrationPoints(INTERNAL_VARIABLES, values, rCurrentProcessInfo);
 
     }
 
@@ -1235,7 +1235,7 @@ protected:
 
         for (Node < 3 > ::DofsContainerType::iterator iii = reference_dofs.begin(); iii != reference_dofs.end(); iii++)
         {
-            Node < 3 > ::DofType& rDof = *iii;
+            Node < 3 > ::DofType& rDof = **iii;
             Node < 3 > ::DofType::Pointer p_new_dof = pnode->pAddDof(rDof);
 
             //the variables are left as free for the internal node

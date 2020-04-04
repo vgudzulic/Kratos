@@ -234,7 +234,7 @@ public:
             //vector containing the localization in the system of the different
             //terms
             Element::EquationIdVectorType EquationId;
-            ProcessInfo& CurrentProcessInfo = r_model_part.GetProcessInfo();
+            const ProcessInfo& CurrentProcessInfo = r_model_part.GetProcessInfo();
             typename ElementsArrayType::ptr_iterator it_begin=pElements.ptr_begin()+element_partition[k];
             typename ElementsArrayType::ptr_iterator it_end=pElements.ptr_begin()+element_partition[k+1];
 
@@ -276,7 +276,7 @@ public:
 
             Condition::EquationIdVectorType EquationId;
 
-            ProcessInfo& CurrentProcessInfo = r_model_part.GetProcessInfo();
+            const ProcessInfo& CurrentProcessInfo = r_model_part.GetProcessInfo();
 
             typename ConditionsArrayType::ptr_iterator it_begin=ConditionsArray.ptr_begin()+condition_partition[k];
             typename ConditionsArrayType::ptr_iterator it_end=ConditionsArray.ptr_begin()+condition_partition[k+1];
@@ -352,7 +352,7 @@ public:
 
         for(GlobalPointersVector< Node<3> >::iterator iii = mActiveNodes.begin(); iii!=mActiveNodes.end(); iii++)
         {
-            BaseType::mDofSet.push_back( iii->pGetDof(rVar).get() );
+            BaseType::mDofSet.push_back( iii->pGetDof(rVar) );
         }
 
         //throws an execption if there are no Degrees of freedom involved in the analysis

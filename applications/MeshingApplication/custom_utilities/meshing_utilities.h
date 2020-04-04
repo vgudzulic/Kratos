@@ -63,12 +63,6 @@ namespace MeshingUtilities
     typedef ElementsArrayType::iterator ElementItType;
 
     /**
-     * @brief This method ensured that the properties of elements and conditions are on the model part
-     * @param ModelPart The model part where ensure properties
-     */
-    void KRATOS_API(MESHING_APPLICATION) EnsureModelPartOwnsProperties(ModelPart& rModelPart);
-
-    /**
      * @brief This computes the element size depending of a whole model part and it assigns to the ELEMENT_H variable
      * @param ModelPart The model part where compute the  and block them
      * @param ThisParameters The parameters

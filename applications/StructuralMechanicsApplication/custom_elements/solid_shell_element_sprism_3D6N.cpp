@@ -510,7 +510,7 @@ void SolidShellElementSprism3D6N::CalculateDampingMatrix(
     )
 {
     const WeakPointerVectorNodesType& p_neighbour_nodes = this->GetValue(NEIGHBOUR_NODES);
-    const IndexType mat_size = GetGeometry().size() + NumberOfActiveNeighbours(p_neighbour_nodes) * 3;
+    const IndexType mat_size = ( GetGeometry().size() + NumberOfActiveNeighbours(p_neighbour_nodes) ) * 3;
 
     StructuralMechanicsElementUtilities::CalculateRayleighDampingMatrix(
         *this,
@@ -1296,49 +1296,49 @@ void SolidShellElementSprism3D6N::CalculateOnIntegrationPoints(
 /******************************** SET DOUBLE VALUE *********************************/
 /***********************************************************************************/
 
-void SolidShellElementSprism3D6N::SetValueOnIntegrationPoints(
+void SolidShellElementSprism3D6N::SetValuesOnIntegrationPoints(
     const Variable<double>& rVariable,
     std::vector<double>& rValues,
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    BaseType::SetValueOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
+    BaseType::SetValuesOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 }
 
 /******************************** SET VECTOR VALUE *********************************/
 /***********************************************************************************/
 
-void SolidShellElementSprism3D6N::SetValueOnIntegrationPoints(
+void SolidShellElementSprism3D6N::SetValuesOnIntegrationPoints(
     const Variable<Vector>& rVariable,
     std::vector<Vector>& rValues,
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    BaseType::SetValueOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
+    BaseType::SetValuesOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 }
 
 /******************************** SET MATRIX VALUE *********************************/
 /***********************************************************************************/
 
-void SolidShellElementSprism3D6N::SetValueOnIntegrationPoints(
+void SolidShellElementSprism3D6N::SetValuesOnIntegrationPoints(
     const Variable<Matrix>& rVariable,
     std::vector<Matrix>& rValues,
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    BaseType::SetValueOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
+    BaseType::SetValuesOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 }
 
 /****************************** SET CONSTITUTIVE VALUE *****************************/
 /***********************************************************************************/
 
-void SolidShellElementSprism3D6N::SetValueOnIntegrationPoints(
+void SolidShellElementSprism3D6N::SetValuesOnIntegrationPoints(
     const Variable<ConstitutiveLaw::Pointer>& rVariable,
     std::vector<ConstitutiveLaw::Pointer>& rValues,
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    BaseType::SetValueOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
+    BaseType::SetValuesOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
 }
 
 /******************************** GET DOUBLE VALUE *********************************/

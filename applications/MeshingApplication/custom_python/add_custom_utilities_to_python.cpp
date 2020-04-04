@@ -51,7 +51,6 @@ void AddCustomUtilitiesToPython(pybind11::module& m)
 {
     // MeshingUtilities
     auto mod_meshing_utilities = m.def_submodule("MeshingUtilities");
-    mod_meshing_utilities.def("EnsureModelPartOwnsProperties", &MeshingUtilities::EnsureModelPartOwnsProperties);
     mod_meshing_utilities.def("BlockThresholdSizeElements", &MeshingUtilities::BlockThresholdSizeElements);
     mod_meshing_utilities.def("ComputeElementsSize", &MeshingUtilities::ComputeElementsSize);
 

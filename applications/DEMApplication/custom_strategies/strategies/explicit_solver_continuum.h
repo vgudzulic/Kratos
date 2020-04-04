@@ -31,7 +31,6 @@ namespace Kratos {
         using BaseType::mListOfSphericParticles;
         using BaseType::mListOfGhostSphericParticles;
         using BaseType::SearchNeighbours;
-        using BaseType::SetSearchRadiiOnAllParticles;
 
         /// Pointer definition of ExplicitSolverStrategy
         KRATOS_CLASS_POINTER_DEFINITION(ContinuumExplicitSolverStrategy);
@@ -63,13 +62,14 @@ namespace Kratos {
         }
 
         virtual void Initialize() override;
-        virtual double Solve() override;
+        virtual double SolveSolutionStep() override;
         void SearchFEMOperations(ModelPart& r_model_part, bool has_mpi);
         void SearchDEMOperations(ModelPart& r_model_part, bool has_mpi);
         void ComputeNewNeighboursHistoricalData() override;
         void CreateContactElements() override;
         void SetCoordinationNumber(ModelPart& r_model_part);
         double ComputeCoordinationNumber(double& standard_dev);
+        void SetSearchRadiiOnAllParticles(ModelPart& r_model_part, const double added_search_distance, const double amplification);
         void BoundingBoxUtility(bool is_time_to_mark_and_remove = true) override;
         void Check_MPI(bool& has_mpi);
         virtual void CalculateMaxSearchDistance();
