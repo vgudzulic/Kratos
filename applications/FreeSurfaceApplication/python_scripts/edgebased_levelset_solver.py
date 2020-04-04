@@ -143,7 +143,8 @@ class EdgeBasedLevelSetSolver(PythonSolver):
         # neighbour search
         number_of_avg_elems = 10
         number_of_avg_nodes = 10
-        self.neighbour_search = KratosMultiphysics.FindNodalNeighboursProcess(self.main_model_part, number_of_avg_elems, number_of_avg_nodes)
+        self.neighbour_search = KratosMultiphysics.FindNodalNeighboursProcess(
+            self.main_model_part, number_of_avg_elems, number_of_avg_nodes)
         (self.neighbour_search).Execute()
 
         # erase isolated notes
