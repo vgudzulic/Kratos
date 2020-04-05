@@ -28,6 +28,7 @@ class TestZlibUtilities(KratosUnittest.TestCase):
         lorem_ipsum_decompressed = KratosMultiphysics.ZlibUtilities.DecompressString(lorem_ipsum_compressed)
 
         self.assertEqual(lorem_ipsum, lorem_ipsum_decompressed)
+        self.assertLess(len(lorem_ipsum_compressed), len(lorem_ipsum))
 
 if __name__ == '__main__':
     KratosUnittest.main()
