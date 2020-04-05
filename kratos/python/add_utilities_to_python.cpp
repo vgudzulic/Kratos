@@ -61,6 +61,7 @@
 #include "utilities/entities_utilities.h"
 #include "utilities/constraint_utilities.h"
 #include "utilities/compare_elements_and_conditions_utility.h"
+#include "utilities/zlib_utilities.h"
 
 namespace Kratos {
 namespace Python {
@@ -1189,6 +1190,11 @@ void AddUtilitiesToPython(pybind11::module &m)
     auto mod_compare_elem_cond_utils = m.def_submodule("CompareElementsAndConditionsUtility");
     mod_compare_elem_cond_utils.def("GetRegisteredName", GetRegisteredNameElement );
     mod_compare_elem_cond_utils.def("GetRegisteredName", GetRegisteredNameCondition );
+
+    // ZlibUtilities
+    auto zlib_utils = m.def_submodule("ZlibUtilities");
+    mod_compare_elem_cond_utils.def("CompressString", ZlibUtilities::CompressString );
+    mod_compare_elem_cond_utils.def("DecompressString", ZlibUtilities::DecompressString );
 }
 
 } // namespace Python.
