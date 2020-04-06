@@ -1193,8 +1193,8 @@ void AddUtilitiesToPython(pybind11::module &m)
 
     // ZlibUtilities
     auto zlib_utils = m.def_submodule("ZlibUtilities");
-    mod_compare_elem_cond_utils.def("CompressString", ZlibUtilities::CompressString );
-    mod_compare_elem_cond_utils.def("DecompressString", ZlibUtilities::DecompressString );
+    zlib_utils.def("CompressString", ZlibUtilities::CompressString );
+    zlib_utils.def("DecompressString", ZlibUtilities::DecompressString );
 }
 
 } // namespace Python.
