@@ -395,11 +395,13 @@ namespace Kratos {
         }
 
         if (fabs(equiv_tg_of_static_fri_ang) > 1.0e-12 || fabs(equiv_tg_of_dynamic_fri_ang) > 1.0e-12) {
-            double critical_force = 0.6666666666666667 * Globals::Pi * equiv_radius * indentation * element1->GetParticleConicalDamageMaxStress();
-            double critical_force_inv = 1.0  / critical_force;
-            double wear_value = pow((normal_contact_force * critical_force_inv), element1->GetParticleConicalDamageGamma());
-            equiv_tg_of_static_fri_ang *= wear_value;
-            equiv_tg_of_dynamic_fri_ang *= wear_value;
+            double critical_force = 0.166666667 * pow(Globals::Pi * element1->GetParticleConicalDamageMaxStress(), 3) * pow(original_equiv_radius / equiv_young, 2);
+            if (LocalElasticContactForce[2] > critical_force) {
+                double critical_force_inv = 1.0  / critical_force;
+                double wear_value = pow((LocalElasticContactForce[2] * critical_force_inv), element1->GetParticleConicalDamageGamma());
+                equiv_tg_of_static_fri_ang *= wear_value;
+                equiv_tg_of_dynamic_fri_ang *= wear_value;
+            }
         }
 
         for (unsigned int i = 0; element1->mNeighbourElements.size(); i++) {
@@ -517,11 +519,13 @@ namespace Kratos {
         }
 
         if (fabs(equiv_tg_of_static_fri_ang) > 1.0e-12 || fabs(equiv_tg_of_dynamic_fri_ang) > 1.0e-12) {
-            double critical_force = 0.6666666666666667 * Globals::Pi * equiv_radius * indentation * element->GetParticleConicalDamageMaxStress();
-            double critical_force_inv = 1.0  / critical_force;
-            double wear_value = pow((normal_contact_force * critical_force_inv), element->GetParticleConicalDamageGamma());
-            equiv_tg_of_static_fri_ang *= wear_value;
-            equiv_tg_of_dynamic_fri_ang *= wear_value;
+            double critical_force = 0.166666667 * pow(Globals::Pi * element->GetParticleConicalDamageMaxStress(), 3) * pow(original_effective_radius / equiv_young, 2);
+            if (LocalElasticContactForce[2] > critical_force) {
+                double critical_force_inv = 1.0  / critical_force;
+                double wear_value = pow((LocalElasticContactForce[2] * critical_force_inv), element->GetParticleConicalDamageGamma());
+                equiv_tg_of_static_fri_ang *= wear_value;
+                equiv_tg_of_dynamic_fri_ang *= wear_value;
+            }
         }
 
         for (unsigned int i = 0; element->mNeighbourRigidFaces.size(); i++) {
