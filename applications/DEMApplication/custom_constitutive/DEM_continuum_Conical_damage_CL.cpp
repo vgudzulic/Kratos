@@ -382,27 +382,40 @@ namespace Kratos {
 
         AuxElasticShearForce = sqrt(LocalElasticContactForce[0] * LocalElasticContactForce[0] + LocalElasticContactForce[1] * LocalElasticContactForce[1]);
 
-        const double my_tg_of_friction_angle        = element1->GetTgOfFrictionAngle();
-        const double neighbour_tg_of_friction_angle = element2->GetTgOfFrictionAngle();
-        double equiv_tg_of_fri_ang                  = 0.5 * (my_tg_of_friction_angle + neighbour_tg_of_friction_angle);
+        const double my_tg_of_static_friction_angle        = element1->GetTgOfStaticFrictionAngle();
+        const double neighbour_tg_of_static_friction_angle = element2->GetTgOfStaticFrictionAngle();
+        double equiv_tg_of_static_fri_ang            = 0.5 * (my_tg_of_static_friction_angle + neighbour_tg_of_static_friction_angle);
 
-        if (fabs(equiv_tg_of_fri_ang) > 1.0e-12) {
+        const double my_tg_of_dynamic_friction_angle        = element1->GetTgOfDynamicFrictionAngle();
+        const double neighbour_tg_of_dynamic_friction_angle = element2->GetTgOfStaticFrictionAngle();
+        double equiv_tg_of_dynamic_fri_ang            = 0.5 * (my_tg_of_dynamic_friction_angle + neighbour_tg_of_dynamic_friction_angle);
+
+        if(equiv_tg_of_static_fri_ang < 0.0 || equiv_tg_of_dynamic_fri_ang < 0.0) {
+            KRATOS_ERROR << "The averaged friction is negative for one contact of element with Id: "<< element1->Id()<<std::endl;
+        }
+
+        if (fabs(equiv_tg_of_static_fri_ang) > 1.0e-12 || fabs(equiv_tg_of_dynamic_fri_ang) > 1.0e-12) {
             double critical_force = 0.166666667 * pow(Globals::Pi * element1->GetParticleConicalDamageMaxStress(), 3) * pow(original_equiv_radius / equiv_young, 2);
             if (LocalElasticContactForce[2] > critical_force) {
                 double critical_force_inv = 1.0  / critical_force;
-                equiv_tg_of_fri_ang *= pow((LocalElasticContactForce[2] * critical_force_inv), element1->GetParticleConicalDamageGamma());
+                double wear_value = pow((LocalElasticContactForce[2] * critical_force_inv), element1->GetParticleConicalDamageGamma());
+                equiv_tg_of_static_fri_ang *= wear_value;
+                equiv_tg_of_dynamic_fri_ang *= wear_value;
             }
         }
 
         for (unsigned int i = 0; element1->mNeighbourElements.size(); i++) {
             if (element1->mNeighbourElements[i]->Id() == element2->Id()) {
-                if (element1->mNeighbourTgOfFriAng[i] <= equiv_tg_of_fri_ang) equiv_tg_of_fri_ang = element1->mNeighbourTgOfFriAng[i];
-                else element1->mNeighbourTgOfFriAng[i] = equiv_tg_of_fri_ang;
+                if (element1->mNeighbourTgOfStatFriAng[i] <= equiv_tg_of_static_fri_ang) equiv_tg_of_static_fri_ang = element1->mNeighbourTgOfStatFriAng[i];
+                else element1->mNeighbourTgOfStatFriAng[i] = equiv_tg_of_static_fri_ang;
+                if (element1->mNeighbourTgOfDynFriAng[i] <= equiv_tg_of_dynamic_fri_ang) equiv_tg_of_dynamic_fri_ang = element1->mNeighbourTgOfDynFriAng[i];
+                else element1->mNeighbourTgOfDynFriAng[i] = equiv_tg_of_dynamic_fri_ang;
                 break;
             }
         }
 
-        MaximumAdmisibleShearForce = normal_contact_force * equiv_tg_of_fri_ang;
+        MaximumAdmisibleShearForce = normal_contact_force * equiv_tg_of_static_fri_ang;
+        if (AuxElasticShearForce > MaximumAdmisibleShearForce) MaximumAdmisibleShearForce = normal_contact_force * equiv_tg_of_dynamic_fri_ang;
 
         const double tangential_contact_force_0 = LocalElasticContactForce[0] + ViscoDampingLocalContactForce[0];
         const double tangential_contact_force_1 = LocalElasticContactForce[1] + ViscoDampingLocalContactForce[1];
@@ -493,27 +506,40 @@ namespace Kratos {
 
         AuxElasticShearForce = sqrt(LocalElasticContactForce[0] * LocalElasticContactForce[0] + LocalElasticContactForce[1] * LocalElasticContactForce[1]);
 
-        const double my_tg_of_friction_angle   = element->GetTgOfFrictionAngle();
-        const double wall_tg_of_friction_angle = wall->GetProperties()[FRICTION];
-        double equiv_tg_of_fri_ang             = 0.5 * (my_tg_of_friction_angle + wall_tg_of_friction_angle);
+        const double my_tg_of_static_friction_angle        = element->GetTgOfStaticFrictionAngle();
+        const double neighbour_tg_of_static_friction_angle = wall->GetProperties()[STATIC_FRICTION];
+        double equiv_tg_of_static_fri_ang            = 0.5 * (my_tg_of_static_friction_angle + neighbour_tg_of_static_friction_angle);
 
-        if (fabs(equiv_tg_of_fri_ang) > 1.0e-12) {
+        const double my_tg_of_dynamic_friction_angle        = element->GetTgOfDynamicFrictionAngle();
+        const double neighbour_tg_of_dynamic_friction_angle = wall->GetProperties()[DYNAMIC_FRICTION];
+        double equiv_tg_of_dynamic_fri_ang            = 0.5 * (my_tg_of_dynamic_friction_angle + neighbour_tg_of_dynamic_friction_angle);
+
+        if(equiv_tg_of_static_fri_ang < 0.0 || equiv_tg_of_dynamic_fri_ang < 0.0) {
+            KRATOS_ERROR << "The averaged friction is negative for one contact of element with Id: "<< element->Id()<<std::endl;
+        }
+
+        if (fabs(equiv_tg_of_static_fri_ang) > 1.0e-12 || fabs(equiv_tg_of_dynamic_fri_ang) > 1.0e-12) {
             double critical_force = 0.166666667 * pow(Globals::Pi * element->GetParticleConicalDamageMaxStress(), 3) * pow(original_effective_radius / equiv_young, 2);
             if (LocalElasticContactForce[2] > critical_force) {
                 double critical_force_inv = 1.0  / critical_force;
-                equiv_tg_of_fri_ang *= pow((LocalElasticContactForce[2] * critical_force_inv), element->GetParticleConicalDamageGamma());
+                double wear_value = pow((LocalElasticContactForce[2] * critical_force_inv), element->GetParticleConicalDamageGamma());
+                equiv_tg_of_static_fri_ang *= wear_value;
+                equiv_tg_of_dynamic_fri_ang *= wear_value;
             }
         }
 
         for (unsigned int i = 0; element->mNeighbourRigidFaces.size(); i++) {
             if (element->mNeighbourRigidFaces[i]->Id() == wall->Id()) {
-                if (element->mNeighbourRigidTgOfFriAng[i] <= equiv_tg_of_fri_ang) equiv_tg_of_fri_ang = element->mNeighbourRigidTgOfFriAng[i];
-                else element->mNeighbourRigidTgOfFriAng[i] = equiv_tg_of_fri_ang;
+                if (element->mNeighbourRigidTgOfStatFriAng[i] <= equiv_tg_of_static_fri_ang) equiv_tg_of_static_fri_ang = element->mNeighbourRigidTgOfStatFriAng[i];
+                else element->mNeighbourRigidTgOfStatFriAng[i] = equiv_tg_of_static_fri_ang;
+                if (element->mNeighbourRigidTgOfDynFriAng[i] <= equiv_tg_of_dynamic_fri_ang) equiv_tg_of_dynamic_fri_ang = element->mNeighbourRigidTgOfDynFriAng[i];
+                else element->mNeighbourRigidTgOfDynFriAng[i] = equiv_tg_of_dynamic_fri_ang;
                 break;
             }
         }
 
-        MaximumAdmisibleShearForce = normal_contact_force * equiv_tg_of_fri_ang;
+        MaximumAdmisibleShearForce = normal_contact_force * equiv_tg_of_static_fri_ang;
+        if (AuxElasticShearForce > MaximumAdmisibleShearForce) MaximumAdmisibleShearForce = normal_contact_force * equiv_tg_of_dynamic_fri_ang;
 
         const double tangential_contact_force_0 = LocalElasticContactForce[0] + ViscoDampingLocalContactForce[0];
         const double tangential_contact_force_1 = LocalElasticContactForce[1] + ViscoDampingLocalContactForce[1];
