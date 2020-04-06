@@ -43,11 +43,15 @@ ContactInfoSphericParticle& ContactInfoSphericParticle::operator=(const ContactI
     mNeighbourContactRadius = rOther.mNeighbourContactRadius;
     mNeighbourIndentation = rOther.mNeighbourIndentation;
     mNeighbourTgOfFriAng = rOther.mNeighbourTgOfFriAng;
+    mNeighbourTgOfStatFriAng = rOther.mNeighbourTgOfStatFriAng;
+    mNeighbourTgOfDynFriAng = rOther.mNeighbourTgOfDynFriAng;
     mNeighbourContactStress = rOther.mNeighbourContactStress;
     mNeighbourCohesion = rOther.mNeighbourCohesion;
     mNeighbourRigidContactRadius = rOther.mNeighbourRigidContactRadius;
     mNeighbourRigidIndentation = rOther.mNeighbourRigidIndentation;
     mNeighbourRigidTgOfFriAng = rOther.mNeighbourRigidTgOfFriAng;
+    mNeighbourRigidTgOfStatFriAng = rOther.mNeighbourRigidTgOfStatFriAng;
+    mNeighbourRigidTgOfDynFriAng = rOther.mNeighbourRigidTgOfDynFriAng;
     mNeighbourRigidContactStress = rOther.mNeighbourRigidContactStress;
     mNeighbourRigidCohesion = rOther.mNeighbourRigidCohesion;
 
@@ -68,6 +72,8 @@ void ContactInfoSphericParticle::ComputeNewNeighboursHistoricalData(DenseVector<
     std::vector<double> temp_neighbour_contact_radius;
     std::vector<double> temp_neighbour_indentation;
     std::vector<double> temp_neighbour_tg_of_fri_ang;
+    std::vector<double> temp_neighbour_tg_of_stat_fri_ang;
+    std::vector<double> temp_neighbour_tg_of_dyn_fri_ang;
     std::vector<double> temp_neighbour_contact_stress;
     std::vector<double> temp_neighbour_cohesion;
     unsigned int new_size = mNeighbourElements.size();
@@ -78,6 +84,8 @@ void ContactInfoSphericParticle::ComputeNewNeighboursHistoricalData(DenseVector<
     temp_neighbour_contact_radius.resize(new_size);
     temp_neighbour_indentation.resize(new_size);
     temp_neighbour_tg_of_fri_ang.resize(new_size);
+    temp_neighbour_tg_of_stat_fri_ang.resize(new_size);
+    temp_neighbour_tg_of_dyn_fri_ang.resize(new_size);
     temp_neighbour_contact_stress.resize(new_size);
     temp_neighbour_cohesion.resize(new_size);
 
@@ -88,7 +96,9 @@ void ContactInfoSphericParticle::ComputeNewNeighboursHistoricalData(DenseVector<
         noalias(temp_neighbour_elastic_extra_contact_forces[i]) = vector_of_zeros;
         temp_neighbour_contact_radius[i] = 0.0;
         temp_neighbour_indentation[i] = 0.0;
-        temp_neighbour_tg_of_fri_ang[i] = 1e20;
+        temp_neighbour_tg_of_fri_ang[i] = 0.0;
+        temp_neighbour_tg_of_stat_fri_ang[i] = 0.0;
+        temp_neighbour_tg_of_dyn_fri_ang[i] = 0.0;
         temp_neighbour_contact_stress[i] = 0.0;
         temp_neighbour_cohesion[i] = 0.0;
 
@@ -106,6 +116,8 @@ void ContactInfoSphericParticle::ComputeNewNeighboursHistoricalData(DenseVector<
                 temp_neighbour_contact_radius[i] = mNeighbourContactRadius[j];
                 temp_neighbour_indentation[i] = mNeighbourIndentation[j];
                 temp_neighbour_tg_of_fri_ang[i] = mNeighbourTgOfFriAng[j];
+                temp_neighbour_tg_of_stat_fri_ang[i] = mNeighbourTgOfStatFriAng[j];
+                temp_neighbour_tg_of_dyn_fri_ang[i] = mNeighbourTgOfDynFriAng[j];
                 temp_neighbour_contact_stress[i] = mNeighbourContactStress[j];
                 temp_neighbour_cohesion[i] = mNeighbourCohesion[j];
                 break;
@@ -119,6 +131,8 @@ void ContactInfoSphericParticle::ComputeNewNeighboursHistoricalData(DenseVector<
     mNeighbourContactRadius.swap(temp_neighbour_contact_radius);
     mNeighbourIndentation.swap(temp_neighbour_indentation);
     mNeighbourTgOfFriAng.swap(temp_neighbour_tg_of_fri_ang);
+    mNeighbourTgOfStatFriAng.swap(temp_neighbour_tg_of_stat_fri_ang);
+    mNeighbourTgOfDynFriAng.swap(temp_neighbour_tg_of_dyn_fri_ang);
     mNeighbourContactStress.swap(temp_neighbour_contact_stress);
     mNeighbourCohesion.swap(temp_neighbour_cohesion);
 }
@@ -134,6 +148,8 @@ void ContactInfoSphericParticle::ComputeNewRigidFaceNeighboursHistoricalData()
     std::vector<double> temp_contact_radius(new_size);
     std::vector<double> temp_indentation(new_size);
     std::vector<double> temp_tg_of_fri_ang(new_size);
+    std::vector<double> temp_tg_of_stat_fri_ang(new_size);
+    std::vector<double> temp_tg_of_dyn_fri_ang(new_size);
     std::vector<double> temp_contact_stress(new_size);
     std::vector<double> temp_cohesion(new_size);
 
@@ -143,7 +159,9 @@ void ContactInfoSphericParticle::ComputeNewRigidFaceNeighboursHistoricalData()
         noalias(temp_neighbours_contact_forces[i]) = vector_of_zeros;
         temp_contact_radius[i] = 0.0;
         temp_indentation[i] = 0.0;
-        temp_tg_of_fri_ang[i] = 1e20;
+        temp_tg_of_fri_ang[i] = 0.0;
+        temp_tg_of_stat_fri_ang[i] = 0.0;
+        temp_tg_of_dyn_fri_ang[i] = 0.0;
         temp_contact_stress[i] = 0.0;
         temp_cohesion[i] = 0.0;
 
@@ -161,6 +179,8 @@ void ContactInfoSphericParticle::ComputeNewRigidFaceNeighboursHistoricalData()
                 temp_contact_radius[i] = mNeighbourRigidContactRadius[j];
                 temp_indentation[i] = mNeighbourRigidIndentation[j];
                 temp_tg_of_fri_ang[i] = mNeighbourRigidTgOfFriAng[j];
+                temp_tg_of_stat_fri_ang[i] = mNeighbourRigidTgOfStatFriAng[j];
+                temp_tg_of_stat_fri_ang[i] = mNeighbourRigidTgOfDynFriAng[j];
                 temp_contact_stress[i] = mNeighbourRigidContactStress[j];
                 temp_cohesion[i] =  mNeighbourRigidCohesion[j];
                 break;
@@ -174,6 +194,8 @@ void ContactInfoSphericParticle::ComputeNewRigidFaceNeighboursHistoricalData()
     mNeighbourRigidContactRadius.swap(temp_contact_radius);
     mNeighbourRigidIndentation.swap(temp_indentation);
     mNeighbourRigidTgOfFriAng.swap(temp_tg_of_fri_ang);
+    mNeighbourRigidTgOfStatFriAng.swap(temp_tg_of_stat_fri_ang);
+    mNeighbourRigidTgOfDynFriAng.swap(temp_tg_of_stat_fri_ang);
     mNeighbourRigidContactStress.swap(temp_contact_stress);
     mNeighbourRigidCohesion.swap(temp_cohesion);
 }

@@ -342,12 +342,12 @@ namespace Kratos {
 
         AuxElasticShearForce = sqrt(LocalElasticContactForce[0] * LocalElasticContactForce[0] + LocalElasticContactForce[1] * LocalElasticContactForce[1]);
 
-        const double my_tg_of_static_friction_angle        = element->GetProperties()[PARTICLE_STATIC_FRICTION_COEF];
-        const double neighbour_tg_of_static_friction_angle = neighbour->GetProperties()[PARTICLE_STATIC_FRICTION_COEF];
+        const double my_tg_of_static_friction_angle        = element->GetTgOfStaticFrictionAngle();
+        const double neighbour_tg_of_static_friction_angle = neighbour->GetProperties()[STATIC_FRICTION];
         const double equiv_tg_of_static_fri_ang            = 0.5 * (my_tg_of_static_friction_angle + neighbour_tg_of_static_friction_angle);
 
-        const double my_tg_of_dynamic_friction_angle        = element->GetProperties()[PARTICLE_DYNAMIC_FRICTION_COEF];
-        const double neighbour_tg_of_dynamic_friction_angle = neighbour->GetProperties()[PARTICLE_DYNAMIC_FRICTION_COEF];
+        const double my_tg_of_dynamic_friction_angle        = element->GetTgOfDynamicFrictionAngle();
+        const double neighbour_tg_of_dynamic_friction_angle = neighbour->GetProperties()[DYNAMIC_FRICTION];
         const double equiv_tg_of_dynamic_fri_ang            = 0.5 * (my_tg_of_dynamic_friction_angle + neighbour_tg_of_dynamic_friction_angle);
 
         if(equiv_tg_of_static_fri_ang < 0.0 || equiv_tg_of_dynamic_fri_ang < 0.0) {
