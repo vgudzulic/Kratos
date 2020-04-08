@@ -17,7 +17,7 @@ if (IsDistributedRun()
     from KratosMultiphysics.RANSApplication.block_builder_and_solvers import TrilinosBlockBuilderAndSolver as block_builder_and_solver
 elif (not IsDistributedRun()):
     from KratosMultiphysics import python_linear_solver_factory as linear_solver_factory
-    from KratosMultiphysics.RANSApplication import GenericResidualBasedSimpleSteadyScalarScheme as steady_scheme
+    from KratosMultiphysics.RANSApplication import AlgebraicFluxCorrectedScalarSteadyScheme as steady_scheme
     from KratosMultiphysics.RANSApplication import ResidualBasedSimpleSteadyVelocityScheme as steady_velocity_scheme
     from KratosMultiphysics.RANSApplication import GenericResidualBasedBossakVelocityDynamicScalarScheme as bossak_scheme
     from KratosMultiphysics.RANSApplication import GenericScalarConvergenceCriteria as scalar_convergence_criteria

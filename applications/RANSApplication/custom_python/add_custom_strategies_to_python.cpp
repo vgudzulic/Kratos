@@ -29,6 +29,7 @@
 #include "custom_strategies/generic_residual_based_bossak_velocity_scalar_scheme.h"
 #include "custom_strategies/generic_residualbased_simple_steady_scalar_scheme.h"
 #include "custom_strategies/residualbased_simple_steady_velocity_scheme.h"
+#include "custom_strategies/algebraic_flux_corrected_scalar_steady_scheme.h"
 
 // convergence criterians
 #include "custom_strategies/generic_convergence_criteria.h"
@@ -54,11 +55,14 @@ void AddCustomStrategiesToPython(pybind11::module& m)
     py::class_<CoupledStrategyItemType, typename CoupledStrategyItemType::Pointer>(
         m, "CoupledStrategyItem")
         .def(py::init<BaseSolvingStrategyType::Pointer, std::string, int>())
+        .def(py::init<BaseSolvingStrategyType::Pointer, std::string, int, std::vector<int>>())
         .def("AddAuxiliaryProcess", &CoupledStrategyItemType::AddAuxiliaryProcess)
         .def("GetName", &CoupledStrategyItemType::GetName)
         .def("GetStrategy", &CoupledStrategyItemType::GetStrategy)
         .def("GetAuxiliaryProcessList", &CoupledStrategyItemType::GetStrategy)
-        .def("GetStrategyInfo", &CoupledStrategyItemType::GetStrategyInfo);
+        .def("GetStrategyInfo", &CoupledStrategyItemType::GetStrategyInfo)
+        .def("GetStrategySolvabilityPattern", &CoupledStrategyItemType::GetStrategySolvabilityPattern)
+        .def("SetStrategySolvabilityPattern", &CoupledStrategyItemType::SetStrategySolvabilityPattern);
 
     // Add strtegies
     using CoupledStrategyType =
@@ -91,6 +95,11 @@ void AddCustomStrategiesToPython(pybind11::module& m)
                typename ResidualBasedSimpleSteadyVelocityScheme<SparseSpaceType, LocalSpaceType>::Pointer, BaseSchemeType>(
         m, "ResidualBasedSimpleSteadyVelocityScheme")
         .def(py::init<const double, const unsigned int>());
+
+    py::class_<AlgebraicFluxCorrectedScalarSteadyScheme<SparseSpaceType, LocalSpaceType>,
+               typename AlgebraicFluxCorrectedScalarSteadyScheme<SparseSpaceType, LocalSpaceType>::Pointer, BaseSchemeType>(
+        m, "AlgebraicFluxCorrectedScalarSteadyScheme")
+        .def(py::init<const double>());
 }
 
 } // namespace Python.

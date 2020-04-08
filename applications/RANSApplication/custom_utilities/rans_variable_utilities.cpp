@@ -372,11 +372,10 @@ void CalculateMagnitudeSquareFor3DVariable(ModelPart& rModelPart,
 }
 
 template <>
-bool CalculateTransientVariableConvergence(const ModelPart& rModelPart,
-                                           const Variable<double>& rVariable,
-                                           const double RelativeTolerance,
-                                           const double AbsoluteTolerance,
-                                           const int EchoLevel)
+void CalculateTransientVariableConvergence(double& rRelativeChange,
+                                           double& rAbsoluteChange,
+                                           const ModelPart& rModelPart,
+                                           const Variable<double>& rVariable)
 {
     KRATOS_TRY
 
@@ -403,30 +402,19 @@ bool CalculateTransientVariableConvergence(const ModelPart& rModelPart,
     solution = std::sqrt(r_communicator.GetDataCommunicator().SumAll(solution));
     number_of_dofs = r_communicator.GetDataCommunicator().SumAll(number_of_dofs);
     number_of_dofs = std::max(1.0, number_of_dofs);
-    solution = std::max(1.0, solution);
+    solution = (solution == 0.0 ? 1.0 : solution);
 
-    const double relative_error = dx / solution;
-    const double absolute_error = dx / number_of_dofs;
-
-    std::stringstream buffer;
-    buffer << std::scientific << std::setprecision(6) << " [ Obtained ratio: " << relative_error
-           << "; Expected ratio: " << RelativeTolerance
-           << "; Absolute norm: " << absolute_error << "; Expected norm: " << AbsoluteTolerance
-           << " ] - " << rVariable.Name() << std::endl;
-
-    KRATOS_INFO_IF("TransientVariableConvergence", EchoLevel > 0) << buffer.str();
-
-    return (relative_error < RelativeTolerance || absolute_error < AbsoluteTolerance);
+    rRelativeChange = dx / solution;
+    rAbsoluteChange = dx / number_of_dofs;
 
     KRATOS_CATCH("");
 }
 
 template <>
-bool CalculateTransientVariableConvergence(const ModelPart& rModelPart,
-                                           const Variable<array_1d<double, 3>>& rVariable,
-                                           const double RelativeTolerance,
-                                           const double AbsoluteTolerance,
-                                           const int EchoLevel)
+void CalculateTransientVariableConvergence(double& rRelativeChange,
+                                           double& rAbsoluteChange,
+                                           const ModelPart& rModelPart,
+                                           const Variable<array_1d<double, 3>>& rVariable)
 {
     KRATOS_TRY
 
@@ -454,20 +442,10 @@ bool CalculateTransientVariableConvergence(const ModelPart& rModelPart,
     solution = std::sqrt(r_communicator.GetDataCommunicator().SumAll(solution));
     number_of_dofs = r_communicator.GetDataCommunicator().SumAll(number_of_dofs);
     number_of_dofs = std::max(1.0, number_of_dofs);
-    solution = std::max(1.0, solution);
+    solution = (solution == 0.0 ? 1.0 : solution);
 
-    const double relative_error = dx / solution;
-    const double absolute_error = dx / number_of_dofs;
-
-    std::stringstream buffer;
-    buffer << std::scientific << std::setprecision(6) << " [ Obtained ratio: " << relative_error
-           << "; Expected ratio: " << RelativeTolerance
-           << "; Absolute norm: " << absolute_error << "; Expected norm: " << AbsoluteTolerance
-           << " ] - " << rVariable.Name() << std::endl;
-
-    KRATOS_INFO_IF("TransientVariableConvergence", EchoLevel > 0) << buffer.str();
-
-    return (relative_error < RelativeTolerance || absolute_error < AbsoluteTolerance);
+    rRelativeChange = dx / solution;
+    rAbsoluteChange = dx / number_of_dofs;
 
     KRATOS_CATCH("");
 }

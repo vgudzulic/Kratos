@@ -35,7 +35,7 @@ RansVtkOutputProcess::RansVtkOutputProcess(Model& rModel, Parameters rParameters
     Parameters default_parameters = Parameters(R"(
         {
             "model_part_name"          : "PLEASE_SPECIFY_MODEL_PART_NAME",
-            "output_file_name_pattern" : "NL_<model_part_name>_<rank>_<step>_<coupling_iteration>_<nl_iteration>"
+            "output_file_name_pattern" : "NL_<model_part_name>_R<rank>_S<step>_CL<coupling_iteration>_NL<nl_iteration>"
         })");
 
     mrParameters.AddMissingParameters(default_parameters);

@@ -15,16 +15,15 @@
 #define  KRATOS_RESIDUALBASED_SIMPLE_STEADY_SCHEME
 
 // Project includes
-#include "containers/array_1d.h"
-#include "fluid_dynamics_application_variables.h"
-#include "includes/cfd_variables.h"
 #include "includes/define.h"
 #include "includes/model_part.h"
-#include "includes/variables.h"
-#include "processes/process.h"
 #include "solving_strategies/schemes/scheme.h"
-#include "utilities/coordinate_transformation_utilities.h"
+#include "includes/variables.h"
+#include "includes/cfd_variables.h"
+#include "containers/array_1d.h"
 #include "utilities/openmp_utils.h"
+#include "utilities/coordinate_transformation_utilities.h"
+#include "processes/process.h"
 
 namespace Kratos {
 
@@ -105,17 +104,6 @@ public:
     mPressureRelaxationFactor = factor;
   }
 
-  void Initialize(ModelPart& rModelPart) override
-  {
-      KRATOS_TRY;
-
-      BaseType::Initialize(rModelPart);
-      int num_threads = OpenMPUtils::GetNumThreads();
-      mPseudoTimeMassMatrix.resize(num_threads);
-
-      KRATOS_CATCH("");
-  }
-
   void Update(ModelPart& rModelPart,
                       DofsArrayType& rDofSet,
                       TSystemMatrixType& rA,
@@ -153,11 +141,6 @@ public:
 
     if (SteadyLHS.size1() != 0)
       noalias(LHS_Contribution) += SteadyLHS;
-
-    const int k = OpenMPUtils::ThisThread();
-    rCurrentElement->Calculate(PSEUDO_TIME_MASS_MATRIX, mPseudoTimeMassMatrix[k], CurrentProcessInfo);
-    if (mPseudoTimeMassMatrix[k].size1() != 0)
-      noalias(LHS_Contribution) += mPseudoTimeMassMatrix[k];
 
     // apply slip condition
     mRotationTool.Rotate(LHS_Contribution,RHS_Contribution,rCurrentElement->GetGeometry());
@@ -322,6 +305,7 @@ public:
   ///@}
 
 protected:
+
   ///@name Protected Operators
   ///@{
 
@@ -330,8 +314,6 @@ protected:
 private:
   ///@name Member Variables
   ///@{
-
-  std::vector<Matrix> mPseudoTimeMassMatrix;
 
   double mVelocityRelaxationFactor;
   double mPressureRelaxationFactor;

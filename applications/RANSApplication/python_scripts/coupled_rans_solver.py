@@ -49,28 +49,7 @@ class CoupledRANSSolver(PythonSolver):
             "coupling_convergence_settings":{
                 "check_strategy_convergence_criteria":false,
                 "check_transient_variable_convergence": true,
-                "convergence_variable_settings_list": [
-                    {
-                        "name": "VELOCITY",
-                        "relative_tolerance": 1e-3,
-                        "absolute_tolerance": 1e-5
-                    },
-                    {
-                        "name": "PRESSURE",
-                        "relative_tolerance": 1e-3,
-                        "absolute_tolerance": 1e-5
-                    },
-                    {
-                        "name": "TURBULENT_KINETIC_ENERGY",
-                        "relative_tolerance": 1e-3,
-                        "absolute_tolerance": 1e-5
-                    },
-                    {
-                        "name": "TURBULENT_ENERGY_DISSIPATION_RATE",
-                        "relative_tolerance": 1e-3,
-                        "absolute_tolerance": 1e-5
-                    }
-                ]
+                "convergence_variable_settings_list": []
             },
             "potential_flow_initialization": {},
             "echo_level": 0,

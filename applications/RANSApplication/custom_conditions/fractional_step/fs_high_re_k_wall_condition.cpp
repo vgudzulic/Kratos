@@ -340,6 +340,7 @@ void FSHighReKWallCondition<TDim, TNumNodes>::ApplyWallLaw(MatrixType& rLocalMat
 
         const double y_plus_limit = rCurrentProcessInfo[RANS_Y_PLUS_LIMIT];
         double y_plus = 0.0;
+        double condition_u_tau = 0.0;
 
         if (wall_cell_center_velocity_magnitude > eps)
         {
@@ -383,8 +384,6 @@ void FSHighReKWallCondition<TDim, TNumNodes>::ApplyWallLaw(MatrixType& rLocalMat
             const std::function<double(double, double)> wall_tau_function =
                 ((y_plus >= y_plus_limit) ? log_region_functional : linear_region_functional);
 
-            double condition_u_tau = 0.0;
-
             for (int g = 0; g < number_of_gauss_points; ++g)
             {
                 const Vector& gauss_shape_functions = row(shape_functions, g);
@@ -427,9 +426,9 @@ void FSHighReKWallCondition<TDim, TNumNodes>::ApplyWallLaw(MatrixType& rLocalMat
             }
 
             condition_u_tau /= static_cast<double>(number_of_gauss_points);
-            this->GetValue(PARENT_CONDITION_POINTER)->SetValue(FRICTION_VELOCITY, condition_u_tau);
         }
 
+        this->GetValue(PARENT_CONDITION_POINTER)->SetValue(FRICTION_VELOCITY, condition_u_tau);
         this->GetValue(PARENT_CONDITION_POINTER)->SetValue(RANS_Y_PLUS, std::max(y_plus, y_plus_limit));
     }
 }

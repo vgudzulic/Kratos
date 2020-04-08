@@ -170,8 +170,10 @@ private:
     ///@}
     ///@name Member Variables
     ///@{
+
     ModelPart& mrBaseModelPart;
 
+    bool mPartitionIndexCheckPerformed = false;
 
     ///@}
     ///@name Private Operators
@@ -244,5 +246,3 @@ inline std::ostream & operator <<(std::ostream& rOStream,
 } // namespace Kratos.
 
 #endif // KRATOS_PARALLEL_FILL_COMMUNICATOR_H_INCLUDED  defined
-
-

@@ -68,6 +68,10 @@ def Factory(settings, Model):
             KratosRANS.RansNutYPlusWallFunctionProcess
         ],
         [
+            "EpsilonYPlusWallFunctionProcess",
+            KratosRANS.RansEpsilonYPlusWallFunctionProcess
+        ],
+        [
             "NuTLowReCalculationProcess",
             KratosRANS.RansNutLowReCalculationProcess
         ],

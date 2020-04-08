@@ -71,7 +71,21 @@ public:
                         const int EchoLevel)
         : mpStrategy(pStrategy),
           mStrategyName(rStrategyName),
-          mEchoLevel(EchoLevel)
+          mEchoLevel(EchoLevel),
+          mCurrentIteration(0)
+    {
+        mStrategySolvabilityPattern.clear();
+    }
+
+    CoupledStrategyItem(typename BaseType::Pointer pStrategy,
+                        const std::string& rStrategyName,
+                        const int EchoLevel,
+                        const std::vector<int>& StrategySolvabilityPattern)
+        : mpStrategy(pStrategy),
+          mStrategyName(rStrategyName),
+          mEchoLevel(EchoLevel),
+          mStrategySolvabilityPattern(StrategySolvabilityPattern),
+          mCurrentIteration(0)
     {
     }
 
@@ -111,6 +125,35 @@ public:
     BaseType& GetStrategy()
     {
         return *mpStrategy;
+    }
+
+    std::vector<int> GetStrategySolvabilityPattern() const
+    {
+        return mStrategySolvabilityPattern;
+    }
+
+    void SetStrategySolvabilityPattern(const std::vector<int>& rPattern)
+    {
+        mStrategySolvabilityPattern = rPattern;
+    }
+
+    bool IsStrategySolvable()
+    {
+        const int pattern_size = mStrategySolvabilityPattern.size();
+        if (pattern_size == 0)
+        {
+            return true;
+        }
+        else
+        {
+            const bool solvability = static_cast<bool>(
+                mStrategySolvabilityPattern[mCurrentIteration % pattern_size]);
+            ++mCurrentIteration;
+            KRATOS_INFO_IF(this->Info(), mEchoLevel > 1 && !solvability)
+                << "Skipping " << mStrategyName
+                << " solving step due pattern specification." << std::endl;
+            return solvability;
+        }
     }
 
     ///@}
@@ -155,6 +198,20 @@ public:
         buffer << "  Element type         : " << r_model_part.ElementsBegin()->Info() << "\n";
         buffer << "  Condition type       : " << r_model_part.ConditionsBegin()->Info()
                << "\n";
+        if (mStrategySolvabilityPattern.size() != 0)
+        {
+            buffer << "  Solvability pattern  : [";
+            for (const int& solvability : mStrategySolvabilityPattern)
+            {
+                buffer << " " << ((static_cast<bool>(solvability)) ? "1" : "0");
+            }
+            buffer << " ]\n";
+        }
+        else
+        {
+            buffer << "  Solvability pattern  : No pattern specified. Always "
+                      "solvable.\n";
+        }
 
         buffer << "  Update process list:\n";
         if (mAuxiliaryProcessList.size() == 0)
@@ -223,6 +280,11 @@ private:
     typename BaseType::Pointer mpStrategy;
     std::string mStrategyName;
     int mEchoLevel;
+    std::vector<int> mStrategySolvabilityPattern;
+    std::vector<std::string> mStrategySolvabilityPatternConvergenceVariables;
+    int mIterationsToSkip;
+    int mIterationsToRun;
+    int mCurrentIteration;
 
     std::vector<Process::Pointer> mAuxiliaryProcessList;
 

@@ -241,6 +241,34 @@ void RansEvmKEpsilonEpsilonWall<TDim, TNumNodes>::PrintData(std::ostream& rOStre
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
+void RansEvmKEpsilonEpsilonWall<TDim, TNumNodes>::Calculate(const Variable<double>& rVariable,
+                                                            double& rOutput,
+                                                            const ProcessInfo& rCurrentProcessInfo)
+{
+    KRATOS_TRY
+
+    if (rVariable == RESIDUAL)
+    {
+        if (RansCalculationUtilities::IsWall(*this))
+        {
+            rOutput = this->GetValue(PARENT_CONDITION_POINTER)
+                          ->GetValue(NEIGHBOUR_ELEMENTS)[0]
+                          .GetValue(RESIDUAL);
+        }
+        else
+        {
+            rOutput = 0.0;
+        }
+    }
+    else
+    {
+        KRATOS_ERROR << "Unsupported variable";
+    }
+
+    KRATOS_CATCH("");
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKEpsilonEpsilonWall<TDim, TNumNodes>::AddLocalVelocityContribution(
     MatrixType& rDampingMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
@@ -262,6 +290,7 @@ void RansEvmKEpsilonEpsilonWall<TDim, TNumNodes>::AddLocalVelocityContribution(
     const double epsilon_sigma =
         rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
     const double c_mu_25 = std::pow(rCurrentProcessInfo[TURBULENCE_RANS_C_MU], 0.25);
+    const double kappa = rCurrentProcessInfo[WALL_VON_KARMAN];
     const double eps = std::numeric_limits<double>::epsilon();
 
     const ConditionType& r_parent_condition = *this->GetValue(PARENT_CONDITION_POINTER);

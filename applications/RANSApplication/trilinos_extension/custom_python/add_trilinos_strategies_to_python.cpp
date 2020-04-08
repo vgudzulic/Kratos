@@ -59,11 +59,14 @@ void AddTrilinosStrategiesToPython(pybind11::module& m)
     py::class_<MPICoupledStrategyItemType, typename MPICoupledStrategyItemType::Pointer>(
         m, "MPICoupledStrategyItem")
         .def(py::init<MPIBaseSolvingStrategyType::Pointer, std::string, int>())
+        .def(py::init<MPIBaseSolvingStrategyType::Pointer, std::string, int, std::vector<int>>())
         .def("AddAuxiliaryProcess", &MPICoupledStrategyItemType::AddAuxiliaryProcess)
         .def("GetName", &MPICoupledStrategyItemType::GetName)
         .def("GetStrategy", &MPICoupledStrategyItemType::GetStrategy)
         .def("GetAuxiliaryProcessList", &MPICoupledStrategyItemType::GetStrategy)
-        .def("GetStrategyInfo", &MPICoupledStrategyItemType::GetStrategyInfo);
+        .def("GetStrategyInfo", &MPICoupledStrategyItemType::GetStrategyInfo)
+        .def("GetStrategySolvabilityPattern", &MPICoupledStrategyItemType::GetStrategySolvabilityPattern)
+        .def("SetStrategySolvabilityPattern", &MPICoupledStrategyItemType::SetStrategySolvabilityPattern);;
 
     // Add strtegies
     using MPICoupledStrategyType =

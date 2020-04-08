@@ -200,6 +200,10 @@ public:
                                             VectorType& rRightHandSideVector,
                                             ProcessInfo& rCurrentProcessInfo) override;
 
+    void Calculate(const Variable<double>& rVariable,
+                   double& rOutput,
+                   const ProcessInfo& rCurrentProcessInfo) override;
+
     /// Check that all data required by this condition is available and reasonable
     int Check(const ProcessInfo& rCurrentProcessInfo) override;
 

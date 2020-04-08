@@ -60,6 +60,9 @@ class CoupledStrategy : public SolvingStrategy<TSparseSpace, TDenseSpace, TLinea
         std::string Name;
         double RelativeTolerance;
         double AbsoluteTolerance;
+        double RelativeError = 1.0;
+        double AbsoluteError = 1.0;
+        bool IsConverged;
     };
 
 public:
@@ -111,7 +114,6 @@ public:
     void AddStrategyItem(typename CouplingStrategyItemType::Pointer pStrategyItem)
     {
         mStrategiesList.push_back(pStrategyItem);
-        mIsStrategyConverged.push_back(false);
     }
 
     void AddConvergenceCheckVariable(const std::string& rVariableName,
@@ -223,28 +225,17 @@ public:
         if (mCheckVariableTransientConvergence)
         {
             const ModelPart& r_model_part = this->GetModelPart();
-            std::stringstream buffer;
-            for (const ConvergenceVariableSettings& r_variable_settings : mConvergenceVariableSettingsList)
+            for (ConvergenceVariableSettings& r_variable_settings : mConvergenceVariableSettingsList)
             {
+                double relative_error, absolute_error;
                 if (KratosComponents<Variable<double>>::Has(r_variable_settings.Name))
                 {
                     const Variable<double>& r_variable =
                         KratosComponents<Variable<double>>::Get(
                             r_variable_settings.Name);
 
-                    const bool is_variable_converged =
-                        RansVariableUtilities::CalculateTransientVariableConvergence(
-                            r_model_part, r_variable, r_variable_settings.RelativeTolerance,
-                            r_variable_settings.AbsoluteTolerance,
-                            this->GetEchoLevel() - 1);
-
-                    if (is_variable_converged)
-                        buffer << r_variable_settings.Name << ", ";
-
-                    if (is_converged)
-                    {
-                        is_converged = is_variable_converged;
-                    }
+                    RansVariableUtilities::CalculateTransientVariableConvergence(
+                        relative_error, absolute_error, r_model_part, r_variable);
                 }
                 else
                 {
@@ -252,20 +243,47 @@ public:
                         KratosComponents<Variable<array_1d<double, 3>>>::Get(
                             r_variable_settings.Name);
 
-                    const bool is_variable_converged =
-                        RansVariableUtilities::CalculateTransientVariableConvergence(
-                            r_model_part, r_variable, r_variable_settings.RelativeTolerance,
-                            r_variable_settings.AbsoluteTolerance,
-                            this->GetEchoLevel() - 1);
-
-                    if (is_variable_converged)
-                        buffer << r_variable_settings.Name << ", ";
-
-                    if (is_converged)
-                    {
-                        is_converged = is_variable_converged;
-                    }
+                    RansVariableUtilities::CalculateTransientVariableConvergence(
+                        relative_error, absolute_error, r_model_part, r_variable);
                 }
+
+                if (relative_error != 0.0 && absolute_error != 0.0)
+                {
+                    r_variable_settings.RelativeError = relative_error;
+                    r_variable_settings.AbsoluteError = absolute_error;
+                }
+
+                r_variable_settings.IsConverged =
+                    (r_variable_settings.RelativeError < r_variable_settings.RelativeTolerance ||
+                     r_variable_settings.AbsoluteError < r_variable_settings.AbsoluteTolerance);
+
+                is_converged = (is_converged) ? r_variable_settings.IsConverged : is_converged;
+
+                if (this->GetEchoLevel() > 1)
+                {
+                    std::stringstream buffer;
+                    buffer << std::scientific << std::setprecision(6)
+                           << "[ Obtained ratio: " << r_variable_settings.RelativeError
+                           << "; Expected ratio: " << r_variable_settings.RelativeTolerance
+                           << "; Absolute norm: " << r_variable_settings.AbsoluteError
+                           << "; Expected norm: " << r_variable_settings.AbsoluteTolerance
+                           << " ] - " << r_variable_settings.Name << std::endl;
+
+                    KRATOS_INFO(this->Info()) << buffer.str();
+                }
+            }
+            std::stringstream buffer;
+            const auto& r_variable_settings =
+                *(mConvergenceVariableSettingsList.begin());
+            buffer << (r_variable_settings.IsConverged ? r_variable_settings.Name : "");
+            for (int i = 1;
+                 i < static_cast<int>(mConvergenceVariableSettingsList.size()); ++i)
+            {
+                const auto& r_variable_settings =
+                    *(mConvergenceVariableSettingsList.begin() + i);
+                buffer << (r_variable_settings.IsConverged
+                               ? (", " + r_variable_settings.Name)
+                               : "");
             }
             KRATOS_INFO_IF(this->Info(), (this->GetEchoLevel() > 1 && buffer.str() != ""))
                 << buffer.str() << " *** CONVERGENCE ACHIEVED ***" << std::endl;
@@ -292,24 +310,41 @@ public:
             for (int i = 0; i < number_of_solving_strategies; ++i)
             {
                 auto& p_solving_strategy = this->mStrategiesList[i];
+                if (p_solving_strategy->IsStrategySolvable())
+                {
+                    p_solving_strategy->GetStrategy().SolveSolutionStep();
 
-                p_solving_strategy->GetStrategy().SolveSolutionStep();
+                    // execute update processes
+                    for (auto& p_process : p_solving_strategy->GetAuxiliaryProcessList())
+                        p_process->Execute();
 
-                // execute update processes
-                for (auto& p_process : p_solving_strategy->GetAuxiliaryProcessList())
-                    p_process->Execute();
+                    KRATOS_INFO_IF(this->Info(), this->GetEchoLevel() > 1)
+                        << "Executed update processes for "
+                        << p_solving_strategy->GetName() << ".\n";
 
-                KRATOS_INFO_IF(this->Info(), this->GetEchoLevel() > 1)
-                    << "Executed update processes for "
-                    << p_solving_strategy->GetName() << ".\n";
-
-                const unsigned int iterations = r_current_process_info[NL_ITERATION_NUMBER];
-                KRATOS_INFO_IF(this->Info(), this->GetEchoLevel() > 1)
-                    << "Solving " << p_solving_strategy->GetName() << " used "
-                    << iterations << " non-linear iterations.\n";
+                    const unsigned int iterations =
+                        r_current_process_info[NL_ITERATION_NUMBER];
+                    KRATOS_INFO_IF(this->Info(), this->GetEchoLevel() > 1)
+                        << "Solving " << p_solving_strategy->GetName()
+                        << " used " << iterations << " non-linear iterations.\n";
+                }
             }
 
             is_converged = this->IsConverged();
+            // Check for all the strategy convergence
+            if (is_converged)
+            {
+                for (int i = 0; i < number_of_solving_strategies; ++i)
+                {
+                    auto& p_solving_strategy = this->mStrategiesList[i];
+                    p_solving_strategy->GetStrategy().SolveSolutionStep();
+
+                    // execute update processes
+                    for (auto& p_process : p_solving_strategy->GetAuxiliaryProcessList())
+                        p_process->Execute();
+                }
+                is_converged = this->IsConverged();
+            }
             ++iteration;
         }
 
@@ -451,7 +486,6 @@ private:
 
     std::vector<typename CouplingStrategyItemType::Pointer> mStrategiesList;
     std::vector<ConvergenceVariableSettings> mConvergenceVariableSettingsList;
-    std::vector<bool> mIsStrategyConverged;
 
     ///@}
     ///@name Private Operators

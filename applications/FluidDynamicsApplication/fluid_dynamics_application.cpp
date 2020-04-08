@@ -115,6 +115,7 @@ KratosFluidDynamicsApplication::KratosFluidDynamicsApplication():
     mTwoFluidNavierStokes3D4N(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
     mVMSAdjointElement2D(0,Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mVMSAdjointElement3D(0,Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4))))
+
 {}
 
 void KratosFluidDynamicsApplication::Register() {
@@ -177,9 +178,6 @@ void KratosFluidDynamicsApplication::Register() {
     KRATOS_REGISTER_VARIABLE( STATISTICS_CONTAINER)
     KRATOS_REGISTER_VARIABLE( TURBULENCE_STATISTICS_DATA)
     KRATOS_REGISTER_VARIABLE( UPDATE_STATISTICS )
-
-    KRATOS_REGISTER_VARIABLE( PSEUDO_TIME_MULTIPLIER )
-    KRATOS_REGISTER_VARIABLE( PSEUDO_TIME_MASS_MATRIX )
 
     // Register Elements
     KRATOS_REGISTER_ELEMENT("VMS2D3N",mVMS2D); //this is the name the element should have according to the naming convention

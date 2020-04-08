@@ -28,7 +28,7 @@ else:
 class FractionalStepKEpsilonHighReFormulation(Formulation):
     def __init__(self, model_part, settings):
         super(FractionalStepKEpsilonHighReFormulation, self).__init__(model_part, settings)
-        defaults = Kratos.Parameters(r'''{
+        self.defaults = Kratos.Parameters(r'''{
             "time_scheme_settings": {
                 "scheme_type"         : "steady",
                 "scheme_settings": {
@@ -46,15 +46,19 @@ class FractionalStepKEpsilonHighReFormulation(Formulation):
             },
             "constants":
             {
-                "wall_smoothness_beta"    : 5.2,
-                "von_karman"              : 0.41,
-                "c_mu"                    : 0.09,
-                "c1"                      : 1.44,
-                "c2"                      : 1.92,
-                "sigma_k"                 : 1.0,
-                "sigma_epsilon"           : 1.3
+                "wall_smoothness_beta"                          : 5.2,
+                "von_karman"                                    : 0.41,
+                "c_mu"                                          : 0.09,
+                "c1"                                            : 1.44,
+                "c2"                                            : 1.92,
+                "sigma_k"                                       : 1.0,
+                "sigma_epsilon"                                 : 1.3,
+                "stabilizing_upwind_operator_coefficient"       : 1.2,
+                "stabilizing_positivity_preserving_coefficient" : 1.2
             },
             "consider_periodic_conditions": false,
+            "velocity_pressure_coupling_iterations": 40,
+            "turbulence_model_coupling_iterations": 20,
             "velocity_pressure_solver_settings": {},
             "turbulent_kinetic_energy_solver_settings": {
                 "update_processes_list": [],
@@ -92,7 +96,7 @@ class FractionalStepKEpsilonHighReFormulation(Formulation):
             }
         }''')
 
-        self.settings.ValidateAndAssignDefaults(defaults)
+        self.settings.ValidateAndAssignDefaults(self.defaults)
         self.fractional_step_formulation = FractionalStepFormulation(model_part, settings["velocity_pressure_solver_settings"])
         self.SetIsPeriodic(self.settings["consider_periodic_conditions"].GetBool())
         self.fractional_step_formulation.SetIsPeriodic(self.IsPeriodic())
@@ -112,6 +116,10 @@ class FractionalStepKEpsilonHighReFormulation(Formulation):
         self.GetBaseModelPart().AddNodalSolutionStepVariable(KratosRANS.TURBULENT_ENERGY_DISSIPATION_RATE_2)
         self.GetBaseModelPart().AddNodalSolutionStepVariable(KratosRANS.RANS_AUXILIARY_VARIABLE_1)
         self.GetBaseModelPart().AddNodalSolutionStepVariable(KratosRANS.RANS_AUXILIARY_VARIABLE_2)
+        self.GetBaseModelPart().AddNodalSolutionStepVariable(KratosRANS.AFC_POSITIVE_ANTI_DIFFUSIVE_FLUX)
+        self.GetBaseModelPart().AddNodalSolutionStepVariable(KratosRANS.AFC_POSITIVE_ANTI_DIFFUSIVE_FLUX_LIMIT)
+        self.GetBaseModelPart().AddNodalSolutionStepVariable(KratosRANS.AFC_NEGATIVE_ANTI_DIFFUSIVE_FLUX)
+        self.GetBaseModelPart().AddNodalSolutionStepVariable(KratosRANS.AFC_NEGATIVE_ANTI_DIFFUSIVE_FLUX_LIMIT)
 
         Kratos.Logger.PrintInfo("FractionalStepKEpsilonHighReFormulation", "Added solution step variables.")
 
@@ -183,7 +191,8 @@ class FractionalStepKEpsilonHighReFormulation(Formulation):
             epsilon_strategy_item = coupled_strategy_item(
                                     self.epsilon_strategy,
                                     "TurbulentEnergyDissipationRate",
-                                    self.settings["turbulent_energy_dissipation_rate_solver_settings"]["strategy_settings"]["echo_level"].GetInt())
+                                    self.settings["turbulent_energy_dissipation_rate_solver_settings"]["strategy_settings"]["echo_level"].GetInt()
+                                    )
         elif (time_scheme_type == "transient"):
             self.is_steady = False
             tke_strategy_item = coupled_strategy_item(
@@ -195,15 +204,28 @@ class FractionalStepKEpsilonHighReFormulation(Formulation):
                                     "TurbulentKineticEnergy",
                                     self.settings["turbulent_energy_dissipation_rate_solver_settings"]["echo_level"].GetInt())
 
+        velocity_pressure_coupling_iterations = self.settings["velocity_pressure_coupling_iterations"].GetInt()
+        turbulence_model_coupling_iterations = self.settings["turbulence_model_coupling_iterations"].GetInt()
+
+        self.velocity_pressure_solvability_pattern = [1] * velocity_pressure_coupling_iterations
+        self.velocity_pressure_solvability_pattern.extend([0] * turbulence_model_coupling_iterations)
+
+        self.turbulence_model_solvability_pattern = [0] * velocity_pressure_coupling_iterations
+        self.turbulence_model_solvability_pattern.extend([1] * turbulence_model_coupling_iterations)
+
         self.strategy_items = self.fractional_step_formulation.GetCoupledStrategyItems()
+        # self.strategy_items[-1][1].SetStrategySolvabilityPattern(self.velocity_pressure_solvability_pattern)
         self.strategy_items.append(["turbulent_kinetic_energy_solver_settings", tke_strategy_item])
+        # self.strategy_items[-1][1].SetStrategySolvabilityPattern(self.turbulence_model_solvability_pattern)
         self.strategy_items.append(["turbulent_energy_dissipation_rate_solver_settings", epsilon_strategy_item])
+        # self.strategy_items[-1][1].SetStrategySolvabilityPattern(self.turbulence_model_solvability_pattern)
 
         Kratos.Logger.PrintInfo("FractionalStepKEpsilonHighReFormulation", "Solver initialization finished.")
 
     def __InitializeConstants(self):
         # update model constants
         constants = self.settings["constants"]
+        constants.ValidateAndAssignDefaults(self.defaults["constants"])
         self.GetBaseModelPart().ProcessInfo[KratosRANS.WALL_SMOOTHNESS_BETA] = constants["wall_smoothness_beta"].GetDouble()
         self.GetBaseModelPart().ProcessInfo[KratosRANS.WALL_VON_KARMAN] = constants["von_karman"].GetDouble()
         self.GetBaseModelPart().ProcessInfo[KratosRANS.TURBULENCE_RANS_C_MU] = constants["c_mu"].GetDouble()
@@ -211,8 +233,8 @@ class FractionalStepKEpsilonHighReFormulation(Formulation):
         self.GetBaseModelPart().ProcessInfo[KratosRANS.TURBULENCE_RANS_C2] = constants["c2"].GetDouble()
         self.GetBaseModelPart().ProcessInfo[KratosRANS.TURBULENT_KINETIC_ENERGY_SIGMA] = constants["sigma_k"].GetDouble()
         self.GetBaseModelPart().ProcessInfo[KratosRANS.TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA] = constants["sigma_epsilon"].GetDouble()
-        self.GetBaseModelPart().ProcessInfo[KratosRANS.RANS_STABILIZATION_DISCRETE_UPWIND_OPERATOR_COEFFICIENT] = 1.2
-        self.GetBaseModelPart().ProcessInfo[KratosRANS.RANS_STABILIZATION_DIAGONAL_POSITIVITY_PRESERVING_COEFFICIENT] = 1.2
+        self.GetBaseModelPart().ProcessInfo[KratosRANS.RANS_STABILIZATION_DISCRETE_UPWIND_OPERATOR_COEFFICIENT] = constants["stabilizing_upwind_operator_coefficient"].GetDouble()
+        self.GetBaseModelPart().ProcessInfo[KratosRANS.RANS_STABILIZATION_DIAGONAL_POSITIVITY_PRESERVING_COEFFICIENT] = constants["stabilizing_positivity_preserving_coefficient"].GetDouble()
         self.GetBaseModelPart().ProcessInfo[KratosRANS.RANS_Y_PLUS_LIMIT] = RansCalculationUtilities.CalculateLogarithmicYPlusLimit(
                                                                                 self.GetBaseModelPart().ProcessInfo[KratosRANS.WALL_VON_KARMAN],
                                                                                 self.GetBaseModelPart().ProcessInfo[KratosRANS.WALL_SMOOTHNESS_BETA]

@@ -47,6 +47,7 @@ IntegrationValuesExtrapolationToNodesProcess::IntegrationValuesExtrapolationToNo
         "list_of_variables"          : [],
         "extrapolate_non_historical" : true
     })");
+
     ThisParameters.ValidateAndAssignDefaults(default_parameters);
 
     mEchoLevel = ThisParameters["echo_level"].GetInt();
@@ -217,6 +218,39 @@ void IntegrationValuesExtrapolationToNodesProcess::ExecuteFinalizeSolutionStep()
             }
         }
     }
+
+    // Assemble nodal data
+    if (mExtrapolateNonHistorical)
+    {
+        for (const auto p_var : mDoubleVariable) {
+            mrModelPart.GetCommunicator().AssembleNonHistoricalData(*p_var);
+        }
+        for (const auto p_var : mArrayVariable)  {
+            mrModelPart.GetCommunicator().AssembleNonHistoricalData(*p_var);
+        }
+        for (const auto p_var : mVectorVariable) {
+            mrModelPart.GetCommunicator().AssembleNonHistoricalData(*p_var);
+        }
+        for (const auto p_var : mMatrixVariable) {
+            mrModelPart.GetCommunicator().AssembleNonHistoricalData(*p_var);
+        }
+    }
+    else
+    {
+        for (const auto p_var : mDoubleVariable) {
+            mrModelPart.GetCommunicator().AssembleCurrentData(*p_var);
+        }
+        for (const auto p_var : mArrayVariable) {
+            mrModelPart.GetCommunicator().AssembleCurrentData(*p_var);
+        }
+        for (const auto p_var : mVectorVariable) {
+            mrModelPart.GetCommunicator().AssembleCurrentData(*p_var);
+        }
+        for (const auto p_var : mMatrixVariable) {
+            mrModelPart.GetCommunicator().AssembleCurrentData(*p_var);
+        }
+    }
+
 }
 
 /***********************************************************************************/
@@ -301,6 +335,8 @@ void IntegrationValuesExtrapolationToNodesProcess::InitializeMaps()
             }
         }
     }
+
+    mrModelPart.GetCommunicator().AssembleNonHistoricalData(*mpAverageVariable);
 
     // The process info
     const ProcessInfo& r_process_info = mrModelPart.GetProcessInfo();
