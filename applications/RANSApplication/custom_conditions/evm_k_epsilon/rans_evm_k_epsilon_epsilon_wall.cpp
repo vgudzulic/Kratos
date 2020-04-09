@@ -269,6 +269,36 @@ void RansEvmKEpsilonEpsilonWall<TDim, TNumNodes>::Calculate(const Variable<doubl
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
+void RansEvmKEpsilonEpsilonWall<TDim, TNumNodes>::Initialize()
+{
+    KRATOS_TRY;
+
+    if (RansCalculationUtilities::IsWall(*this))
+    {
+        const ConditionType& r_parent_condition =
+            *(this->GetValue(PARENT_CONDITION_POINTER));
+
+        const array_1d<double, 3>& rNormal = r_parent_condition.GetValue(NORMAL);
+        KRATOS_ERROR_IF(norm_2(rNormal) == 0.0)
+            << "NORMAL must be calculated before using this " << this->Info() << "\n";
+
+        KRATOS_ERROR_IF(r_parent_condition.GetValue(NEIGHBOUR_ELEMENTS).size() == 0)
+            << this->Info() << " cannot find parent element\n";
+
+        const double nu = RansCalculationUtilities::EvaluateInParentCenter(
+            KINEMATIC_VISCOSITY, r_parent_condition);
+        KRATOS_ERROR_IF(nu == 0.0)
+            << "KINEMATIC_VISCOSITY is not defined in the parent element of "
+            << this->Info() << "\n.";
+
+        mWallHeight =
+            RansCalculationUtilities::CalculateWallHeight(r_parent_condition, rNormal);
+    }
+
+    KRATOS_CATCH("");
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKEpsilonEpsilonWall<TDim, TNumNodes>::AddLocalVelocityContribution(
     MatrixType& rDampingMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
@@ -295,6 +325,11 @@ void RansEvmKEpsilonEpsilonWall<TDim, TNumNodes>::AddLocalVelocityContribution(
 
     const ConditionType& r_parent_condition = *this->GetValue(PARENT_CONDITION_POINTER);
     const double y_plus = r_parent_condition.GetValue(RANS_Y_PLUS);
+    const double u_tau = r_parent_condition.GetValue(FRICTION_VELOCITY);
+    // const double tke = RansCalculationUtilities::EvaluateInParentCenter(
+    //     TURBULENT_KINETIC_ENERGY, r_parent_condition);
+    // const double coeff = std::pow(c_mu_25 * std::sqrt(std::max(tke, 0.0)), 3) /
+    //                      (kappa * std::pow(mWallHeight, 2));
 
     for (IndexType g = 0; g < num_gauss_points; ++g)
     {
@@ -305,27 +340,22 @@ void RansEvmKEpsilonEpsilonWall<TDim, TNumNodes>::AddLocalVelocityContribution(
             r_geometry, KINEMATIC_VISCOSITY, gauss_shape_functions);
         const double nu_t = RansCalculationUtilities::EvaluateInPoint(
             r_geometry, TURBULENT_VISCOSITY, gauss_shape_functions);
-        const double tke = RansCalculationUtilities::EvaluateInPoint(
-            r_geometry, TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
-        const double epsilon = RansCalculationUtilities::EvaluateInPoint(
-            r_geometry, TURBULENT_ENERGY_DISSIPATION_RATE, gauss_shape_functions);
-        const double u_tau = c_mu_25 * std::sqrt(std::max(tke, 0.0));
+        // const double epsilon = RansCalculationUtilities::EvaluateInPoint(
+        // r_geometry, TURBULENT_ENERGY_DISSIPATION_RATE, gauss_shape_functions);
 
-        if (y_plus > eps)
-        {
-            const double value =
-                weight * (nu + nu_t / epsilon_sigma) * u_tau / (y_plus * nu);
+        const double value = weight * (nu + nu_t / epsilon_sigma) *
+                             std::pow(u_tau, 5) / (kappa * std::pow(y_plus * nu, 2));
+        noalias(rRightHandSideVector) += gauss_shape_functions * value;
 
-            for (IndexType a = 0; a < TNumNodes; ++a)
-            {
-                for (IndexType b = 0; b < TNumNodes; ++b)
-                {
-                    rDampingMatrix(a, b) -=
-                        gauss_shape_functions[a] * gauss_shape_functions[b] * value;
-                }
-                rRightHandSideVector[a] += value * gauss_shape_functions[a] * epsilon;
-            }
-        }
+        // for (IndexType a = 0; a < TNumNodes; ++a)
+        // {
+        //     // for (IndexType b = 0; b < TNumNodes; ++b)
+        //     // {
+        //     //     rDampingMatrix(a, b) -=
+        //     //         gauss_shape_functions[a] * gauss_shape_functions[b] * value;
+        //     // }
+        //     rRightHandSideVector[a] += value * gauss_shape_functions[a];
+        // }
     }
 
     KRATOS_CATCH("");

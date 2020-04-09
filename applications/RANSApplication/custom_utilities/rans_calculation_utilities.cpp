@@ -373,9 +373,9 @@ void CalculateYPlusAndUtau(double& rYPlus,
     {
         int iter = 0;
         double dx = 1e10;
-        double u_plus = inv_kappa * log(rYPlus) + Beta;
+        double u_plus = inv_kappa * std::log(rYPlus) + Beta;
 
-        while (iter < MaxIterations && fabs(dx) > Tolerance * rUTau)
+        while (iter < MaxIterations && std::fabs(dx) > Tolerance * rUTau)
         {
             // Newton-Raphson iteration
             double f = rUTau * u_plus - WallVelocity;
@@ -385,7 +385,7 @@ void CalculateYPlusAndUtau(double& rYPlus,
             // Update variables
             rUTau -= dx;
             rYPlus = WallHeight * rUTau / KinematicViscosity;
-            u_plus = inv_kappa * log(rYPlus) + Beta;
+            u_plus = inv_kappa * std::log(rYPlus) + Beta;
             ++iter;
         }
         if (iter == MaxIterations)

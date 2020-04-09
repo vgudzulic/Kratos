@@ -100,6 +100,10 @@ def Factory(settings, Model):
             KratosRANS.RansKEpsilonDomainInitializationProcess
         ],
         [
+            "WallFunctionUpdateProcess",
+            KratosRANS.RansWallFunctionUpdateProcess
+        ],
+        [
             "VtkOutputProcess",
             KratosRANS.RansVtkOutputProcess
         ]

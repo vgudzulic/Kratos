@@ -35,6 +35,7 @@
 #include "custom_processes/auxiliary_processes/rans_k_epsilon_domain_initialization_process.h"
 #include "custom_processes/auxiliary_processes/rans_vtk_output_process.h"
 #include "custom_processes/auxiliary_processes/rans_epsilon_y_plus_wall_function_process.h"
+#include "custom_processes/auxiliary_processes/rans_wall_function_update_process.h"
 
 // RANS sensitivity processes
 #include "custom_processes/auxiliary_processes/rans_logarithmic_y_plus_velocity_sensitivities_process.h"
@@ -171,6 +172,11 @@ void AddCustomAuxiliaryProcessesToPython(pybind11::module& m)
     using RansEpsilonYPlusWallFunctionProcessType = RansEpsilonYPlusWallFunctionProcess;
     py::class_<RansEpsilonYPlusWallFunctionProcessType, RansEpsilonYPlusWallFunctionProcessType::Pointer, Process>(
         m, "RansEpsilonYPlusWallFunctionProcess")
+        .def(py::init<Model&, Parameters&>());
+
+    using RansWallFunctionUpdateProcessType = RansWallFunctionUpdateProcess;
+    py::class_<RansWallFunctionUpdateProcessType, RansWallFunctionUpdateProcessType::Pointer, Process>(
+        m, "RansWallFunctionUpdateProcess")
         .def(py::init<Model&, Parameters&>());
 }
 

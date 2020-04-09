@@ -165,6 +165,9 @@ public:
 
     Condition::Pointer Clone(IndexType NewId, NodesArrayType const& rThisNodes) const override;
 
+    /// Find the condition's parent element.
+    void Initialize() override;
+
     /// Return local contributions of the correct size, filled with zeros (for compatibility with time schemes).
     /** The actual local contributions are computed in the Damping functions
       @see CalculateLocalVelocityContribution
@@ -301,6 +304,8 @@ protected:
 private:
     ///@name Static Member Variables
     ///@{
+
+      double mWallHeight;
 
     ///@}
     ///@name Member Variables
