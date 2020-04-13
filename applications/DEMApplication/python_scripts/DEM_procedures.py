@@ -1576,7 +1576,7 @@ class DEMIo(object):
         if "PostStressStrainOption" in self.DEM_parameters.keys():
             if self.DEM_parameters["PostStressStrainOption"].GetBool():
                 self.PushPrintVar(1, REPRESENTATIVE_VOLUME, self.spheres_variables)
-                self.PushPrintVar(1, DEM_STRESS_TENSOR, self.spheres_variables)
+                # self.PushPrintVar(1, DEM_STRESS_TENSOR, self.spheres_variables)
 
         if "PostReactions" in self.DEM_parameters.keys():
             if self.DEM_parameters["PostReactions"].GetBool():
