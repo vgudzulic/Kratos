@@ -63,8 +63,26 @@ class ConditionFactory:
             self.AddRigidConditions(conditions[-1])
 
         if self.parameters["conditions"]["edges"]["direct"]["apply_enforcement_conditions"].GetBool():
+            position_conditions = []
+            tangent_conditions = []
+            self.AddDirectEdgeConditions(position_conditions, tangent_conditions)
+            if len(position_conditions)>0:
+                conditions.append(position_conditions)
+            if len(tangent_conditions)>0:
+                conditions.append(tangent_conditions)
+
+        if self.parameters["conditions"]["edges"]["direct"]["fix_free_edges"].GetBool():
+            position_conditions = []
+            tangent_conditions = []
+            self.AddFixFreeEdgeConditions(position_conditions, tangent_conditions)
+            if len(position_conditions)>0:
+                conditions.append(position_conditions)
+            if len(tangent_conditions)>0:
+                conditions.append(tangent_conditions)
+
+        if self.parameters["conditions"]["edges"]["direct"]["fix_free_edges_with_no_shape_change"].GetBool():
             conditions.append([])
-            self.AddDirectEdgeConditions(conditions[-1])
+            self.AddFixFreeEdgesWithNoShapeChangeConditions(conditions[-1])
 
         if self.parameters["conditions"]["edges"]["fe_based"]["apply_enforcement_conditions"].GetBool():
             position_conditions = []
@@ -365,11 +383,122 @@ class ConditionFactory:
                 nonzero_indices, shape_functions = surface_geometry_data.ShapeFunctionsAt(u, v, order=0)
                 nonzero_pole_nodes = [pole_nodes[i] for i in nonzero_indices]
 
-                new_condition = clib.PositionEnforcementCondition(rigididly_displaced_point_coords, nonzero_pole_nodes, shape_functions, penalty_fac)
+                new_condition = clib.PositionEnforcementCondition(rigididly_displaced_point_coords, nonzero_pole_nodes, shape_functions, penalty_fac, weight=1)
                 conditions.append(new_condition)
 
     # --------------------------------------------------------------------------
-    def AddDirectEdgeConditions(self, conditions):
+    def AddFixFreeEdgeConditions(self, position_conditions, tangent_conditions):
+        drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
+        min_span_length = self.parameters["drawing_parameters"]["min_span_length"].GetDouble()
+        penalty_factor_pos = self.parameters["conditions"]["edges"]["direct"]["penalty_factor_free_edge_position"].GetDouble()
+        penalty_factor_tan = self.parameters["conditions"]["edges"]["direct"]["penalty_factor_free_edge_tangent"].GetDouble()
+
+        # Free edges are given as edges with no coupled face
+        for edge_itr, edge_i in enumerate(self.cad_model.GetByType('BrepEdge')):
+            adjacent_faces = edge_i.Data().Faces()
+            num_adjacent_faces = len(adjacent_faces)
+
+            if num_adjacent_faces > 1:
+                # Skip coupling-edges
+                pass
+            elif num_adjacent_faces == 1:
+                face = adjacent_faces[0]
+                surface_geometry = face.Data().Geometry()
+                surface_geometry_data = face.Data().Geometry().Data()
+
+                poles_nodes = self.pole_nodes[surface_geometry.Key()]
+                list_of_points, list_of_parameters, _, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i, drawing_tolerance, min_span_length)
+
+                for integration_point, integration_weight, (u,v) in zip(list_of_points, list_of_integration_weights, list_of_parameters):
+
+                    point_ptr = self.cad_model.Add(an.Point3D(location=integration_point))
+                    point_ptr.Attributes().SetLayer('FreeEdgePoints')
+
+                    nonzero_indices, shape_functions = surface_geometry_data.ShapeFunctionsAt(u, v, order=1)
+                    nonzero_pole_nodes = [poles_nodes[i] for i in nonzero_indices]
+
+                    # Positions enforcement
+                    if penalty_factor_pos > 0:
+                        target_position = integration_point
+
+                        new_condition = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes, shape_functions, penalty_factor_pos, integration_weight)
+                        position_conditions.append(new_condition)
+
+                    # tangent enforcement
+                    if penalty_factor_tan > 0:
+                        new_condition = clib.TangentFixationConditionWithAD(nonzero_pole_nodes, shape_functions, penalty_factor_tan, integration_weight)
+                        tangent_conditions.append(new_condition)
+
+    # --------------------------------------------------------------------------
+    def AddFixFreeEdgesWithNoShapeChangeConditions(self, conditions):
+        drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
+        min_span_length = self.parameters["drawing_parameters"]["min_span_length"].GetDouble()
+        limit_shape_change = self.parameters["conditions"]["edges"]["direct"]["limit_shape_change"].GetDouble()
+        penalty_factor_pos = self.parameters["conditions"]["edges"]["direct"]["penalty_factor_free_edge_position"].GetDouble()
+
+        # Create integration points and assign fe data
+        temp_model = KratosMultiphysics.Model()
+        destination_mdpa = temp_model.CreateModelPart("temp_model_part")
+        destination_mdpa.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE)
+        integration_point_counter = 0
+        integration_point_data = {}
+        for edge_i in self.cad_model.GetByType('BrepEdge'):
+            adjacent_faces = edge_i.Data().Faces()
+            if len(adjacent_faces) == 1:
+
+                list_of_integration_points, list_of_parameters, _, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i, drawing_tolerance, min_span_length)
+
+                # Collect integration points in model part
+                list_of_fe_points = []
+                for [x,y,z] in list_of_integration_points:
+                    integration_point_counter = integration_point_counter+1
+                    destination_mdpa.CreateNewNode(integration_point_counter, x, y, z)
+                    list_of_fe_points.append(destination_mdpa.Nodes[integration_point_counter])
+
+                integration_point_data[edge_i] = [list_of_fe_points, list_of_integration_points, list_of_parameters, list_of_integration_weights]
+
+        # Map information from fem to integration points using element based mapper
+        print("> Starting to map from FEM to integration points for edge conditions... ")
+        mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, self.parameters["conditions"]["general"]["mapping_cad_fem"].Clone() )
+        mapper.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
+        print("> Finished mapping from FEM to integration points for edge conditions. ")
+
+        # Create conditions
+        for edge, [list_of_fe_points, list_of_integration_points, list_of_parameters, list_of_integration_weights] in integration_point_data.items():
+            face = edge.Data().Faces()[0]
+            surface_geometry = face.Data().Geometry()
+            surface_geometry_data = face.Data().Geometry().Data()
+
+            poles_nodes = self.pole_nodes[surface_geometry.Key()]
+
+            is_edge_to_be_fixed = True
+            for fe_point in list_of_fe_points:
+                local_shape_change = np.array(fe_point.GetSolutionStepValue(KratosShape.SHAPE_CHANGE))
+                if la.norm(local_shape_change) > limit_shape_change:
+                    is_edge_to_be_fixed = False
+                    break
+
+            if is_edge_to_be_fixed:
+                for integration_weight, integration_point, (u,v) in zip(list_of_integration_weights, list_of_integration_points, list_of_parameters):
+                    point_ptr = self.cad_model.Add(an.Point3D(location=integration_point))
+                    point_ptr.Attributes().SetLayer('FreeEdgesWithNoShapeChange')
+
+                    # local_shape_change = np.array(fe_point.GetSolutionStepValue(KratosShape.SHAPE_CHANGE))
+                    # line_ptr =  self.cad_model.Add(an.Line3D(a=integration_point, b=(integration_point+local_shape_change)))
+                    # line_ptr.Attributes().SetLayer('disp')
+
+                    nonzero_indices, shape_functions = surface_geometry_data.ShapeFunctionsAt(u, v, order=1)
+                    nonzero_pole_nodes = [poles_nodes[i] for i in nonzero_indices]
+
+                    # Positions enforcement
+                    if penalty_factor_pos > 0:
+                        target_position = integration_point
+
+                        new_condition = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes, shape_functions, penalty_factor_pos, integration_weight)
+                        conditions.append(new_condition)
+
+    # --------------------------------------------------------------------------
+    def AddDirectEdgeConditions(self, position_conditions, tangent_conditions):
         drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
         min_span_length = self.parameters["drawing_parameters"]["min_span_length"].GetDouble()
         penalty_factor_position_enforcement = self.parameters["conditions"]["edges"]["direct"]["penalty_factor_position_enforcement"].GetDouble()
@@ -409,7 +538,7 @@ class ConditionFactory:
                         target_position = integration_point + np.array(target_displacement)
 
                         new_condition = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes, shape_functions, penalty_factor_position_enforcement, integration_weight)
-                        conditions.append(new_condition)
+                        position_conditions.append(new_condition)
 
             elif num_adjacent_faces == 2:
                 raise RuntimeError("Specific edge enforcement not implemented for edge with more than 1 adjacent faces!!")

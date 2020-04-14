@@ -74,7 +74,12 @@ class CADMapper:
                     {
                         "apply_enforcement_conditions" : false,
                         "exclusive_edge_list": [],
-                        "penalty_factor_position_enforcement" : 1e3
+                        "penalty_factor_position_enforcement" : 1e3,
+                        "fix_free_edges"                      : false,
+                        "fix_free_edges_with_no_shape_change" : false,
+                        "limit_shape_change"                  : 0.0,
+                        "penalty_factor_free_edge_position"   : 1e3,
+                        "penalty_factor_free_edge_tangent"    : 1e3
                     },
                     "fe_based" :
                     {
