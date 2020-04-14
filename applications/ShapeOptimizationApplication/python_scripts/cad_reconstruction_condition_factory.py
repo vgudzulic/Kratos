@@ -111,7 +111,7 @@ class ConditionFactory:
             if len(rotation_conditions)>0:
                 conditions.append(rotation_conditions)
 
-        if self.parameters["regularization"]["alpha"].GetDouble() != 0:
+        if self.parameters["regularization"]["alpha"].GetDouble() >0:
             conditions.append([])
             self.AddAlphaRegularizationConditions(conditions[-1])
 
@@ -225,13 +225,13 @@ class ConditionFactory:
                 # line_ptr.Attributes().SetLayer('disp')
 
                 # point_ptr = self.cad_model.Add(an.Point3D(location=node_coords_i))
-                # point_ptr.Attributes().SetLayer('IntegrationPoints_'+str(face_i.Key()))
+                # point_ptr.Attributes().SetLayer('IntegrationPoints_'+str(face.Key()))
 
                 # point_ptr = self.cad_model.Add(an.Point3D(location=node_coords_i_updated))
-                # point_ptr.Attributes().SetLayer('MappedIntPointsUpdated'+str(face_i.Key()))
+                # point_ptr.Attributes().SetLayer('MappedIntPointsUpdated'+str(face.Key()))
 
                 # point_ptr = self.cad_model.Add(an.Point3D(location=[fe_node.X, fe_node.Y, fe_node.Z]))
-                # point_ptr.Attributes().SetLayer('IntegationProjectionPoints')
+                # point_ptr.Attributes().SetLayer('IntegationPoints')
 
                 new_condition = clib.DistanceMinimizationCondition(fe_node, nonzero_pole_nodes, shape_functions, KratosShape.SHAPE_CHANGE, weight=weight)
 
@@ -778,6 +778,7 @@ class ConditionFactory:
 
                 list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_curve_parameters_a, _, list_of_integration_weights = self.__CreateIntegrationPointsForCouplingEdge(edge_i, drawing_tolerance, min_span_length)
 
+                # # Output of coupling points
                 # for point in list_of_points:
                 #     point_ptr = self.cad_model.Add(an.Point3D(location=point))
                 #     point_ptr.Attributes().SetLayer('CouplingPoints')
@@ -868,9 +869,10 @@ class ConditionFactory:
 
                     pole_indices.append((r,s))
                     greville_abscissa_parameters.append((u_value,v_value))
-                    greville_points.append(surface_geometry_data.PointAt(u_value, v_value))
+                    greville_point = surface_geometry_data.PointAt(u_value, v_value)
+                    greville_points.append(greville_point)
 
-                    # point_ptr = self.cad_model.Add(an.Point3D(location=grevile_point))
+                    # point_ptr = self.cad_model.Add(an.Point3D(location=greville_point))
                     # point_ptr.Attributes().SetLayer('GrevillePoints')
 
             # Create condition for each of the relevant control points
@@ -969,13 +971,17 @@ class ConditionFactory:
                 #     point_ptr.Attributes().SetLayer('FE_nodes_on_boundary')
 
         # Check results
+        has_missing_point_pairs = False
         for entry in fe_point_parametrization:
             fe_node = entry["node"]
             list_of_faces = entry["faces"]
             if len(list_of_faces) == 0:
-                print("> WARNING: Missing point pair for point: ", fe_node.Id)
+                has_missing_point_pairs = True
                 point_ptr = self.cad_model.Add(an.Point3D(location=[fe_node.X, fe_node.Y, fe_node.Z]))
                 point_ptr.Attributes().SetLayer('FEPointsWithNoCADPartner')
+
+        if has_missing_point_pairs:
+            print("> WARNING: Missing point pairs identified!!!")
 
         print("> Finished parametrization of fe points in" ,round( time.time()-start_time, 3 ), " s.")
 
@@ -1127,6 +1133,7 @@ class ConditionFactory:
             span_b = an.Interval(t0_b, t1_b)
 
             if span_b.Length() < min_span_length:
+                # print("> WARNING in __CreateIntegrationPointsForCouplingEdge: Skippin span_b as length below minimal span length!!")
                 continue
 
             for t_b, weight in an.IntegrationPoints.Points1D(degree, span_b):

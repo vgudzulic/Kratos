@@ -107,7 +107,7 @@ class CADMapper:
             "solution" :
             {
                 "iterations"        : 1,
-                "test_solution"     : true,
+                "test_solution"     : false,
                 "parallel_assembly" : false
             },
             "regularization" :
@@ -208,7 +208,7 @@ class CADMapper:
                 self.Initialize()
                 self.Map()
 
-                self.__OutputCadModel("reconstructed_geometry_refinement_level"+ iteration_tag +".iga")
+                self.__OutputCadModel("reconstructed_geometry_refinement"+ iteration_tag +".iga")
 
                 nothing_to_refine = self.ResetDisplacementsAndRefineCadModel()
 
@@ -613,9 +613,12 @@ class CADMapper:
             if is_initial_assembly:
                 penalty_fac_of_element_type = self.conditions[itr][0].GetPenaltyFactor()
 
-                constraint_norm_inf = sla.norm(self.system.working_h, np.inf) / penalty_fac_of_element_type
-
-                scaling_factor = system_norm_inf/constraint_norm_inf
+                if penalty_fac_of_element_type > 0:
+                    constraint_norm_inf = sla.norm(self.system.working_h, np.inf) / penalty_fac_of_element_type
+                    scaling_factor = system_norm_inf/constraint_norm_inf
+                else:
+                    constraint_norm_inf = 0
+                    scaling_factor = 1
                 self.conditions_scaling_factors.append(scaling_factor)
 
                 if self.parameters["output"]["echo_level"].GetInt() > 1:
