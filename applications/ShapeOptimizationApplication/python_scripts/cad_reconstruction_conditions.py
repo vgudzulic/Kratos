@@ -101,6 +101,12 @@ class DistanceMinimizationCondition(ReconstructionCondition):
         self.fe_node_coords = node_initial_coords + nodal_update
 
     # --------------------------------------------------------------------------
+    def CalculateQualityIndicator(self):
+        cad_location = super().ComputeActual(self.pole_nodes, self.shape_function_values)
+        distance_vec =  cad_location - self.fe_node_coords
+        return distance_vec
+
+    # --------------------------------------------------------------------------
     def CalculateRHS(self, rhs):
         cad_location = super().ComputeActual(self.pole_nodes, self.shape_function_values)
         distance_vec =  cad_location - self.fe_node_coords
@@ -193,6 +199,12 @@ class PositionEnforcementCondition(ReconstructionCondition):
         self.shape_function_values = np.asarray(shape_functions[0], float)
         self.penalty_factor = penalty_factor
         self.weight = weight
+
+    # --------------------------------------------------------------------------
+    def CalculateQualityIndicator(self):
+        cad_location = super().ComputeActual(self.pole_nodes, self.shape_function_values)
+        distance_vec =  cad_location - self.target_position
+        return distance_vec
 
     # --------------------------------------------------------------------------
     def CalculateRHS(self, rhs):
