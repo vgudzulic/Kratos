@@ -296,6 +296,31 @@ class TangentEnforcementConditionWithAD( ReconstructionConditionWithAD ):
         return self.CalculateLocalSystem(rhs, lhs)
 
 # ==============================================================================
+class TangentFixationConditionWithAD( TangentEnforcementConditionWithAD ):
+    # --------------------------------------------------------------------------
+    def __init__(self, pole_nodes, shape_functions, penalty_factor, weight):
+        shape_function_derivatives_u = np.asarray(shape_functions[1], float)
+        shape_function_derivatives_v = np.asarray(shape_functions[2], float)
+
+        A1 = super().ComputeActual(pole_nodes, shape_function_derivatives_u)
+        A2 = super().ComputeActual(pole_nodes, shape_function_derivatives_v)
+        A3 = np.cross(A1, A2)
+        A3 = A3 / np.linalg.norm(A3)
+
+        super().__init__(A3, pole_nodes, shape_functions, penalty_factor, weight)
+
+    # --------------------------------------------------------------------------
+    def CalculateQualityIndicator(self):
+        A1 = super().ComputeActual(self.pole_nodes, self.shape_function_derivatives_u)
+        A2 = super().ComputeActual(self.pole_nodes, self.shape_function_derivatives_v)
+        A3 = np.cross(A1, A2)
+        A3 = A3 / np.linalg.norm(A3)
+
+        argument = min(A3.dot(self.target_normal)/(np.linalg.norm(A3)*np.linalg.norm(self.target_normal)),1)
+        angle = np.arccos(argument)
+        return angle
+
+# ==============================================================================
 class DisplacementCouplingCondition(ReconstructionCondition):
     # --------------------------------------------------------------------------
     def __init__(self, pole_nodes_a, pole_nodes_b, shape_functions_a, shape_functions_b, geometry_a, geometry_b, parameters_a, parameters_b, penalty_factor, weight):
