@@ -790,6 +790,45 @@ class KLShellConditionWithAD( ReconstructionConditionWithAD ):
             return self.CalculateRHS(rhs)
         return self.CalculateLocalSystem(rhs, lhs)
 
+# ==============================================================================
+class ReducedShellConditionAD( ReconstructionConditionWithAD ):
+    # --------------------------------------------------------------------------
+    def __init__(self, pole_nodes, shape_function_values_and_dervatives, penalty_factor, weight, membrane_factor, bending_factor):
+        super().__init__()
+
+        self.pole_nodes = pole_nodes
+        self.shape_function_derivatives_u = np.asarray(shape_function_values_and_dervatives[1], float)
+        self.shape_function_derivatives_v = np.asarray(shape_function_values_and_dervatives[2], float)
+        self.shape_function_derivatives_uu = np.asarray(shape_function_values_and_dervatives[3], float)
+        self.shape_function_derivatives_uv = np.asarray(shape_function_values_and_dervatives[4], float)
+        self.shape_function_derivatives_vv = np.asarray(shape_function_values_and_dervatives[5], float)
+        self.penalty_factor = penalty_factor
+        self.weight = weight
+        self.membrane_factor = membrane_factor
+        self.bending_factor = bending_factor
+
+    # --------------------------------------------------------------------------
+    def CalculateRHS(self, rhs):
+        a1 =super().ComputeActualJet(self.pole_nodes, self.shape_function_derivatives_u)
+        a2 =super().ComputeActualJet(self.pole_nodes, self.shape_function_derivatives_v)
+        a1_1 =super().ComputeActualJet(self.pole_nodes, self.shape_function_derivatives_uu)
+        a1_2 =super().ComputeActualJet(self.pole_nodes, self.shape_function_derivatives_uv)
+        a2_2 =super().ComputeActualJet(self.pole_nodes, self.shape_function_derivatives_vv)
+
+        f = self.penalty_factor * self.weight * (self.bending_factor * (np.dot(a1_1, a1_1)+ np.dot(a1_2, a1_2) + np.dot(a2_2, a2_2)))
+        rhs[:] = -f.g
+        return f.f
+
+    # --------------------------------------------------------------------------
+    def CalculateLocalSystem(self, rhs, lhs):
+        a1 =super().ComputeActualHyperJet(self.pole_nodes, self.shape_function_derivatives_u)
+        a2 =super().ComputeActualHyperJet(self.pole_nodes, self.shape_function_derivatives_v)
+        a1_1 =super().ComputeActualHyperJet(self.pole_nodes, self.shape_function_derivatives_uu)
+        a1_2 =super().ComputeActualHyperJet(self.pole_nodes, self.shape_function_derivatives_uv)
+        a2_2 =super().ComputeActualHyperJet(self.pole_nodes, self.shape_function_derivatives_vv)
+
+        f = self.penalty_factor * self.weight * (self.bending_factor * (np.dot(a1_1, a1_1)+ np.dot(a1_2, a1_2) + np.dot(a2_2, a2_2)))
+
         rhs[:] = -f.g
         lhs[:] = f.h
         return f.f
