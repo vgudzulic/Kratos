@@ -57,9 +57,12 @@ class CADMapper:
                 {
                     "mechanical" :
                     {
-                        "apply_KL_shell"      : false,
-                        "exclusive_face_list" : [],
-                        "penalty_factor"      : 1e3
+                        "apply_KL_shell"       : false,
+                        "exclusive_face_list"  : [],
+                        "penalty_factor"       : 1e3,
+                        "membrane_factor"      : 1.0,
+                        "bending_factor"       : 1.0,
+                        "apply_on_whole_patch" : false
                     },
                     "rigid" :
                     {
