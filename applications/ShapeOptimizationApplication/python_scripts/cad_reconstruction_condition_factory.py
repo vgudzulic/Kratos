@@ -244,6 +244,9 @@ class ConditionFactory:
         drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
         apply_kl_shell = self.parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].GetBool()
         shell_penalty_fac = self.parameters["conditions"]["faces"]["mechanical"]["penalty_factor"].GetDouble()
+        membrane_fac = self.parameters["conditions"]["faces"]["mechanical"]["membrane_factor"].GetDouble()
+        bending_fac = self.parameters["conditions"]["faces"]["mechanical"]["bending_factor"].GetDouble()
+        apply_on_whole_patch = self.parameters["conditions"]["faces"]["mechanical"]["apply_on_whole_patch"].GetBool()
 
         list_of_exclusive_faces = []
         for itr in range(self.parameters["conditions"]["faces"]["mechanical"]["exclusive_face_list"].size()):
@@ -267,7 +270,10 @@ class ConditionFactory:
 
             pole_nodes = self.pole_nodes[surface_geometry.Key()]
 
-            list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i, drawing_tolerance)
+            if apply_on_whole_patch:
+                list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForWholePatch(face_i, drawing_tolerance)
+            else:
+                list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i, drawing_tolerance)
 
             # Create conditions
             for (x,y,z), (u,v), integration_weight in zip(list_of_points, list_of_parameters, list_of_integration_weights):
@@ -1210,6 +1216,33 @@ class ConditionFactory:
                             list_of_points.append([x,y,z])
                             list_of_parameters.append((u, v))
                             list_of_weights.append(weight * la.norm(np.cross(a1,a2)))
+
+        return list_of_points, list_of_parameters, list_of_weights
+
+# --------------------------------------------------------------------------
+    @staticmethod
+    def __CreateIntegrationPointsForWholePatch(face, drawing_tolerance):
+        surface_geometry = face.Data().Geometry().Data()
+
+        degree_u = surface_geometry.DegreeU()
+        degree_v = surface_geometry.DegreeV()
+
+        degree = max(degree_u, degree_v) + 1
+
+        list_of_points = []
+        list_of_parameters = []
+        list_of_weights = []
+
+        integration_points = an.PolygonIntegrationPoints()
+
+        for i in range(len(surface_geometry.SpansU())):
+            for j in range(len(surface_geometry.SpansV())):
+                for u, v, weight in an.IntegrationPoints.Points2D(degree_u+1, degree_v+1, surface_geometry.SpansU()[i], surface_geometry.SpansV()[j]):
+                    [x,y,z], a1, a2  = surface_geometry.DerivativesAt(u, v, 1)
+
+                    list_of_points.append([x,y,z])
+                    list_of_parameters.append((u, v))
+                    list_of_weights.append(weight * la.norm(np.cross(a1,a2)))
 
         return list_of_points, list_of_parameters, list_of_weights
 

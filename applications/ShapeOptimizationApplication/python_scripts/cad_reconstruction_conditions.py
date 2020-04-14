@@ -618,7 +618,7 @@ class RotationCouplingConditionWithAD(ReconstructionConditionWithAD):
 # ==============================================================================
 class KLShellConditionWithAD( ReconstructionConditionWithAD ):
     # --------------------------------------------------------------------------
-    def __init__(self, pole_nodes, shape_function_values_and_dervatives, penalty_factor, weight):
+    def __init__(self, pole_nodes, shape_function_values_and_dervatives, penalty_factor, weight, membrane_factor, bending_factor):
         super().__init__()
 
         self.pole_nodes = pole_nodes
@@ -629,6 +629,8 @@ class KLShellConditionWithAD( ReconstructionConditionWithAD ):
         self.shape_function_derivatives_vv = np.asarray(shape_function_values_and_dervatives[5], float)
         self.penalty_factor = penalty_factor
         self.weight = weight
+        self.membrane_factor = membrane_factor
+        self.bending_factor = bending_factor
 
         # Reference configuration
         A1 = super().ComputeActual(pole_nodes, self.shape_function_derivatives_u)
@@ -650,8 +652,9 @@ class KLShellConditionWithAD( ReconstructionConditionWithAD ):
         # Material properties
         thickness = 1.0
         youngsmodulus = 1.0
-        poissonsratio = 0.3
+        poissonsratio = 0.0
 
+        # The difference betwen Dm and Db comes from pre-integration - refer to Kiendl eq. (3.38) and (3.39)
         self.Dm = np.array([
             [1.0, poissonsratio, 0],
             [poissonsratio, 1.0, 0],
@@ -710,7 +713,7 @@ class KLShellConditionWithAD( ReconstructionConditionWithAD ):
         n = np.dot(eps, self.Dm)
         m = np.dot(kap, self.Db)
 
-        f = self.penalty_factor * self.weight * (np.dot(eps, n) + np.dot(kap, m))
+        f = self.penalty_factor * self.weight * (self.membrane_factor * np.dot(eps, n) + self.bending_factor*np.dot(kap, m))
 
         rhs[:] = -f.g
         return f.f
@@ -738,7 +741,17 @@ class KLShellConditionWithAD( ReconstructionConditionWithAD ):
         n = np.dot(eps, self.Dm)
         m = np.dot(kap, self.Db)
 
-        f = self.penalty_factor * self.weight * (np.dot(eps, n) + np.dot(kap, m))
+        f = self.penalty_factor * self.weight * (self.membrane_factor * np.dot(eps, n) + self.bending_factor*np.dot(kap, m))
+
+        rhs[:] = -f.g
+        lhs[:] = f.h
+        return f.f
+
+    # --------------------------------------------------------------------------
+    def compute(self, rhs, lhs):
+        if len(lhs) == 0:
+            return self.CalculateRHS(rhs)
+        return self.CalculateLocalSystem(rhs, lhs)
 
         rhs[:] = -f.g
         lhs[:] = f.h
