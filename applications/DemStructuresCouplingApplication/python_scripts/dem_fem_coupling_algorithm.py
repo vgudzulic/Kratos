@@ -89,7 +89,7 @@ class Algorithm(object):
                             )
 
         structures_nodal_results = ["VOLUME_ACCELERATION","DEM_SURFACE_LOAD","REACTION","TARGET_STRESS","REACTION_STRESS","LOADING_VELOCITY"]
-        dem_nodal_results = ["VELOCITY"] # ["IS_STICKY", "DEM_STRESS_TENSOR"]
+        dem_nodal_results = ["VELOCITY","RIGID_ELEMENT_FORCE"] # ["IS_STICKY", "DEM_STRESS_TENSOR"]
         clusters_nodal_results = []
         rigid_faces_nodal_results = []
         contact_model_part_results = ["CONTACT_FAILURE"]
@@ -145,8 +145,8 @@ class Algorithm(object):
         props[Dem.SEVERITY_OF_WEAR] = 0.0
         props[Dem.IMPACT_WEAR_SEVERITY] = 0.0
         props[Dem.BRINELL_HARDNESS] = 0.0
-        props[Kratos.YOUNG_MODULUS] = 25e9
-        props[Kratos.POISSON_RATIO] = 0.32
+        props[Kratos.YOUNG_MODULUS] = 16.8e9
+        props[Kratos.POISSON_RATIO] = 0.2
         dem_walls_mp.AddProperties(props)
         DemFem.DemStructuresCouplingUtilities().TransferStructuresSkinToDem(self.skin_mp, dem_walls_mp, props)
 
