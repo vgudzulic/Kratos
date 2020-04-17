@@ -145,8 +145,8 @@ class Algorithm(object):
         props[Dem.SEVERITY_OF_WEAR] = 0.0
         props[Dem.IMPACT_WEAR_SEVERITY] = 0.0
         props[Dem.BRINELL_HARDNESS] = 0.0
-        props[Kratos.YOUNG_MODULUS] = 25e9
-        props[Kratos.POISSON_RATIO] = 0.32
+        props[Kratos.YOUNG_MODULUS] = 16.8e9
+        props[Kratos.POISSON_RATIO] = 0.2
         dem_walls_mp.AddProperties(props)
         DemFem.DemStructuresCouplingUtilities().TransferStructuresSkinToDem(self.skin_mp, dem_walls_mp, props)
 
