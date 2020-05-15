@@ -25,6 +25,7 @@ import ANurbs as an
 import numpy as np
 import numpy.linalg as la
 import scipy.sparse.linalg as sla
+import scipy as sp
 import time, os, shutil
 import EQlib as eq
 
@@ -430,8 +431,11 @@ class CADMapper:
                 # Check fitting system
                 print("\n> Max absolute control point displacement = ",la.norm(solution, np.inf))
                 # print("> Computing condition number of LHS...")
-                # print("> Condition number LHS = ", la.cond(self.system.h.todense()))
-                # print("\n> Max absolute value in LHS = ", abs(self.system.h).max())
+                # temp_matrix_tri = self.system.h.todense()
+                # tem_triu = np.triu(temp_matrix_tri,k=1)
+                # temp_matrix_full = temp_matrix_tri + np.transpose(tem_triu)
+                # print("> Condition number LHS = ", la.cond(temp_matrix_full))
+                print("\n> Max absolute value in LHS = ", abs(self.system.h).max())
 
                 # Test solution quality
                 test_rhs = self.system.h_v(solution)
@@ -590,13 +594,25 @@ class CADMapper:
         self.conditions_scaling_factors.append(1)
 
         if is_initial_assembly:
-            system_norm_inf = sla.norm(self.system.working_h, np.inf)
 
+            # Scaling using the complete matrix
+            temp_matrix_tri = self.system.working_h
+            tem_triu = sp.sparse.triu(temp_matrix_tri,k=1)
+            temp_matrix_full = temp_matrix_tri + np.transpose(tem_triu)
+            system_norm_inf = sla.norm(temp_matrix_full, np.inf)
             if self.parameters["output"]["echo_level"].GetInt() > 1:
-                print("> Max absolute value system LHS = " + str(abs(self.system.working_h).max()))
+                print("> Max absolute value system LHS = " + str(abs(temp_matrix_full).max()))
                 print("> Norm infinity of system LHS = " + str(system_norm_inf))
-                print("> Max value system LHS = " + str((self.system.working_h).max()))
-                print("> Min value system LHS = " + str((self.system.working_h).min()))
+                print("> Max value system LHS = " + str((temp_matrix_full).max()))
+                print("> Min value system LHS = " + str((temp_matrix_full).min()))
+
+            # # Scaling only using the upper triangular matrix
+            # system_norm_inf = sla.norm(self.system.working_h, np.inf)
+            # if self.parameters["output"]["echo_level"].GetInt() > 1:
+            #     print("> Max absolute value system LHS = " + str(abs(self.system.working_h).max()))
+            #     print("> Norm infinity of system LHS = " + str(system_norm_inf))
+            #     print("> Max value system LHS = " + str((self.system.working_h).max()))
+            #     print("> Min value system LHS = " + str((self.system.working_h).min()))
 
         # Beta regularization
         beta = self.parameters["regularization"]["beta"].GetDouble()
@@ -617,7 +633,16 @@ class CADMapper:
                 penalty_fac_of_element_type = self.conditions[itr][0].GetPenaltyFactor()
 
                 if penalty_fac_of_element_type > 0:
-                    constraint_norm_inf = sla.norm(self.system.working_h, np.inf) / penalty_fac_of_element_type
+                    # Scaling using the complete matrix
+                    temp_matrix_tri = self.system.working_h
+                    temp_triu = sp.sparse.triu(temp_matrix_tri,k=1)
+                    lhs_contribution = temp_matrix_tri + np.transpose(temp_triu)
+                    constraint_norm_inf = sla.norm(lhs_contribution, np.inf) / penalty_fac_of_element_type
+
+                    # # Scaling only using the upper triangular matrix
+                    # lhs_contribution = self.system.working_h
+                    # constraint_norm_inf = sla.norm(lhs_contribution, np.inf) / penalty_fac_of_element_type
+
                     scaling_factor = system_norm_inf/constraint_norm_inf
                 else:
                     constraint_norm_inf = 0
@@ -627,7 +652,7 @@ class CADMapper:
                 if self.parameters["output"]["echo_level"].GetInt() > 1:
                     print("> Infinity norm constraint LHS_"+str(itr)+" before scaling without penalty factor = " + str(constraint_norm_inf))
                     print("> Infinity norm constraint LHS_"+str(itr)+" after scaling with penalty factor= " + str(penalty_fac_of_element_type*scaling_factor*constraint_norm_inf))
-                    constraint_max = abs(self.system.working_h).max() / penalty_fac_of_element_type
+                    constraint_max = abs(lhs_contribution).max() / penalty_fac_of_element_type
                     print("> Max absolute value constraint LHS_"+str(itr)+" before scaling without penalty factor = " + str(constraint_max))
                     print("> Max absolute value constraint LHS_"+str(itr)+" after scaling with penalty factor = " + str(penalty_fac_of_element_type*scaling_factor*constraint_max))
                     print("> penalty_factor_"+str(itr)+" = "+str(penalty_fac_of_element_type))

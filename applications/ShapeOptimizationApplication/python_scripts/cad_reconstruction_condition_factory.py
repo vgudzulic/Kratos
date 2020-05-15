@@ -46,17 +46,22 @@ class ConditionFactory:
     def CreateConditions(self, pole_nodes):
         self.pole_nodes = pole_nodes
         conditions = []
+        num_elements = 0
 
         if self.parameters["conditions"]["general"]["apply_integral_method"].GetBool():
             conditions.append([])
-            self.AddDistanceMinimizationWithIntegrationConditions(conditions[-1])
+            num_elements = self.AddDistanceMinimizationWithIntegrationConditions(conditions[-1])
+            print("> Number of elements from DistanceMinimizationWithIntegrationConditions(Mapping) =", num_elements)
         else:
             conditions.append([])
             self.AddDistanceMinimizationConditions(conditions[-1])
 
         if self.parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].GetBool():
             conditions.append([])
-            self.AddFaceConditions(conditions[-1])
+
+            num_elements_i = self.AddFaceConditions(conditions[-1])
+            print("> Number of elements from FaceConditions(shell) =", num_elements_i)
+            num_elements += num_elements_i
 
         if self.parameters["conditions"]["faces"]["rigid"]["apply_rigid_conditions"].GetBool():
             conditions.append([])
@@ -74,7 +79,11 @@ class ConditionFactory:
         if self.parameters["conditions"]["edges"]["direct"]["fix_free_edges"].GetBool():
             position_conditions = []
             tangent_conditions = []
-            self.AddFixFreeEdgeConditions(position_conditions, tangent_conditions)
+
+            num_elements_i = self.AddFixFreeEdgeConditions(position_conditions, tangent_conditions)
+            print("> Number of elements from FixFreeEdgeConditions =", num_elements_i)
+            num_elements += num_elements_i
+
             if len(position_conditions)>0:
                 conditions.append(position_conditions)
             if len(tangent_conditions)>0:
@@ -82,7 +91,9 @@ class ConditionFactory:
 
         if self.parameters["conditions"]["edges"]["direct"]["fix_free_edges_with_no_shape_change"].GetBool():
             conditions.append([])
-            self.AddFixFreeEdgesWithNoShapeChangeConditions(conditions[-1])
+            num_elements_i = self.AddFixFreeEdgesWithNoShapeChangeConditions(conditions[-1])
+            print("> Number of elements from FixFreeEdgesWithNoShapeChangeConditions =", num_elements_i)
+            num_elements += num_elements_i
 
         if self.parameters["conditions"]["edges"]["fe_based"]["apply_enforcement_conditions"].GetBool():
             position_conditions = []
@@ -105,7 +116,11 @@ class ConditionFactory:
         if self.parameters["conditions"]["edges"]["coupling"]["apply_coupling_conditions"].GetBool():
             displacement_conditions = []
             rotation_conditions = []
-            self.AddCouplingConditions(displacement_conditions, rotation_conditions)
+
+            num_elements_i = self.AddCouplingConditions(displacement_conditions, rotation_conditions)
+            print("> Number of elements from CouplingConditions =", num_elements_i)
+            num_elements += num_elements_i
+
             if len(displacement_conditions)>0:
                 conditions.append(displacement_conditions)
             if len(rotation_conditions)>0:
@@ -113,7 +128,13 @@ class ConditionFactory:
 
         if self.parameters["regularization"]["alpha"].GetDouble() >0:
             conditions.append([])
-            self.AddAlphaRegularizationConditions(conditions[-1])
+
+            num_elements_i = self.AddAlphaRegularizationConditions(conditions[-1])
+            print("> Number of elements from AlphaRegularizationConditions =", num_elements_i)
+            num_elements += num_elements_i
+
+        print("> Total number of elements =", num_elements)
+        print("")
 
         return conditions
 
@@ -170,6 +191,7 @@ class ConditionFactory:
     def AddDistanceMinimizationWithIntegrationConditions(self, conditions):
         drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
         total_area = 0
+        num_elements = 0
 
         # Create integration points and assign fe data
         temp_model = KratosMultiphysics.Model()
@@ -187,7 +209,8 @@ class ConditionFactory:
 
             print("> Processing face ",face_i.Key())
 
-            list_of_integration_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i, drawing_tolerance)
+            list_of_integration_points, list_of_parameters, list_of_integration_weights, num_elements_face_i = self.__CreateIntegrationPointsForFace(face_i, drawing_tolerance)
+            num_elements += num_elements_face_i
 
             # Collect integration points in model part
             list_of_fe_points = []
@@ -239,6 +262,8 @@ class ConditionFactory:
 
         print("> Total area of cad surface = ",total_area,"\n")
 
+        return num_elements
+
     # --------------------------------------------------------------------------
     def AddFaceConditions(self, conditions):
         drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
@@ -247,6 +272,8 @@ class ConditionFactory:
         membrane_fac = self.parameters["conditions"]["faces"]["mechanical"]["membrane_factor"].GetDouble()
         bending_fac = self.parameters["conditions"]["faces"]["mechanical"]["bending_factor"].GetDouble()
         apply_on_whole_patch = self.parameters["conditions"]["faces"]["mechanical"]["apply_on_whole_patch"].GetBool()
+
+        num_elements = 0
 
         list_of_exclusive_faces = []
         for itr in range(self.parameters["conditions"]["faces"]["mechanical"]["exclusive_face_list"].size()):
@@ -271,9 +298,11 @@ class ConditionFactory:
             pole_nodes = self.pole_nodes[surface_geometry.Key()]
 
             if apply_on_whole_patch:
-                list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForWholePatch(face_i, drawing_tolerance)
+                list_of_points, list_of_parameters, list_of_integration_weights, num_elements_face_i = self.__CreateIntegrationPointsForWholePatch(face_i, drawing_tolerance)
             else:
-                list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i, drawing_tolerance)
+                list_of_points, list_of_parameters, list_of_integration_weights, num_elements_face_i = self.__CreateIntegrationPointsForFace(face_i, drawing_tolerance)
+
+            num_elements += num_elements_face_i
 
             # Create conditions
             for (x,y,z), (u,v), integration_weight in zip(list_of_points, list_of_parameters, list_of_integration_weights):
@@ -287,6 +316,8 @@ class ConditionFactory:
                 if apply_kl_shell:
                     new_condition = clib.KLShellConditionWithAD(nonzero_pole_nodes, shape_functions, shell_penalty_fac, integration_weight, membrane_fac, bending_fac)
                     conditions.append(new_condition)
+
+        return num_elements
 
     # --------------------------------------------------------------------------
     def AddRigidConditions(self, conditions):
@@ -399,6 +430,8 @@ class ConditionFactory:
         penalty_factor_pos = self.parameters["conditions"]["edges"]["direct"]["penalty_factor_free_edge_position"].GetDouble()
         penalty_factor_tan = self.parameters["conditions"]["edges"]["direct"]["penalty_factor_free_edge_tangent"].GetDouble()
 
+        num_elements = 0
+
         # Free edges are given as edges with no coupled face
         for edge_itr, edge_i in enumerate(self.cad_model.GetByType('BrepEdge')):
             adjacent_faces = edge_i.Data().Faces()
@@ -413,7 +446,12 @@ class ConditionFactory:
                 surface_geometry_data = face.Data().Geometry().Data()
 
                 poles_nodes = self.pole_nodes[surface_geometry.Key()]
-                list_of_points, list_of_parameters, _, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i, drawing_tolerance, min_span_length)
+                list_of_points, list_of_parameters, _, list_of_integration_weights, num_elements_edge_i = self.__CreateIntegrationPointsForEdge(edge_i, drawing_tolerance, min_span_length)
+
+                if penalty_factor_pos > 0:
+                    num_elements += num_elements_edge_i
+                if penalty_factor_tan > 0:
+                    num_elements += num_elements_edge_i
 
                 for integration_point, integration_weight, (u,v) in zip(list_of_points, list_of_integration_weights, list_of_parameters):
 
@@ -435,6 +473,8 @@ class ConditionFactory:
                         new_condition = clib.TangentFixationConditionWithAD(nonzero_pole_nodes, shape_functions, penalty_factor_tan, integration_weight)
                         tangent_conditions.append(new_condition)
 
+        return num_elements
+
     # --------------------------------------------------------------------------
     def AddFixFreeEdgesWithNoShapeChangeConditions(self, conditions):
         drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
@@ -452,7 +492,7 @@ class ConditionFactory:
             adjacent_faces = edge_i.Data().Faces()
             if len(adjacent_faces) == 1:
 
-                list_of_integration_points, list_of_parameters, _, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i, drawing_tolerance, min_span_length)
+                list_of_integration_points, list_of_parameters, _, list_of_integration_weights, num_elements_edge_i = self.__CreateIntegrationPointsForEdge(edge_i, drawing_tolerance, min_span_length)
 
                 # Collect integration points in model part
                 list_of_fe_points = []
@@ -461,7 +501,7 @@ class ConditionFactory:
                     destination_mdpa.CreateNewNode(integration_point_counter, x, y, z)
                     list_of_fe_points.append(destination_mdpa.Nodes[integration_point_counter])
 
-                integration_point_data[edge_i] = [list_of_fe_points, list_of_integration_points, list_of_parameters, list_of_integration_weights]
+                integration_point_data[edge_i] = [list_of_fe_points, list_of_integration_points, list_of_parameters, list_of_integration_weights, num_elements_edge_i]
 
         # Map information from fem to integration points using element based mapper
         print("> Starting to map from FEM to integration points for edge conditions... ")
@@ -470,7 +510,7 @@ class ConditionFactory:
         print("> Finished mapping from FEM to integration points for edge conditions. ")
 
         # Create conditions
-        for edge, [list_of_fe_points, list_of_integration_points, list_of_parameters, list_of_integration_weights] in integration_point_data.items():
+        for edge, [list_of_fe_points, list_of_integration_points, list_of_parameters, list_of_integration_weights, num_elements_edge_i] in integration_point_data.items():
             face = edge.Data().Faces()[0]
             surface_geometry = face.Data().Geometry()
             surface_geometry_data = face.Data().Geometry().Data()
@@ -485,6 +525,9 @@ class ConditionFactory:
                     break
 
             if is_edge_to_be_fixed:
+                if penalty_factor_pos > 0:
+                    num_elements += num_elements_edge_i
+
                 for integration_weight, integration_point, (u,v) in zip(list_of_integration_weights, list_of_integration_points, list_of_parameters):
                     point_ptr = self.cad_model.Add(an.Point3D(location=integration_point))
                     point_ptr.Attributes().SetLayer('FreeEdgesWithNoShapeChange')
@@ -502,6 +545,8 @@ class ConditionFactory:
 
                         new_condition = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes, shape_functions, penalty_factor_pos, integration_weight)
                         conditions.append(new_condition)
+
+        return num_elements
 
     # --------------------------------------------------------------------------
     def AddDirectEdgeConditions(self, position_conditions, tangent_conditions):
@@ -529,7 +574,7 @@ class ConditionFactory:
                 surface_geometry_data = face.Data().Geometry().Data()
 
                 poles_nodes = self.pole_nodes[surface_geometry.Key()]
-                list_of_points, list_of_parameters, _, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i, drawing_tolerance, min_span_length)
+                list_of_points, list_of_parameters, _, list_of_integration_weights, _ = self.__CreateIntegrationPointsForEdge(edge_i, drawing_tolerance, min_span_length)
 
                 for integration_point, integration_weight, (u,v) in zip(list_of_points, list_of_integration_weights, list_of_parameters):
 
@@ -756,6 +801,8 @@ class ConditionFactory:
         min_span_length = self.parameters["drawing_parameters"]["min_span_length"].GetDouble()
         penalty_factor_displacement = self.parameters["conditions"]["edges"]["coupling"]["penalty_factor_displacement_coupling"].GetDouble()
         penalty_factor_rotation = self.parameters["conditions"]["edges"]["coupling"]["penalty_factor_rotation_coupling"].GetDouble()
+
+        num_elements = 0
 
         # Create corresponding points
         for edge_itr, edge_i in enumerate(self.cad_model.GetByType('BrepEdge')):
