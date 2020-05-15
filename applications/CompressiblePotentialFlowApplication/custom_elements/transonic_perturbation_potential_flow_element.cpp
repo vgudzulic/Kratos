@@ -13,7 +13,6 @@
 #include "transonic_perturbation_potential_flow_element.h"
 #include "compressible_potential_flow_application_variables.h"
 #include "includes/cfd_variables.h"
-#include "includes/kratos_flags.h"
 #include "fluid_dynamics_application_variables.h"
 #include "custom_utilities/potential_flow_utilities.h"
 #include "utilities/geometry_utilities.h"
@@ -942,31 +941,93 @@ void TransonicPerturbationPotentialFlowElement<TDim, TNumNodes>::ComputePotentia
 template <int TDim, int TNumNodes>
 void TransonicPerturbationPotentialFlowElement<TDim, TNumNodes>::FindUpwindElement(const ProcessInfo& rCurrentProcessInfo)
 {
-    const TransonicPerturbationPotentialFlowElement& r_this = *this;
-
-    std::vector<size_t> upwind_element_nodes, neighbor_element_ids;
-
-    // find nodes of element which should be the upwind element
     GeometryType upwind_element_boundary;
-    FindUpwindNodes(upwind_element_boundary, rCurrentProcessInfo);
+    FindUpwindEdge(upwind_element_boundary, rCurrentProcessInfo);
+    std::vector<size_t> upwind_element_nodes;
     PotentialFlowUtilities::GetSortedIds<TDim, TNumNodes>(upwind_element_nodes, upwind_element_boundary);
 
     // find neighboring elements to nodes of current element
     GlobalPointersVector<Element> upwind_element_candidates;
     PotentialFlowUtilities::GetNodeNeighborElementCandidates<TDim, TNumNodes>(upwind_element_candidates, upwind_element_boundary);
+    SelectUpwindElement(upwind_element_nodes, upwind_element_candidates);
+}
 
-    for (SizeType i = 0; i < upwind_element_candidates.size(); i++)
+template <int TDim, int TNumNodes>
+void TransonicPerturbationPotentialFlowElement<TDim, TNumNodes>::FindUpwindEdge(GeometryType& rUpwindEdge,
+    const ProcessInfo& rCurrentProcessInfo)
+{
+    // get element edges or faces depending on dimension of the problem
+    GeometriesArrayType element_boundary_geometry;
+    GetElementGeometryBoundary(element_boundary_geometry);
+
+    const array_1d<double, 3> free_stream_velocity = rCurrentProcessInfo[FREE_STREAM_VELOCITY];
+    double minimum_free_stream_projection = 0.0;
+    for (SizeType i = 0; i < element_boundary_geometry.size(); i++)
+    {
+        const auto unit_normal = GetEdgeUnitNormal(element_boundary_geometry[i]);
+
+        // find the projection of the normal vector into the direction of free stream velocity
+        const double free_stream_projection = inner_prod(unit_normal, free_stream_velocity);
+
+        // upwind edges have negative free stream projection
+        if(free_stream_projection < minimum_free_stream_projection){
+            minimum_free_stream_projection = free_stream_projection;
+            rUpwindEdge = element_boundary_geometry[i];
+        }
+    }
+}
+
+template <int TDim, int TNumNodes>
+void TransonicPerturbationPotentialFlowElement<TDim, TNumNodes>::GetElementGeometryBoundary(GeometriesArrayType& rElementGeometryBoundary)
+{
+    const TransonicPerturbationPotentialFlowElement& r_this = *this;
+
+    // current element geometry
+    const GeometryType& r_geom = r_this.GetGeometry();
+
+    if(TDim == 2)
+    {
+        // current element edges
+        rElementGeometryBoundary = r_geom.GenerateEdges();
+    }
+    else if(TDim == 3)
+    {
+        // current element faces
+        rElementGeometryBoundary = r_geom.GenerateFaces();
+    }
+}
+
+template <int TDim, int TNumNodes>
+array_1d<double, 3> TransonicPerturbationPotentialFlowElement<TDim, TNumNodes>::GetEdgeUnitNormal(
+    const GeometryType& rEdge)
+{
+    // get local coordinates of edge center
+    array_1d<double,3> edge_center_coordinates;
+    rEdge.PointLocalCoordinates(edge_center_coordinates, rEdge.Center());
+
+    // outward pointing normals of each edge
+    const auto normal = rEdge.Normal(edge_center_coordinates);
+    return normal / std::sqrt(inner_prod(normal,normal));
+}
+
+template <int TDim, int TNumNodes>
+void TransonicPerturbationPotentialFlowElement<TDim, TNumNodes>::SelectUpwindElement(
+    std::vector<IndexType>& rUpwindElementNodesIds,
+    GlobalPointersVector<Element>& rUpwindElementCandidates)
+{
+    for (SizeType i = 0; i < rUpwindElementCandidates.size(); i++)
     {
         // get sorted node ids of neighbording elements
-        PotentialFlowUtilities::GetSortedIds<TDim, TNumNodes>(neighbor_element_ids, upwind_element_candidates[i].GetGeometry());
+        std::vector<size_t> neighbor_element_ids;
+        PotentialFlowUtilities::GetSortedIds<TDim, TNumNodes>(neighbor_element_ids, rUpwindElementCandidates[i].GetGeometry());
 
         // find element which shares the upwind element nodes with current element
         // but is not the current element
-        if(std::includes(neighbor_element_ids.begin(), neighbor_element_ids.end(), 
-            upwind_element_nodes.begin(), upwind_element_nodes.end()) 
-            && upwind_element_candidates[i].Id() != r_this.Id())
+        if(std::includes(neighbor_element_ids.begin(), neighbor_element_ids.end(),
+            rUpwindElementNodesIds.begin(), rUpwindElementNodesIds.end())
+            && rUpwindElementCandidates[i].Id() != this->Id())
         {
-            mpUpwindElement = upwind_element_candidates(i);
+            mpUpwindElement = rUpwindElementCandidates(i);
             break;
         }
     }
@@ -978,58 +1039,6 @@ void TransonicPerturbationPotentialFlowElement<TDim, TNumNodes>::FindUpwindEleme
         mpUpwindElement = this;
         this->SetFlags(INLET);
     }
-
-}
-
-template <int TDim, int TNumNodes>
-void TransonicPerturbationPotentialFlowElement<TDim, TNumNodes>::FindUpwindNodes(GeometryType& rResult,
-    const ProcessInfo& rCurrentProcessInfo)
-{   
-    const TransonicPerturbationPotentialFlowElement& r_this = *this;
-
-    // free stream values
-    const array_1d<double, 3> free_stream_velocity = rCurrentProcessInfo[FREE_STREAM_VELOCITY];
-
-    // current element geometry
-    const GeometryType& r_geom = r_this.GetGeometry();
-
-    // get element edges or faces depending on dimension of the problem
-    Element::GeometryType::GeometriesArrayType element_boundary_geometry;
-
-    if(TDim == 2)
-    {
-        // current element edges
-        element_boundary_geometry = r_geom.GenerateEdges();
-    }
-    else if(TDim == 3)
-    {
-        // current element faces
-        element_boundary_geometry = r_geom.GenerateFaces();
-    }
-
-    array_1d<double,3> aux_coordinates;
-    vector<double> element_boundary_normal_velocity_components(element_boundary_geometry.size(), 0.0);
-
-    for (SizeType i = 0; i < element_boundary_geometry.size(); i++)
-    { 
-        // get local coordinates of bondary geometry center
-        element_boundary_geometry[i].PointLocalCoordinates(aux_coordinates, element_boundary_geometry[i].Center());
-        
-        // compute portion of normal vectors of faces or edges in free stream direction
-        element_boundary_normal_velocity_components[i] = 
-            PotentialFlowUtilities::ComputeScalarProductProjection<TDim, TNumNodes>(
-                element_boundary_geometry[i].Normal(aux_coordinates), free_stream_velocity);
-    }
-
-    // find min normal component, which belongs to the edge or face which acts as the boundary to the upwind element
-    const auto min_normal_v_comp = std::min_element(
-        element_boundary_normal_velocity_components.begin(), element_boundary_normal_velocity_components.end());    
-    
-    // get vector location of the edg of face which is shared between the current and upwind element
-    const auto upwind_geometry_iterator = std::distance(
-        std::begin(element_boundary_normal_velocity_components), min_normal_v_comp);
-
-    rResult = element_boundary_geometry[upwind_geometry_iterator];
 }
 
 template <int TDim, int TNumNodes>
