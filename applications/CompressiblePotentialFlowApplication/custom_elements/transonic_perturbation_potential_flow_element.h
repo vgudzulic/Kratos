@@ -230,6 +230,8 @@ private:
 
     void GetEquationIdVectorExtendedElement(EquationIdVectorType& rResult) const;
 
+    void AddUpwindEquationId(EquationIdVectorType& rResult) const;
+
     void GetEquationIdVectorNormalElement(EquationIdVectorType& rResult) const;
 
     void GetEquationIdVectorKuttaElement(EquationIdVectorType& rResult) const;

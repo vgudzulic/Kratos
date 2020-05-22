@@ -391,35 +391,42 @@ template <int TDim, int TNumNodes>
 void TransonicPerturbationPotentialFlowElement<TDim, TNumNodes>::GetEquationIdVectorExtendedElement(
     EquationIdVectorType& rResult) const
 {
+    // Adding the normal contribution
     const TransonicPerturbationPotentialFlowElement& r_this = *this;
     const int kutta = r_this.GetValue(KUTTA);
-    if(kutta == 0){
+    if (kutta == 0) {
         GetEquationIdVectorNormalElement(rResult);
-    }
-    else{
+    } else {
         GetEquationIdVectorKuttaElement(rResult);
     }
 
+    // Adding the extra equation Id
+    AddUpwindEquationId(rResult);
+}
+
+template <int TDim, int TNumNodes>
+void TransonicPerturbationPotentialFlowElement<TDim, TNumNodes>::AddUpwindEquationId(
+    EquationIdVectorType& rResult) const
+{
     const int additional_upwind_node_index = GetAdditionalUpwindNodeIndex();
     const auto& r_upstream_element = *pGetUpwindElement();
     const auto& r_upwind_geometry = r_upstream_element.GetGeometry();
     const int upstream_kutta = r_upstream_element.GetValue(KUTTA);
     if (upstream_kutta == 0) { // upwind element is not kutta
-        //TODO Special treatment for the upwind wake elements
+        // TODO Special treatment for the upwind wake elements
         rResult[TNumNodes] = r_upwind_geometry[additional_upwind_node_index]
-                                     .GetDof(VELOCITY_POTENTIAL)
-                                     .EquationId();
-    }
-    else { // upwind element is kutta
+                                 .GetDof(VELOCITY_POTENTIAL)
+                                 .EquationId();
+    } else { // upwind element is kutta
         if (!r_upwind_geometry[additional_upwind_node_index].GetValue(TRAILING_EDGE)) {
             // upwind node is not trailing edge
             rResult[TNumNodes] = r_upwind_geometry[additional_upwind_node_index]
-                                         .GetDof(VELOCITY_POTENTIAL)
-                                         .EquationId();
+                                     .GetDof(VELOCITY_POTENTIAL)
+                                     .EquationId();
         } else { // upwind node is trailing edge
             rResult[TNumNodes] = r_upwind_geometry[additional_upwind_node_index]
-                                         .GetDof(AUXILIARY_VELOCITY_POTENTIAL)
-                                         .EquationId();
+                                     .GetDof(AUXILIARY_VELOCITY_POTENTIAL)
+                                     .EquationId();
         }
     }
 }
