@@ -946,17 +946,19 @@ template<SizeType TVoigtSize>
 void ConstitutiveLawUtilities<TVoigtSize>::CalculateRotationOperatorEuler1(
     const double EulerAngle1,
     BoundedMatrix<double, 3, 3>& rRotationOperator
-)
+    )
 {
-    noalias(rRotationOperator) = ZeroMatrix(Dimension, Dimension);
-
     const double cos_angle = std::cos(EulerAngle1 * Globals::Pi / 180.0);
     const double sin_angle = std::sin(EulerAngle1 * Globals::Pi / 180.0);
 
     rRotationOperator(0, 0) = cos_angle;
     rRotationOperator(0, 1) = sin_angle;
+    rRotationOperator(0, 2) = 0.0;
     rRotationOperator(1, 0) = -sin_angle;
     rRotationOperator(1, 1) = cos_angle;
+    rRotationOperator(1, 2) = 0.0;
+    rRotationOperator(2, 0) = 0.0;
+    rRotationOperator(2, 1) = 0.0;
     rRotationOperator(2, 2) = 1.0;
 }
 
