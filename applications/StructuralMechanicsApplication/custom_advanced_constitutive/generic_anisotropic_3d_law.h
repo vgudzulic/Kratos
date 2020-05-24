@@ -6,7 +6,7 @@
 //  License:         BSD License
 //                   license: structural_mechanics_application/license.txt
 //
-//  Main authors:    Alejandro Cornejo 
+//  Main authors:    Alejandro Cornejo
 //  Collaborator:    Lucia Barbu
 //
 
@@ -42,11 +42,12 @@ namespace Kratos
 ///@}
 ///@name Kratos Classes
 ///@{
+
 /**
  * @class GenericAnisotropic3DLaw
  * @ingroup StructuralMechanicsApplication
- * @brief This CL takes into account the material anisotropy in terms of 
- * young modulus, poisson ratio, orientation and strengths. 
+ * @brief This CL takes into account the material anisotropy in terms of
+ * young modulus, poisson ratio, orientation and strengths.
  * @details See "Comportamiento mecánico de los materiales compuestos" by S. Oller,
  * Chapter "Anisotropía mecánica"
  * @author Alejandro Cornejo
@@ -69,10 +70,10 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) GenericAnisotropic3DLaw
 
     /// The size type definition
     typedef std::size_t SizeType;
-    
+
     /// Static definition of the dimension
     static constexpr SizeType Dimension = 3;
-    
+
     /// Static definition of the VoigtSize
     static constexpr SizeType VoigtSize = 6;
 
@@ -106,7 +107,7 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) GenericAnisotropic3DLaw
 
     // Copy constructor
     GenericAnisotropic3DLaw(GenericAnisotropic3DLaw const& rOther)
-        : ConstitutiveLaw(rOther), 
+        : ConstitutiveLaw(rOther),
         mpIsotropicCL(rOther.mpIsotropicCL)
     {
     }
@@ -301,21 +302,21 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) GenericAnisotropic3DLaw
     /**
      * @brief This computes the mapper operator between the stresses in the isotropic
      * "ficticious" space and the real anisotropic space. S_iso = As*Sa_niso
-     * @param rValues The values of the constitutive la
+     * @param rValues The values of the constitutive law
      * @param rAs The stress mapper operator
      * @param rAs The stress mapper operator inverse
      * @note Eq.(2.39) S. Oller book: Comportamiento mecánico de los materiales compuestos
      */
     void CalculateAnisotropicStressMapperMatrix(
         const Properties& rProperties,
-        BoundedMatrixVoigtType &rAs,
+        BoundedMatrixVoigtType& rAs,
         BoundedMatrixVoigtType& rAsInv
         );
 
     /**
      * @brief This computes the mapper operator between the strain in the isotropic
      * "ficticious" space and the real anisotropic space
-     * @param rValues The values of the constitutive la
+     * @param rValues The values of the constitutive law
      * @param rAs The mapper operator
      * @param rAs The mapper operator inverse
      * @note Eq.(2.35) S. Oller book: Comportamiento mecánico de los materiales compuestos
@@ -323,15 +324,29 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) GenericAnisotropic3DLaw
     void CalculateAnisotropicStrainMapperMatrix(
         const BoundedMatrixVoigtType& rAnisotropicElasticMatrix,
         const BoundedMatrixVoigtType& rIsotropicElasticMatrix,
-        const BoundedMatrixVoigtType &rAs,
+        const BoundedMatrixVoigtType& rAs,
         BoundedMatrixVoigtType& rAe
         );
 
     /**
-     * Initialize the material response in terms of 2nd Piola-Kirchhoff stresses
+     * @brief This computes the mapper operator between the strain in the isotropic
+     * "ficticious" space and the real anisotropic space
+     * @param rDeformationGradient The rotated deformation gradient
+     * @param rReferenceStrain The reference strain in the mapped domain
+     * @param rAs The mapper operator
+     */
+    void CalculateAnisotropicStrainMapperMatrix(
+        const Matrix& rDeformationGradient,
+        const Vector& rReferenceStrain,
+        BoundedMatrixType& rAe
+        );
+
+    /**
+     * @brief Initialize the material response in terms of 2nd Piola-Kirchhoff stresses
+     * @param rValues The values of the constitutive law
      * @see Parameters
      */
-    void InitializeMaterialResponsePK2(Parameters& rValues) override;  
+    void InitializeMaterialResponsePK2(Parameters& rValues) override;
 
     /**
      * @brief If the CL requires to initialize the material response, called by the element in InitializeSolutionStep.
@@ -376,7 +391,7 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) GenericAnisotropic3DLaw
 
     ///@}
 
-  protected:
+protected:
     ///@name Protected static Member Variables
     ///@{
 
@@ -386,6 +401,14 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) GenericAnisotropic3DLaw
 
     ///@}
     ///@name Protected Operators
+    ///@{
+
+    ///@}
+    ///@name Protected Operations
+    ///@{
+
+    ///@}
+    ///@name Protected  Access
     ///@{
 
     /**
@@ -404,15 +427,6 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) GenericAnisotropic3DLaw
         mpIsotropicCL = pIsotropicConstitutiveLaw;
     }
 
-
-    ///@}
-    ///@name Protected Operations
-    ///@{
-
-    ///@}
-    ///@name Protected  Access
-    ///@{
-
     ///@}
     ///@name Protected Inquiry
     ///@{
@@ -422,7 +436,7 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) GenericAnisotropic3DLaw
     ///@{
 
     ///@}
-  private:
+private:
     ///@name Static Member Variables
     ///@{
 
