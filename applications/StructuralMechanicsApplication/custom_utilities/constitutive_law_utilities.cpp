@@ -969,16 +969,18 @@ template<SizeType TVoigtSize>
 void ConstitutiveLawUtilities<TVoigtSize>::CalculateRotationOperatorEuler2(
     const double EulerAngle2,
     BoundedMatrix<double, 3, 3>& rRotationOperator
-)
+    )
 {
-    noalias(rRotationOperator) = ZeroMatrix(Dimension, Dimension);
-
     const double cos_angle = std::cos(EulerAngle2 * Globals::Pi / 180.0);
     const double sin_angle = std::sin(EulerAngle2 * Globals::Pi / 180.0);
 
     rRotationOperator(0, 0) = 1.0;
+    rRotationOperator(0, 1) = 0.0;
+    rRotationOperator(0, 2) = 0.0;
+    rRotationOperator(1, 0) = 0.0;
     rRotationOperator(1, 1) = cos_angle;
     rRotationOperator(1, 2) = sin_angle;
+    rRotationOperator(2, 0) = 0.0;
     rRotationOperator(2, 1) = -sin_angle;
     rRotationOperator(2, 2) = cos_angle;
 }
@@ -990,7 +992,7 @@ template<SizeType TVoigtSize>
 void ConstitutiveLawUtilities<TVoigtSize>::CalculateRotationOperatorEuler3(
     const double EulerAngle3,
     BoundedMatrix<double, 3, 3>& rRotationOperator
-)
+    )
 {
     ConstitutiveLawUtilities<6>::CalculateRotationOperatorEuler1(EulerAngle3, rRotationOperator);
 }
@@ -1004,10 +1006,8 @@ void ConstitutiveLawUtilities<TVoigtSize>::CalculateRotationOperator(
     const double EulerAngle2, // theta
     const double EulerAngle3, // hi
     BoundedMatrix<double, 3, 3>& rRotationOperator // global to local coordinates
-)
+    )
 {
-    noalias(rRotationOperator) = ZeroMatrix(Dimension, Dimension);
-
     const double pi_over_180 = Globals::Pi / 180.0;
     const double cos1 = std::cos(EulerAngle1 * pi_over_180);
     const double sin1 = std::sin(EulerAngle1 * pi_over_180);
