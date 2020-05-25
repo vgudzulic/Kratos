@@ -23,7 +23,7 @@ export CXX=g++
 export KRATOS_SOURCE="D:/Doctorado/Trabajo/Kratos"
 export KRATOS_BUILD="${KRATOS_SOURCE}/build"
 export KRATOS_APP_DIR="${KRATOS_SOURCE}/applications"
-# export KRATOS_INSTALL_PYTHON_USING_LINKS=ON
+export KRATOS_INSTALL_PYTHON_USING_LINKS=ON
 
 # Set basic configuration
 export KRATOS_BUILD_TYPE=${KRATOS_BUILD_TYPE:-"RelWithDebInfo"}
