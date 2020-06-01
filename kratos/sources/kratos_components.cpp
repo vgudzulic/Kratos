@@ -22,6 +22,7 @@
 #include "includes/constitutive_law.h"
 #include "includes/imposed_deformation.h"
 #include "includes/master_slave_constraint.h"
+#include "modeler/modeler.h"
 
 /* Utilities */
 #include "utilities/quaternion.h"
@@ -132,6 +133,11 @@ void AddKratosComponent(std::string const& Name, Condition const& ThisComponent)
     KratosComponents<Condition>::Add(Name, ThisComponent);
 }
 
+void AddKratosComponent(std::string const& Name, Modeler const& ThisComponent)
+{
+    KratosComponents<Modeler>::Add(Name, ThisComponent);
+}
+
 void AddKratosComponent(std::string const& Name, ConstitutiveLaw const& ThisComponent)
 {
     KratosComponents<ConstitutiveLaw>::Add(Name, ThisComponent);
@@ -180,6 +186,7 @@ template class KratosComponents<Variable<ConstitutiveLaw::Pointer>>;
 template class KratosComponents<ImposedDeformation>;
 template class KratosComponents<Variable<ImposedDeformation::Pointer>>;
 template class KratosComponents<MasterSlaveConstraint>;
+template class KratosComponents<Modeler>;
 
 using RealSparseSpace = UblasSpace<double, boost::numeric::ublas::compressed_matrix<double>, boost::numeric::ublas::vector<double>>;
 using RealDenseSpace = UblasSpace<double, DenseMatrix<double>, DenseVector<double>>;
