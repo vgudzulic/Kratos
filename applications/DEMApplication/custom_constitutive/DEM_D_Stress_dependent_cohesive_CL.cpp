@@ -51,7 +51,7 @@ namespace Kratos {
         const double my_radius       = element1->GetRadius();
         const double other_radius    = element2->GetRadius();
         const double radius_sum      = my_radius + other_radius;
-        const double equiv_radius    = 0.5 * (my_radius + other_radius);
+        const double equiv_radius    = 2.0 * (my_radius * other_radius) / radius_sum;
 
         //Get equivalent Young's Modulus
         const double my_young        = element1->GetYoung();
