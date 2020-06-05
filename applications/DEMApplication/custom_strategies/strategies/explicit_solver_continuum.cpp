@@ -72,6 +72,8 @@ namespace Kratos {
             if (automatic_skin_computation) {
                 ComputeSkin(r_model_part, factor_radius);
                 SetCoordinationNumber(r_model_part);
+                // Added
+                ComputeSkin(r_model_part, factor_radius);
             }
         }
 
