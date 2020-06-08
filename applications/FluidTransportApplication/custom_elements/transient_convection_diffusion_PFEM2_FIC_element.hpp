@@ -147,6 +147,8 @@ protected:
 
     void CalculateDiffusivityVariables(ElementVariables& rVariables, const PropertiesType& Prop, const ProcessInfo& CurrentProcessInfo) override;
 
+    void CalculateHVector(ElementVariables& rVariables, const PropertiesType& Prop, const ProcessInfo& CurrentProcessInfo) override;
+
     void CalculateAndAddAdvectionMatrix(MatrixType& rLeftHandSideMatrix, ElementVariables& rVariables) override {}
 
     void CalculateAndAddRHSAdvection(VectorType& rRightHandSideVector, ElementVariables& rVariables) override {}

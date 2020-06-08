@@ -107,7 +107,7 @@ void TransientConvectionDiffusionPFEM2FICElement<TDim,TNumNodes>::CalculateDiffu
 
     if (std::abs(st) > 0.1 * std::abs(previous_absorption))
     {
-        rVariables.TransientAbsorption = previous_absorption + 0.1 * previous_absorption;
+       rVariables.TransientAbsorption = previous_absorption + 0.1 * previous_absorption;
     }
 
     // If absorption = 0; no transient absorption is added
@@ -170,7 +170,16 @@ void TransientConvectionDiffusionPFEM2FICElement<TDim,TNumNodes>::CalculateDiffu
 
         if (TNumNodes == 3)
         {
-            rVariables.lsc = std::sqrt(2.0) * rVariables.lv;
+            for (unsigned int i = 0; i < TNumNodes; i++)
+            {
+                array_1d <double, 3> AuxNodeNormal = rGeom[i].FastGetSolutionStepValue(NORMAL);
+                double NormAuxNodeNormal = norm_2 (AuxNodeNormal);
+
+                if (NormAuxNodeNormal > rVariables.LowTolerance)
+                {
+                    rVariables.lsc = std::sqrt(2.0) * rVariables.lv;
+                }
+            }
         }
     }
     else
@@ -191,19 +200,28 @@ void TransientConvectionDiffusionPFEM2FICElement<TDim,TNumNodes>::CalculateDiffu
 
     rVariables.AlphaVBar = 0.0;
     rVariables.OmegaV = 0.0;
+    rVariables.OmegaVt = 0.0;
+    rVariables.OmegaVBarra = 0.0;
     rVariables.SigmaV = 0.0;
+    rVariables.SigmaVt = 0.0;
+    rVariables.SigmaVBarra = 0.0;
     rVariables.Peclet = 0.0;
 
     if (NormVel < rVariables.HighTolerance)
     {
 
         // TODO: S'ha de posar OmegaV = 0 si v = 0??
-        rVariables.OmegaV = rVariables.TransientAbsorption * rVariables.lv * rVariables.lv / conductivity;
+        rVariables.OmegaV = rVariables.absorption * rVariables.lv * rVariables.lv * rVariables.rho_dot_c / conductivity;
+        rVariables.OmegaVt = st * rVariables.lv * rVariables.lv * rVariables.rho_dot_c / conductivity;
+
+        rVariables.OmegaVBarra = rVariables.OmegaV + rVariables.OmegaVt;
 
         rVariables.SigmaV = rVariables.OmegaV / (2.0 * rVariables.HighTolerance);
+        rVariables.SigmaVt = rVariables.rho_dot_c * rVariables.lv / (theta * delta_time * NormVel) * fk;
 
-        rVariables.Peclet = NormVel * rVariables.lv / (2.0 * rVariables.AuxDiffusion);
+        rVariables.SigmaVBarra = rVariables.SigmaV + rVariables.SigmaVt;
 
+        rVariables.Peclet = NormVel * rVariables.lv * rVariables.rho_dot_c / (2.0 * rVariables.AuxDiffusion);
     }
     else
     {
@@ -213,31 +231,40 @@ void TransientConvectionDiffusionPFEM2FICElement<TDim,TNumNodes>::CalculateDiffu
         }
         else
         {
-            rVariables.Peclet = NormVel * rVariables.lv / (2.0 * rVariables.AuxDiffusion);
+            rVariables.Peclet = NormVel * rVariables.lv * rVariables.rho_dot_c / (2.0 * rVariables.AuxDiffusion);
         }
 
-        rVariables.OmegaV = rVariables.TransientAbsorption * rVariables.lv * rVariables.lv / rVariables.AuxDiffusion;
+        rVariables.OmegaV = rVariables.absorption * rVariables.lv * rVariables.lv * rVariables.rho_dot_c / rVariables.AuxDiffusion;
+        rVariables.OmegaVt = st * rVariables.lv * rVariables.lv * rVariables.rho_dot_c / rVariables.AuxDiffusion;
+
+        rVariables.OmegaVBarra = rVariables.OmegaV + rVariables.OmegaVt;
 
         rVariables.SigmaV = rVariables.OmegaV / (2.0 * rVariables.Peclet);
+        rVariables.SigmaVt = rVariables.rho_dot_c * rVariables.lv / (theta * delta_time * NormVel) * fk;
+
+        rVariables.SigmaVBarra = rVariables.SigmaV + rVariables.SigmaVt;
 
         rVariables.AlphaVBar = 1.0 / tanh(rVariables.Peclet) - 1.0 / rVariables.Peclet;
-
     }
 
-    rVariables.LambdaV = std::sqrt(rVariables.Peclet * rVariables.Peclet + rVariables.OmegaV);
+    rVariables.LambdaV = std::sqrt(rVariables.Peclet * rVariables.Peclet + rVariables.OmegaVBarra);
 
-    rVariables.XiV = (cosh(rVariables.LambdaV) / cosh(rVariables.Peclet));
+    double epsilon = rVariables.LambdaV - rVariables.Peclet;
 
-    if(rVariables.SigmaV < 0.00024414) // 2^-12
+    // rVariables.XiV = (cosh(rVariables.LambdaV) / cosh(rVariables.Peclet));
+
+    rVariables.XiV = (exp(epsilon) + exp(- 2 * rVariables.Peclet - epsilon)) / (1.0 + exp(- 2 * rVariables.Peclet));
+
+    if(rVariables.SigmaVBarra < 0.00024414) // 2^-12
     {
-        rVariables.AlphaV = rVariables.SigmaV / 3.0 + rVariables.AlphaVBar * (1.0 - rVariables.SigmaV / rVariables.Peclet);
+        rVariables.AlphaV = rVariables.SigmaVBarra / 3.0 + rVariables.AlphaVBar * (1.0 - rVariables.SigmaVBarra / rVariables.Peclet);
     }
     else
     {
-        rVariables.AlphaV = 2.0 / rVariables.SigmaV * (1.0 - (rVariables.SigmaV * tanh (rVariables.Peclet)) / (rVariables.XiV - 1.0));
+        rVariables.AlphaV = 2.0 / rVariables.SigmaVBarra * (1.0 - (rVariables.SigmaVBarra * tanh (rVariables.Peclet)) / (rVariables.XiV - 1.0));
     }
 
-    if (std::abs(rVariables.absorption) < rVariables.HighTolerance)
+    if (std::abs(rVariables.TransientAbsorption) < rVariables.HighTolerance)
     {
         rVariables.AlphaV = 1.0 / tanh(rVariables.Peclet) - 1.0 / rVariables.Peclet;
     }
@@ -300,7 +327,6 @@ void TransientConvectionDiffusionPFEM2FICElement<TDim,TNumNodes>::CalculateDiffu
     //                         + rVariables.absorption * inner_prod(rVariables.N, NodalPhi0)
     //                         - rVariables.QSource;
 
-    // In PFEM2 the advective term is not needed
     rVariables.Residual =   - rVariables.NormAux2 * conductivity
                             + rVariables.absorption * inner_prod(rVariables.N, NodalPhi0)
                             - rVariables.QSource;
@@ -318,21 +344,31 @@ void TransientConvectionDiffusionPFEM2FICElement<TDim,TNumNodes>::CalculateDiffu
     {
 
         // TODO: S'ha de posar OmegaV = 0 si v = 0??
-        rVariables.OmegaV = previous_absorption * rVariables.lv * rVariables.lv / conductivity;
+        rVariables.OmegaV = rVariables.absorption * rVariables.lv * rVariables.lv * rVariables.rho_dot_c / conductivity;
+        rVariables.OmegaVt = st * rVariables.lv * rVariables.lv * rVariables.rho_dot_c / conductivity;
+
+        rVariables.OmegaVBarra = rVariables.OmegaV + rVariables.OmegaVt;
 
         rVariables.SigmaV = rVariables.OmegaV / (2.0 * rVariables.HighTolerance);
+        rVariables.SigmaVt = rVariables.rho_dot_c * rVariables.lv / (theta * delta_time * NormVel) * fk;
+
+        rVariables.SigmaVBarra = rVariables.SigmaV + rVariables.SigmaVt;
 
     }
     else
     {
+        rVariables.OmegaV = rVariables.absorption * rVariables.lv * rVariables.lv * rVariables.rho_dot_c / rVariables.AuxDiffusion;
+        rVariables.OmegaVt = st * rVariables.lv * rVariables.lv * rVariables.rho_dot_c / rVariables.AuxDiffusion;
 
-        rVariables.OmegaV = previous_absorption * rVariables.lv * rVariables.lv / rVariables.AuxDiffusion;
+        rVariables.OmegaVBarra = rVariables.OmegaV + rVariables.OmegaVt;
 
         rVariables.SigmaV = rVariables.OmegaV / (2.0 * rVariables.Peclet);
+        rVariables.SigmaVt = rVariables.rho_dot_c * rVariables.lv / (theta * delta_time * NormVel) * fk;
 
+        rVariables.SigmaVBarra = rVariables.SigmaV + rVariables.SigmaVt;
     }
 
-    rVariables.AlphaR = rVariables.Peclet * (0.5 * rVariables.SigmaV * ((rVariables.XiV + 1.0) / (rVariables.XiV - 1.0)) - rVariables.AlphaV)
+    rVariables.AlphaR = rVariables.Peclet * (0.5 * rVariables.SigmaV * ((rVariables.XiV + 1.0) / (rVariables.XiV - 1.0)))
                         - 1.0 - (1.0 / rVariables.AuxDiffusion) * inner_prod(rVariables.VelInterHat, prod(rVariables.DifMatrixS, rVariables.VelInterHat));
 
     if (rVariables.absorption < rVariables.HighTolerance)
@@ -353,7 +389,7 @@ void TransientConvectionDiffusionPFEM2FICElement<TDim,TNumNodes>::CalculateDiffu
         }
         else if (conductivity < rVariables.HighTolerance)
         {
-            rVariables.AlphaR = previous_absorption * rVariables.lv * rVariables.lv / 6.0;
+            rVariables.AlphaR = rVariables.absorption * rVariables.lv * rVariables.lv / 6.0;
         }
     }
 
@@ -365,10 +401,10 @@ void TransientConvectionDiffusionPFEM2FICElement<TDim,TNumNodes>::CalculateDiffu
     else
     {
         //TODO
-        noalias(rVariables.DifMatrixR) =  std::abs(rVariables.TransientResidual / rVariables.Residual) * rVariables.AlphaR * rVariables.AuxDiffusion
-                                    * outer_prod(rVariables.VelInterHat , rVariables.VelInterHat);
-        // noalias(rVariables.DifMatrixR) =  rVariables.AlphaR * rVariables.AuxDiffusion
-        //                             * outer_prod(rVariables.VelInterHat , rVariables.VelInterHat);
+        //noalias(rVariables.DifMatrixR) =  std::abs(rVariables.TransientResidual / rVariables.Residual) * rVariables.AlphaR * rVariables.AuxDiffusion
+        //                            * outer_prod(rVariables.VelInterHat , rVariables.VelInterHat);
+         noalias(rVariables.DifMatrixR) =  rVariables.AlphaR * rVariables.AuxDiffusion
+                                     * outer_prod(rVariables.VelInterHat , rVariables.VelInterHat);
     }
 
     //////////////////////////////////////////////////////
@@ -454,10 +490,112 @@ void TransientConvectionDiffusionPFEM2FICElement<TDim,TNumNodes>::CalculateDiffu
         rVariables.CosinusNormals = 1.0;
     }
 
-    noalias(rVariables.DifMatrixV) = 0.0 * (rVariables.lv + rVariables.lsc * (1.0 - rVariables.CosinusGradPhi) * (1.0 - rVariables.CosinusNormals * rVariables.CosinusNormals))
+    noalias(rVariables.DifMatrixV) = (rVariables.lv + rVariables.lsc * (1.0 - rVariables.CosinusGradPhi) * (1.0 - rVariables.CosinusNormals * rVariables.CosinusNormals))
                                                  * rVariables.AlphaV * outer_prod(rVariables.VelInterHat , rVariables.VelInter);
 
 KRATOS_CATCH("")
+}
+
+//----------------------------------------------------------------------------------------
+
+template< unsigned int TDim, unsigned int TNumNodes >
+void TransientConvectionDiffusionPFEM2FICElement<TDim,TNumNodes>::CalculateHVector(ElementVariables& rVariables, const PropertiesType& Prop, const ProcessInfo& CurrentProcessInfo)
+{
+KRATOS_TRY
+
+    ConvectionDiffusionSettings::Pointer my_settings = CurrentProcessInfo.GetValue(CONVECTION_DIFFUSION_SETTINGS);
+
+    //Properties variables
+    double NormVel = rVariables.VelInter[0]*rVariables.VelInter[0];
+    for (unsigned int d = 1; d < TDim; d++)
+        NormVel += rVariables.VelInter[d]*rVariables.VelInter[d];
+    NormVel = std::sqrt(NormVel);
+
+    // Compute HrVector
+    BoundedMatrix<double,TDim,TDim> AuxMatrix;
+    BoundedMatrix<double,TDim,TDim> AuxMatrix2;
+    BoundedMatrix<double,TDim,TDim> AuxMatrix3;
+    BoundedMatrix<double,TDim,TDim> AuxMatrix4;
+
+    if (std::abs(rVariables.Residual) < rVariables.LowTolerance)
+    {
+        for (unsigned int i = 0 ; i < TDim ; i++ )
+        {
+            rVariables.HrVector [i] = 0.0;
+        }
+    }
+    else
+    {
+        if(std::abs(rVariables.TransientResidual) < rVariables.LowTolerance)
+        {
+            AuxMatrix3 = (2.0 / rVariables.Residual ) * (rVariables.DifMatrixS
+                            + rVariables.AlphaR * rVariables.AuxDiffusion * outer_prod(rVariables.VelInterHat, rVariables.VelInterHat));
+        }
+        else
+        {
+            // TODO
+            AuxMatrix3 = (2.0 * (rVariables.TransientResidual / std::abs(rVariables.TransientResidual)) / rVariables.Residual ) * (rVariables.DifMatrixS
+                            + rVariables.AlphaR * rVariables.AuxDiffusion * outer_prod(rVariables.VelInterHat, rVariables.VelInterHat));
+
+            // AuxMatrix3 = (2.0 / rVariables.Residual ) * (rVariables.DifMatrixS
+            //                 + rVariables.AlphaR * rVariables.AuxDiffusion * outer_prod(rVariables.VelInterHat, rVariables.VelInterHat));
+        }
+
+        rVariables.HrVector = prod(AuxMatrix3, rVariables.GradPhi);
+
+    }
+
+    // Compute HscVector
+    if (std::abs(rVariables.NormGradPhi) < rVariables.LowTolerance)
+    {
+        for (unsigned int i = 0 ; i < TDim ; i++ )
+        {
+            rVariables.HscVector [i] = 0.0;
+        }
+    }
+    else
+    {
+        noalias(AuxMatrix2) = outer_prod(rVariables.VelInterHat , rVariables.VelInterHat);
+
+        for (unsigned int i = 0 ; i < TDim ; i++ )
+        {
+            for (unsigned int j = 0 ; j < TDim ; j++ )
+            {
+                AuxMatrix(i,j) = rVariables.IdentityMatrix(i,j) - AuxMatrix2(i,j);
+            }
+        }
+
+        // Double dot product
+        AuxMatrix4 = prod((rVariables.DifMatrixK + rVariables.DifMatrixS), AuxMatrix);
+        double DoubleDotScalar = 0.0;
+
+        for (unsigned int i = 0 ; i < TDim ; i++ )
+        {
+            DoubleDotScalar += AuxMatrix4 (i,i);
+        }
+
+
+        double AuxScalar = (rVariables.lsc * (rVariables.Residual / std::abs(rVariables.Residual)) - 2.0 * rVariables.NormGradPhi / rVariables.Residual
+                            * DoubleDotScalar) * (1.0 - rVariables.Beta * rVariables.Beta);
+
+        if (std::abs(rVariables.Residual) < rVariables.LowTolerance)
+        {
+            AuxScalar = 0.0;
+        }
+
+        // On the first iteration, SC can't be used
+        if (rVariables.IterationNumber == 1)
+        {
+            AuxScalar = 0.0;
+        }
+
+        rVariables.HscVector = AuxScalar * rVariables.GradPhi / rVariables.NormGradPhi;
+    }
+
+    // Compute HVector
+    rVariables.HVector = rVariables.HrVector + rVariables.HscVector;
+
+    KRATOS_CATCH("")
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
