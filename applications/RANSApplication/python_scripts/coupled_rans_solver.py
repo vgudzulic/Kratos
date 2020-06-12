@@ -184,6 +184,8 @@ class CoupledRANSSolver(PythonSolver):
         else:
             self.formulation.SetCommunicator(None)
 
+        self.main_model_part.ProcessInfo[Kratos.STEP] = 0
+
         # If needed, create the estimate time step utility
         if (self.settings["time_stepping"]["automatic_time_step"].GetBool()):
             self.EstimateDeltaTimeUtility = self._GetAutomaticTimeSteppingUtility(
