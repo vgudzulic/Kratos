@@ -107,8 +107,7 @@ public:
 
     typedef Dof<double> DofType;
     typedef std::vector< DofType::Pointer > DofsVectorType;
-    typedef Kratos::Variable<double> DoubleVariableType;
-    typedef Kratos::VariableComponent<Kratos::VectorComponentAdaptor<Kratos::array_1d<double, 3>>> VariableComponentType;
+    typedef Variable<double> DoubleVariableType;
     typedef Matrix MatrixType;
     typedef Vector VectorType;
 
@@ -247,6 +246,9 @@ public:
 
     /// Const Geometry Iterator
     typedef typename GeometryContainerType::GeometryConstantIterator GeometryConstantIterator;
+
+    /// Geometry Hash Map Container. Stores with hash of Ids to corresponding geometries.
+    typedef typename GeometryContainerType::GeometriesMapType GeometriesMapType;
 
     /// The container of the sub model parts. A hash table is used.
     /**
@@ -734,16 +736,6 @@ public:
                                                                                     const DoubleVariableType& rSlaveVariable,
                                                                                     const double Weight,
                                                                                     const double Constant,
-                                                                                    IndexType ThisIndex = 0);
-
-    MasterSlaveConstraint::Pointer CreateNewMasterSlaveConstraint(const std::string& ConstraintName,
-                                                                                    IndexType Id,
-                                                                                    NodeType& rMasterNode,
-                                                                                    const VariableComponentType& rMasterVariable,
-                                                                                    NodeType& rSlaveNode,
-                                                                                    const VariableComponentType& rSlaveVariable,
-                                                                                    double Weight,
-                                                                                    double Constant,
                                                                                     IndexType ThisIndex = 0);
 
     /**
@@ -1443,6 +1435,19 @@ public:
         return mGeometries.GeometriesEnd();
     }
 
+
+    /// Get geometry map containe
+    GeometriesMapType& Geometries()
+    {
+        return mGeometries.Geometries();
+    }
+
+    /// Get geometry map containe
+    const GeometriesMapType& Geometries() const
+    {
+        return mGeometries.Geometries();
+    }
+
     ///@}
     ///@name Sub model parts
     ///@{
@@ -1508,6 +1513,11 @@ public:
     }
 
     SubModelPartsContainerType& SubModelParts()
+    {
+        return mSubModelParts;
+    }
+
+    const SubModelPartsContainerType& SubModelParts() const
     {
         return mSubModelParts;
     }
@@ -1629,7 +1639,7 @@ public:
     ///@}
     ///@name Operations
     ///@{
-    
+
     /**
      * @brief This method returns the full name of the model part (including the parents model parts)
      * @details This is evaluated in a recursive way
@@ -1643,7 +1653,7 @@ public:
         }
         return full_name;
     }
-    
+
     /**
      * @brief This method returns the name list of submodelparts
      * @return A vector conrtaining the list of submodelparts contained
