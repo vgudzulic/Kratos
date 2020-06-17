@@ -21,6 +21,7 @@
 #include "custom_advanced_constitutive/hyper_elastic_isotropic_ogden_3d.h"
 #include "custom_utilities/constitutive_law_utilities.h"
 #include "structural_mechanics_application_variables.h"
+#include "custom_utilities/tangent_operator_calculator_utility.h"
 
 namespace Kratos
 {
@@ -135,14 +136,14 @@ void HyperElasticIsotropicOgden3D::CalculateMaterialResponsePK2 (ConstitutiveLaw
             for (IndexType j = 0; j < Dimension; ++j) {
                 auxiliar_vector[j] = eigen_vector_matrix(j, i);
             }
-            noalias(eigen_vectors_container(i)) = auxiliar_vector;
+            noalias(eigen_vectors_container[i]) = auxiliar_vector;
         }
 
         // We fill the M_container
-        BoundedMatrixType auxiliar_matrix;
+        Matrix auxiliar_matrix(Dimension, Dimension);
         for (IndexType i = 0; i < Dimension; ++i) {
-            noalias(auxiliar_matrix) = std::pow(eigen_values_matrix(i, i), -2) * outer_prod(eigen_vectors_container(i), eigen_vectors_container(i));
-            noalias(M_container(i))  = auxiliar_matrix;
+            noalias(auxiliar_matrix) = std::pow(eigen_values_matrix(i, i), -2) * outer_prod(eigen_vectors_container[i], eigen_vectors_container[i]);
+            noalias(M_container[i])  = auxiliar_matrix;
         }
 
         // We fill the beta parameter
@@ -159,7 +160,7 @@ void HyperElasticIsotropicOgden3D::CalculateMaterialResponsePK2 (ConstitutiveLaw
         BoundedMatrixType stress_tensor;
         for (IndexType i = 0; i < Dimension; ++i) {
             for (IndexType j = 0; j < Dimension; ++j) {
-                stress_tensor(i, j) = beta(0) * M_container(0) + beta(1) * M_container(1) + beta(2) * M_container(2);
+                noalias(stress_tensor) = beta(0) * M_container[0] + beta(1) * M_container[1] + beta(2) * M_container[2];
             }
         }
 
@@ -169,25 +170,9 @@ void HyperElasticIsotropicOgden3D::CalculateMaterialResponsePK2 (ConstitutiveLaw
 
         // We compute the tangent tensor by perturbation
         if (r_flags.Is( ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
-            // todo perturb
+            this->CalculateTangentTensor(rValues, ConstitutiveLaw::StressMeasure_PK2); // this modifies the ConstitutiveMatrix
         }
     }
-
-
-
-
-    DO i=1,3
-        DO j=i,3
-           Deviator(i,j)=BETA(1)*MA(i,j,1)+BETA(2)*MA(i,j,2)+BETA(3)*MA(i,j,3)
-        ENDDO
-    ENDDO
-
-
-
-
-
-
-
 
     KRATOS_CATCH("");
 }
@@ -590,5 +575,20 @@ void HyperElasticIsotropicOgden3D::CalculateAlmansiStrain(
     const Matrix B_tensor = prod(F,trans(F));
     ConstitutiveLawUtilities<VoigtSize>::CalculateAlmansiStrain(B_tensor, rStrainVector);
 }
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+void HyperElasticIsotropicOgden3D::CalculateTangentTensor(
+    ConstitutiveLaw::Parameters& rValues,
+    const ConstitutiveLaw::StressMeasure& rStressMeasure
+    )
+{
+    // Calculates the Tangent Constitutive Tensor by perturbation
+    TangentOperatorCalculatorUtility::CalculateTangentTensorFiniteDeformation(rValues, this, rStressMeasure);
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
 
 } // Namespace Kratos
