@@ -107,6 +107,7 @@
 #include "custom_advanced_constitutive/hyper_elastic_isotropic_henky_1d.h"
 #include "custom_advanced_constitutive/elastic_isotropic_plane_stress_uncoupled_shear.h"
 #include "custom_advanced_constitutive/hyper_elastic_isotropic_kirchhoff_3d.h"
+#include "custom_advanced_constitutive/hyper_elastic_isotropic_ogden_3d.h"
 #include "custom_advanced_constitutive/hyper_elastic_isotropic_kirchhoff_plane_stress_2d.h"
 #include "custom_advanced_constitutive/hyper_elastic_isotropic_kirchhoff_plane_strain_2d.h"
 #include "custom_advanced_constitutive/hyper_elastic_isotropic_neo_hookean_3d.h"
@@ -523,6 +524,7 @@ private:
     // Damage and plasticity laws
     const ElasticIsotropicPlaneStressUncoupledShear  mElasticIsotropicPlaneStressUncoupledShear;
     const HyperElasticIsotropicKirchhoff3D  mHyperElasticIsotropicKirchhoff3D;
+    const HyperElasticIsotropicOgden3D  mHyperElasticIsotropicOgden3D;
     const HyperElasticIsotropicKirchhoffPlaneStress2D  mHyperElasticIsotropicKirchhoffPlaneStress2D;
     const HyperElasticIsotropicKirchhoffPlaneStrain2D  mHyperElasticIsotropicKirchhoffPlaneStrain2D;
     const HyperElasticIsotropicNeoHookean3D  mHyperElasticIsotropicNeoHookean3D;
