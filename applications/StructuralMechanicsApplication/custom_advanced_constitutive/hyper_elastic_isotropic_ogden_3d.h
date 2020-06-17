@@ -70,6 +70,21 @@ public:
     /// Static definition of the VoigtSize
     static constexpr SizeType VoigtSize = 6;
 
+    /// The matrix type definition
+    typedef Matrix MatrixType;
+
+    /// the vector type definition
+    typedef Vector VectorType;
+
+    /// The definition of the bounded vector type
+    typedef array_1d<double, VoigtSize> BoundedVectorType;
+
+    /// The definition of the bounded matrix type
+    typedef BoundedMatrix<double, Dimension, Dimension> BoundedMatrixType;
+
+    /// The definition of the bounded matrix type
+    typedef BoundedMatrix<double, VoigtSize, VoigtSize> BoundedMatrixVoigtType;
+    
     /// Pointer definition of HyperElasticIsotropicOgden3D
     KRATOS_CLASS_POINTER_DEFINITION( HyperElasticIsotropicOgden3D );
 

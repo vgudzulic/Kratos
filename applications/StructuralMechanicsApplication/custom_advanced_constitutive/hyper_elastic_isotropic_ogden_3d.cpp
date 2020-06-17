@@ -71,7 +71,7 @@ void HyperElasticIsotropicOgden3D::CalculateMaterialResponsePK1 (ConstitutiveLaw
 /***********************************************************************************/
 /***********************************************************************************/
 
-void  HyperElasticIsotropicOgden3D::CalculateMaterialResponsePK2(ConstitutiveLaw::Parameters& rValues)
+void  HyperElasticIsotropicOgden3D::CalculateMaterialResponseCauchy(ConstitutiveLaw::Parameters& rValues)
 {
     KRATOS_TRY;
 
@@ -89,21 +89,98 @@ void HyperElasticIsotropicOgden3D::CalculateMaterialResponseKirchhoff (Constitut
 /***********************************************************************************/
 /***********************************************************************************/
 
-void HyperElasticIsotropicOgden3D::CalculateMaterialResponseCauchy (ConstitutiveLaw::Parameters& rValues)
+void HyperElasticIsotropicOgden3D::CalculateMaterialResponsePK2 (ConstitutiveLaw::Parameters& rValues)
 {
     KRATOS_TRY;
 
     // Get Values to compute the constitutive law:
     Flags& r_flags= rValues.GetOptions();
 
-    const Properties& material_properties = rValues.GetMaterialProperties();
+    const Properties& r_material_properties = rValues.GetMaterialProperties();
+    Vector& r_strain_vector                   = rValues.GetStrainVector();
+
+    if (r_flags.IsNot( ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN)) {
+        this->CalculateGreenLagrangianStrain(rValues, r_strain_vector);
+    }
+
+    if (r_flags.Is( ConstitutiveLaw::COMPUTE_STRESS)) {
+        Vector& r_stress_vector = rValues.GetStressVector();
+        const Vector& r_ogden_parameters = r_material_properties[OGDEN_HYPERELASTIC_PARAMETERS];
+
+        const double mu_1    = r_ogden_parameters(0);
+        const double mu_2    = r_ogden_parameters(1);
+        const double mu_3    = r_ogden_parameters(2);
+        const double alpha_1 = r_ogden_parameters(3);
+        const double alpha_2 = r_ogden_parameters(4);
+        const double alpha_3 = r_ogden_parameters(5);
+
+        const Matrix& rFDeformationGradient = rValues.GetDeformationGradientF();
+
+        // We compute Right Cauchy tensor
+        const Matrix& r_C = prod(trans(rFDeformationGradient), rFDeformationGradient);
+
+        // Decompose matrix C
+        BoundedMatrix<double, Dimension, Dimension> eigen_vector_matrix, eigen_values_matrix, deviatoric_eigen_values;
+        MathUtils<double>::GaussSeidelEigenSystem(r_C, eigen_vector_matrix, eigen_values_matrix, 1.0e-16, 200);
+
+        noalias(deviatoric_eigen_values) = eigen_values_matrix * 
+            std::pow(eigen_values_matrix(0, 0) * eigen_values_matrix(1, 1) * eigen_values_matrix(2, 2), -1.0 / 3.0);
+
+        std::vector<Vector> eigen_vectors_container(Dimension);
+        std::vector<Matrix> M_container(Dimension);
+
+        // We fill the eigen_vectors_container
+        Vector auxiliar_vector = ZeroVector(Dimension);
+        for (IndexType i = 0; i < Dimension; ++i) {
+            for (IndexType j = 0; j < Dimension; ++j) {
+                auxiliar_vector[j] = eigen_vector_matrix(j, i);
+            }
+            noalias(eigen_vectors_container(i)) = auxiliar_vector;
+        }
+
+        // We fill the M_container
+        BoundedMatrixType auxiliar_matrix;
+        for (IndexType i = 0; i < Dimension; ++i) {
+            noalias(auxiliar_matrix) = std::pow(eigen_values_matrix(i, i), -2) * outer_prod(eigen_vectors_container(i), eigen_vectors_container(i));
+            noalias(M_container(i))  = auxiliar_matrix;
+        }
+
+        // We fill the beta parameter
+        array_1d<double, Dimension> beta;
+        for (IndexType i = 0; i < Dimension; ++i) {
+            beta(i) = mu_1 * (std::pow(deviatoric_eigen_values(i, i), alpha_1) - (std::pow(deviatoric_eigen_values(0, 0), alpha_1) + std::pow(deviatoric_eigen_values(1, 1), alpha_1) + std::pow(deviatoric_eigen_values(2, 2), alpha_1)) / 3.0) + 
+                      mu_2 * (std::pow(deviatoric_eigen_values(i, i), alpha_2) - (std::pow(deviatoric_eigen_values(0, 0), alpha_2) + std::pow(deviatoric_eigen_values(1, 1), alpha_2) + std::pow(deviatoric_eigen_values(2, 2), alpha_2)) / 3.0) +
+                      mu_3 * (std::pow(deviatoric_eigen_values(i, i), alpha_3) - (std::pow(deviatoric_eigen_values(0, 0), alpha_3) + std::pow(deviatoric_eigen_values(1, 1), alpha_3) + std::pow(deviatoric_eigen_values(2, 2), alpha_3)) / 3.0);
+        }
+
+        // check the pressure terms...
+
+        // deviatoric terms
+        BoundedMatrixType stress_tensor;
+        for (IndexType i = 0; i < Dimension; ++i) {
+            for (IndexType j = 0; j < Dimension; ++j) {
+                stress_tensor(i, j) = beta(0) * M_container(0) + beta(1) * M_container(1) + beta(2) * M_container(2);
+            }
+        }
+
+        // Stress vector computed
+        noalias(r_stress_vector) = MathUtils<double>::StressTensorToVector(stress_tensor, VoigtSize);
+
+
+        // We compute the tangent tensor by perturbation
+        if (r_flags.Is( ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
+            // todo perturb
+        }
+    }
 
 
 
 
-
-
-
+    DO i=1,3
+        DO j=i,3
+           Deviator(i,j)=BETA(1)*MA(i,j,1)+BETA(2)*MA(i,j,2)+BETA(3)*MA(i,j,3)
+        ENDDO
+    ENDDO
 
 
 
