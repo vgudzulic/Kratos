@@ -1131,9 +1131,9 @@ void ConstitutiveLawUtilities<6>::CalculatePrincipalStretches(
     MathUtils<double>::GaussSeidelEigenSystem(r_C, eigen_vector_matrix, eigen_values_matrix, 1.0e-16, 200);
 
     // The eigenvalues of C are the ones from U but squared
-    rStretchesVector(0) = std::sqrt(eigen_values_matrix(0));
-    rStretchesVector(1) = std::sqrt(eigen_values_matrix(1));
-    rStretchesVector(2) = std::sqrt(eigen_values_matrix(2));
+    rStretchesVector(0) = std::sqrt(eigen_values_matrix(0, 0));
+    rStretchesVector(1) = std::sqrt(eigen_values_matrix(1, 1));
+    rStretchesVector(2) = std::sqrt(eigen_values_matrix(2, 2));
 }
 
 /***********************************************************************************/
