@@ -458,6 +458,16 @@ class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) ConstitutiveLawUtilities
         BoundedMatrixVoigtType &rNewOperator
     );
 
+    /**
+     * @brief This computes the principal
+     * stretches from the deformation gradient
+     * tensor F
+     */
+    void CalculatePrincipalStretches(
+        const BoundedMatrixType& rF,
+        array_1d<double, 3>& rStretchesVector
+    );
+
 
 private:
 
