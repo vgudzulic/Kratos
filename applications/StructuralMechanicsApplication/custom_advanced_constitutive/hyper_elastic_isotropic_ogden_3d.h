@@ -84,9 +84,12 @@ public:
 
     /// The definition of the bounded matrix type
     typedef BoundedMatrix<double, VoigtSize, VoigtSize> BoundedMatrixVoigtType;
-    
+
     /// Pointer definition of HyperElasticIsotropicOgden3D
     KRATOS_CLASS_POINTER_DEFINITION( HyperElasticIsotropicOgden3D );
+
+    /// Definition of the machine precision tolerance
+    static constexpr double tolerance = std::numeric_limits<double>::epsilon();
 
     ///@name Lyfe Cycle
     ///@{
@@ -324,62 +327,6 @@ protected:
     ///@{
 
     /**
-     * @brief It calculates the constitutive matrix C (PK2)
-     * @param rConstitutiveMatrix The constitutive matrix
-     * @param YoungModulus The young modulus
-     * @param PoissonCoefficient The Poisson coefficient
-     */
-    virtual void CalculateConstitutiveMatrixPK2(
-        Matrix& rConstitutiveMatrix,
-        const double YoungModulus,
-        const double PoissonCoefficient
-        );
-
-    /**
-     * @brief It calculates the constitutive matrix C (Kirchoff)
-     * @param rConstitutiveMatrix The constitutive matrix
-     * @param rDeformationGradientF The deformation gradient
-     * @param YoungModulus The young modulus
-     * @param PoissonCoefficient The Poisson coefficient
-     */
-    virtual void CalculateConstitutiveMatrixKirchhoff(
-        Matrix& rConstitutiveMatrix,
-        const Matrix& rDeformationGradientF,
-        const double YoungModulus,
-        const double PoissonCoefficient
-        );
-
-    /**
-     * @brief It calculates the PK2 stress vector
-     * @param rStrainVector The strain vector in Voigt notation
-     * @param rStressVector The stress vector in Voigt notation
-     * @param LameLambda: First Lame parameter
-     * @param LameMu: Second Lame parameter
-     */
-    virtual void CalculatePK2Stress(
-        const Vector& rStrainVector,
-        Vector& rStressVector,
-        const double YoungModulus,
-        const double PoissonCoefficient
-        );
-
-    /**
-     * @brief It calculates the Kirchoff stress vector
-     * @param rStrainVector The strain vector in Voigt notation
-     * @param rStressVector The stress vector in Voigt notation
-     * @param rDeformationGradientF The deformation gradient
-     * @param YoungModulus The young modulus
-     * @param PoissonCoefficient The Poisson coefficient
-     */
-    virtual void CalculateKirchhoffStress(
-        const Vector& rStrainVector,
-        Vector& rStressVector,
-        const Matrix& rDeformationGradientF,
-        const double YoungModulus,
-        const double PoissonCoefficient
-        );
-
-    /**
      * @brief It calculates the strain vector
      * @param rValues The Internalvalues of the law
      * @param rStrainVector The strain vector in Voigt notation
@@ -397,6 +344,11 @@ protected:
     virtual void CalculateAlmansiStrain(
         ConstitutiveLaw::Parameters& rValues,
         Vector& rStrainVector
+        );
+
+    void CalculateTangentTensor(
+        ConstitutiveLaw::Parameters& rValues,
+        const ConstitutiveLaw::StressMeasure& rStressMeasure
         );
 
     ///@}
@@ -438,6 +390,7 @@ private:
     {
         KRATOS_SERIALIZE_LOAD_BASE_CLASS( rSerializer, ConstitutiveLaw)
     }
+
 
 }; // Class HyperElasticIsotropicOgden3D
 }  // namespace Kratos.

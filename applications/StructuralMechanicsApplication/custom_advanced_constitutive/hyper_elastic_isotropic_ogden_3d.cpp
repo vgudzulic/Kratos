@@ -76,6 +76,14 @@ void  HyperElasticIsotropicOgden3D::CalculateMaterialResponseCauchy(Constitutive
 {
     KRATOS_TRY;
 
+    HyperElasticIsotropicOgden3D::CalculateMaterialResponsePK2(rValues);
+
+    Vector& stress_vector                = rValues.GetStressVector();
+    const Matrix& deformation_gradient_f = rValues.GetDeformationGradientF();
+    const double determinant_f           = rValues.GetDeterminantF();
+
+    this->TransformStresses(stress_vector, deformation_gradient_f, determinant_f, StressMeasure_PK2, StressMeasure_Cauchy);
+
     KRATOS_CATCH("");
 }
 
@@ -84,7 +92,17 @@ void  HyperElasticIsotropicOgden3D::CalculateMaterialResponseCauchy(Constitutive
 
 void HyperElasticIsotropicOgden3D::CalculateMaterialResponseKirchhoff (ConstitutiveLaw::Parameters& rValues)
 {
+    KRATOS_TRY;
 
+    HyperElasticIsotropicOgden3D::CalculateMaterialResponsePK2(rValues);
+
+    Vector& stress_vector                = rValues.GetStressVector();
+    const Matrix& deformation_gradient_f = rValues.GetDeformationGradientF();
+    const double determinant_f           = rValues.GetDeterminantF();
+
+    this->TransformStresses(stress_vector, deformation_gradient_f, determinant_f, StressMeasure_PK2, StressMeasure_Kirchhoff);
+
+    KRATOS_CATCH("");
 }
 
 /***********************************************************************************/
@@ -154,15 +172,10 @@ void HyperElasticIsotropicOgden3D::CalculateMaterialResponsePK2 (ConstitutiveLaw
                       mu_3 * (std::pow(deviatoric_eigen_values(i, i), alpha_3) - (std::pow(deviatoric_eigen_values(0, 0), alpha_3) + std::pow(deviatoric_eigen_values(1, 1), alpha_3) + std::pow(deviatoric_eigen_values(2, 2), alpha_3)) / 3.0);
         }
 
-        // check the pressure terms...
-
-        // deviatoric terms
+        // Compute the stress tensor
         BoundedMatrixType stress_tensor;
-        for (IndexType i = 0; i < Dimension; ++i) {
-            for (IndexType j = 0; j < Dimension; ++j) {
-                noalias(stress_tensor) = beta(0) * M_container[0] + beta(1) * M_container[1] + beta(2) * M_container[2];
-            }
-        }
+        noalias(stress_tensor) = beta(0) * M_container[0] + beta(1) * M_container[1] + beta(2) * M_container[2];
+
 
         // Stress vector computed
         noalias(r_stress_vector) = MathUtils<double>::StressTensorToVector(stress_tensor, VoigtSize);
@@ -412,9 +425,9 @@ Matrix& HyperElasticIsotropicOgden3D::CalculateValue(
 void HyperElasticIsotropicOgden3D::GetLawFeatures(Features& rFeatures)
 {
     //Set the type of law
-    rFeatures.mOptions.Set( THREE_DIMENSIONAL_LAW );
-    rFeatures.mOptions.Set( FINITE_STRAINS );
-    rFeatures.mOptions.Set( ISOTROPIC );
+    rFeatures.mOptions.Set(THREE_DIMENSIONAL_LAW);
+    rFeatures.mOptions.Set(FINITE_STRAINS);
+    rFeatures.mOptions.Set(ISOTROPIC);
 
     //Set strain measure required by the consitutive law
     rFeatures.mStrainMeasures.push_back(StrainMeasure_GreenLagrange);
@@ -436,112 +449,13 @@ int HyperElasticIsotropicOgden3D::Check(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    KRATOS_CHECK_VARIABLE_KEY(YOUNG_MODULUS);
-    KRATOS_ERROR_IF(rMaterialProperties[YOUNG_MODULUS] <= 0.0) << "YOUNG_MODULUS is null or negative." << std::endl;
+    KRATOS_CHECK_VARIABLE_KEY(OGDEN_HYPERELASTIC_PARAMETERS);
 
-    KRATOS_CHECK_VARIABLE_KEY(POISSON_RATIO);
-    const double tolerance = 1.0e-12;
-    const double nu_upper_bound = 0.5;
-    const double nu_lower_bound = -1.0;
-    const double nu = rMaterialProperties[POISSON_RATIO];
-    KRATOS_ERROR_IF((nu_upper_bound - nu) < tolerance) << "POISSON_RATIO is above the upper bound 0.5." << std::endl;
-    KRATOS_ERROR_IF((nu - nu_lower_bound) < tolerance) << "POISSON_RATIO is below the lower bound -1.0." << std::endl;
-
-    KRATOS_CHECK_VARIABLE_KEY(DENSITY);
-    KRATOS_ERROR_IF(rMaterialProperties[DENSITY] < 0.0) << "DENSITY is negative." << std::endl;
+    const Vector& r_ogden_props = rMaterialProperties[OGDEN_HYPERELASTIC_PARAMETERS];
+    KRATOS_ERROR_IF(r_ogden_props.size() != VoigtSize) << "OGDEN_HYPERELASTIC_PARAMETERS must have 6 parameters" << std::endl;
+    KRATOS_ERROR_IF(norm_2(r_ogden_props) <=  tolerance) << "OGDEN_HYPERELASTIC_PARAMETERS must have non-zero values" << std::endl;
 
     return 0;
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
-void HyperElasticIsotropicOgden3D::CalculateConstitutiveMatrixPK2(
-    Matrix& rConstitutiveMatrix,
-    const double YoungModulus,
-    const double PoissonCoefficient
-    )
-{
-    rConstitutiveMatrix.clear();
-    rConstitutiveMatrix = ZeroMatrix(6,6);
-    const double c1 = YoungModulus / (( 1.00 + PoissonCoefficient ) * ( 1 - 2 * PoissonCoefficient ) );
-    const double c2 = c1 * ( 1 - PoissonCoefficient );
-    const double c3 = c1 * PoissonCoefficient;
-    const double c4 = c1 * 0.5 * ( 1 - 2 * PoissonCoefficient );
-
-    rConstitutiveMatrix( 0, 0 ) = c2;
-    rConstitutiveMatrix( 0, 1 ) = c3;
-    rConstitutiveMatrix( 0, 2 ) = c3;
-    rConstitutiveMatrix( 1, 0 ) = c3;
-    rConstitutiveMatrix( 1, 1 ) = c2;
-    rConstitutiveMatrix( 1, 2 ) = c3;
-    rConstitutiveMatrix( 2, 0 ) = c3;
-    rConstitutiveMatrix( 2, 1 ) = c3;
-    rConstitutiveMatrix( 2, 2 ) = c2;
-    rConstitutiveMatrix( 3, 3 ) = c4;
-    rConstitutiveMatrix( 4, 4 ) = c4;
-    rConstitutiveMatrix( 5, 5 ) = c4;
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
-void HyperElasticIsotropicOgden3D::CalculateKirchhoffStress(
-    const Vector& rStrainVector,
-    Vector& rStressVector,
-    const Matrix& rDeformationGradientF,
-    const double YoungModulus,
-    const double PoissonCoefficient
-    )
-{
-    CalculatePK2Stress( rStrainVector, rStressVector, YoungModulus, PoissonCoefficient );
-    Matrix stress_matrix = MathUtils<double>::StressVectorToTensor( rStressVector );
-    ContraVariantPushForward (stress_matrix,rDeformationGradientF); //Kirchhoff
-    rStressVector = MathUtils<double>::StressTensorToVector( stress_matrix, rStressVector.size() );
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
-void HyperElasticIsotropicOgden3D::CalculatePK2Stress(
-    const Vector& rStrainVector,
-    Vector& rStressVector,
-    const double YoungModulus,
-    const double PoissonCoefficient
-    )
-{
-    const double lame_lambda = (YoungModulus * PoissonCoefficient)/((1.0 + PoissonCoefficient)*(1.0 - 2.0 * PoissonCoefficient));
-    const double lame_mu = YoungModulus/(2.0 * (1.0 + PoissonCoefficient));
-    const Matrix E_tensor=MathUtils<double>::StrainVectorToTensor(rStrainVector);
-    double E_trace = 0.0;
-    for (unsigned int i = 0; i < E_tensor.size1();i++) {
-      E_trace += E_tensor (i,i);
-    }
-    const SizeType dimension = WorkingSpaceDimension();
-    Matrix stress_matrix = lame_lambda*E_trace*IdentityMatrix(dimension) + 2.0 * lame_mu * E_tensor;
-    rStressVector = MathUtils<double>::StressTensorToVector( stress_matrix, rStressVector.size() );
-
-//     // Other possibility
-//     SizeType size_system = GetStrainSize();
-//     Matrix constitutive_matrix_pk2(size_system,size_system);
-//     CalculateConstitutiveMatrixPK2(constitutive_matrix_pk2, YoungModulus, PoissonCoefficient);
-//     noalias(rStressVector) = prod(constitutive_matrix_pk2,rStrainVector);
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
-void HyperElasticIsotropicOgden3D::CalculateConstitutiveMatrixKirchhoff(
-    Matrix& ConstitutiveMatrix,
-    const Matrix& DeformationGradientF,
-    const double YoungModulus,
-    const double PoissonCoefficient
-    )
-{
-    ConstitutiveMatrix.clear();
-
-    this->CalculateConstitutiveMatrixPK2(ConstitutiveMatrix, YoungModulus, PoissonCoefficient);
-    PushForwardConstitutiveMatrix (ConstitutiveMatrix,DeformationGradientF );
 }
 
 /***********************************************************************************/
