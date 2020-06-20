@@ -74,11 +74,11 @@ namespace Kratos
 namespace Python
 {
 
-char const* greet()
+std::string Hello()
 {
     std::stringstream header;
-    header << "Hello, I am Kratos Multi-Physics " << GetVersionString() <<" ;-)";
-    return header.str().c_str();
+    header << "Hello, I am Kratos Multi-Physics " << GetVersionString() << " ;-)";
+    return header.str();
 }
 
 PYBIND11_MODULE(Kratos, m)
@@ -106,9 +106,6 @@ PYBIND11_MODULE(Kratos, m)
     AddMATVariablesToPython(m);
     AddDeprecatedVariablesToPython(m);
     AddGlobalPointersToPython(m);
-
-//     AddQuadraturesToPython();
-//     AddIntegrationPointsToPython();
 
     AddProcessesToPython(m);
     AddIOToPython(m);
@@ -143,7 +140,7 @@ PYBIND11_MODULE(Kratos, m)
     AddDataCommunicatorToPython(m);
     AddParallelEnvironmentToPython(m);
 
-    m.def("Hello", greet);
+    m.def("Hello", Hello);
 }
 
 
