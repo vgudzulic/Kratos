@@ -39,6 +39,7 @@ if(${KRATOS_BUILD_TESTING} MATCHES ON)
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_epsilon/test_rans_evm_k_epsilon_elements.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_epsilon/test_evm_k_epsilon_k_adjoint_element_data.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_epsilon/test_evm_k_epsilon_epsilon_adjoint_element_data.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/stabilization_method_test_utilities.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_omega_sst/evm_k_omega_sst_test_utilities.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_omega_sst/test_evm_k_omega_sst_afc_elements.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_omega_sst/test_evm_k_omega_sst_rfc_elements.cpp

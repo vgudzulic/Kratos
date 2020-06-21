@@ -16,12 +16,10 @@
 
 // Project includes
 #include "containers/model.h"
-#include "includes/cfd_variables.h"
-#include "includes/process_info.h"
-#include "includes/variables.h"
 #include "testing/testing.h"
 
 // Application includes
+#include "../stabilization_method_test_utilities.h"
 #include "custom_utilities/test_utilities.h"
 #include "evm_k_omega_sst_test_utilities.h"
 #include "rans_application_variables.h"
@@ -37,13 +35,8 @@ ModelPart& RansEvmKOmegaSSTKResidualBasedFC2D3N_SetUp(Model& rModel)
     ModelPart& r_model_part = EvmKOmegaSSTTestUtilities::RansEvmKOmegaSSTK2D3N_SetUp(
         rModel, "RansEvmKOmegaSSTKResidualBasedFC2D3N");
 
-    ProcessInfo& r_process_info = r_model_part.GetProcessInfo();
-    r_process_info.SetValue(DELTA_TIME, 2.6);
-    r_process_info.SetValue(BOSSAK_ALPHA, -0.3);
-    r_process_info.SetValue(DYNAMIC_TAU, 0.8);
-    r_process_info.SetValue(RANS_STABILIZATION_DISCRETE_UPWIND_OPERATOR_COEFFICIENT, 1.8);
-    r_process_info.SetValue(
-        RANS_STABILIZATION_DIAGONAL_POSITIVITY_PRESERVING_COEFFICIENT, 2.8);
+    StabilizationMethodTestUtilities::InitializeResidualBasedFluxCorrectedConstants(
+        r_model_part.GetProcessInfo());
 
     return r_model_part;
 }
@@ -53,13 +46,8 @@ ModelPart& RansEvmKOmegaSSTOmegaResidualBasedFC2D3N_SetUp(Model& rModel)
     ModelPart& r_model_part = EvmKOmegaSSTTestUtilities::RansEvmKOmegaSSTOmega2D3N_SetUp(
         rModel, "RansEvmKOmegaSSTOmegaResidualBasedFC2D3N");
 
-    ProcessInfo& r_process_info = r_model_part.GetProcessInfo();
-    r_process_info.SetValue(DELTA_TIME, 2.6);
-    r_process_info.SetValue(BOSSAK_ALPHA, -0.3);
-    r_process_info.SetValue(DYNAMIC_TAU, 0.8);
-    r_process_info.SetValue(RANS_STABILIZATION_DISCRETE_UPWIND_OPERATOR_COEFFICIENT, 1.8);
-    r_process_info.SetValue(
-        RANS_STABILIZATION_DIAGONAL_POSITIVITY_PRESERVING_COEFFICIENT, 2.8);
+    StabilizationMethodTestUtilities::InitializeResidualBasedFluxCorrectedConstants(
+        r_model_part.GetProcessInfo());
 
     return r_model_part;
 }

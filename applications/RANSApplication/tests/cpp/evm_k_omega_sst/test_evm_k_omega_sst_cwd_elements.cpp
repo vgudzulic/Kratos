@@ -16,12 +16,10 @@
 
 // Project includes
 #include "containers/model.h"
-#include "includes/cfd_variables.h"
-#include "includes/process_info.h"
-#include "includes/variables.h"
 #include "testing/testing.h"
 
 // Application includes
+#include "../stabilization_method_test_utilities.h"
 #include "custom_utilities/test_utilities.h"
 #include "evm_k_omega_sst_test_utilities.h"
 #include "rans_application_variables.h"
@@ -37,10 +35,8 @@ ModelPart& RansEvmKOmegaSSTKCrossWindStabilized2D3N_SetUp(Model& rModel)
     ModelPart& r_model_part = EvmKOmegaSSTTestUtilities::RansEvmKOmegaSSTK2D3N_SetUp(
         rModel, "RansEvmKOmegaSSTKCrossWindStabilized2D3N");
 
-    ProcessInfo& r_process_info = r_model_part.GetProcessInfo();
-    r_process_info.SetValue(DELTA_TIME, 2.6);
-    r_process_info.SetValue(BOSSAK_ALPHA, -0.3);
-    r_process_info.SetValue(DYNAMIC_TAU, 0.8);
+    StabilizationMethodTestUtilities::InitializeCrossWindStabilizedConstants(
+        r_model_part.GetProcessInfo());
 
     return r_model_part;
 }
@@ -50,10 +46,8 @@ ModelPart& RansEvmKOmegaSSTOmegaCrossWindStabilized2D3N_SetUp(Model& rModel)
     ModelPart& r_model_part = EvmKOmegaSSTTestUtilities::RansEvmKOmegaSSTOmega2D3N_SetUp(
         rModel, "RansEvmKOmegaSSTOmegaCrossWindStabilized2D3N");
 
-    ProcessInfo& r_process_info = r_model_part.GetProcessInfo();
-    r_process_info.SetValue(DELTA_TIME, 2.6);
-    r_process_info.SetValue(BOSSAK_ALPHA, -0.3);
-    r_process_info.SetValue(DYNAMIC_TAU, 0.8);
+    StabilizationMethodTestUtilities::InitializeCrossWindStabilizedConstants(
+        r_model_part.GetProcessInfo());
 
     return r_model_part;
 }
