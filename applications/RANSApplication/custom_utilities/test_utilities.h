@@ -478,6 +478,38 @@ void RunAdjointElementDataSensitivityTest(
     }
 }
 
+template <class TDataType>
+void AssignRandomValues(TDataType& rValue,
+                        const std::string& rSeed,
+                        const double MinValue = 0.0,
+                        const double MaxValue = 1.0);
+
+ModelPart& CreateTestModelPart(Model& rModel,
+                               const std::string& rElementName,
+                               const std::string& rConditionName,
+                               const std::function<void(ModelPart& rModelPart)>& rAddNodalSolutionStepVariablesFuncion,
+                               const Variable<double>& rDofVariable,
+                               const int BufferSize = 2);
+
+template <class TDataType>
+void RandomFillNodalHistoricalVariable(ModelPart& rModelPart,
+                                       const Variable<TDataType>& rVariable,
+                                       const double MinValue = 0.0,
+                                       const double MaxValue = 1.0,
+                                       const int Step = 0);
+
+template <class TContainerType>
+TContainerType& GetContainer(ModelPart& rModelPart);
+
+template <class TContainerType, class TDataType>
+void RandomFillContainerVariable(ModelPart& rModelPart,
+                                 const Variable<TDataType>& rVariable,
+                                 const double MinValue = 0.0,
+                                 const double MaxValue = 1.0);
+
+void TestEquationIdVector(ModelPart& rModelPart);
+void TestGetDofList(ModelPart& rModelPart, const Variable<double>& rVariable);
+
 } // namespace RansModellingApplicationTestUtilities
 } // namespace Kratos
 

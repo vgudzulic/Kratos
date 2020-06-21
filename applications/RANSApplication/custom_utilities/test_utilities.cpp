@@ -445,7 +445,167 @@ std::function<double&(NodeType&, const int)> GetPerturbationMethod(
     }
 }
 
+template <>
+void AssignRandomValues(double& rValue, const std::string& rSeed, const double MinValue, const double MaxValue)
+{
+    std::seed_seq seed(rSeed.begin(), rSeed.end());
+    std::default_random_engine generator(seed);
+    std::uniform_real_distribution<double> distribution(MinValue, MaxValue);
+
+    rValue = distribution(generator);
+}
+
+template <>
+void AssignRandomValues(array_1d<double, 3>& rValue,
+                        const std::string& rSeed,
+                        const double MinValue,
+                        const double MaxValue)
+{
+    std::seed_seq seed(rSeed.begin(), rSeed.end());
+    std::default_random_engine generator(seed);
+    std::uniform_real_distribution<double> distribution(MinValue, MaxValue);
+
+    rValue[0] = distribution(generator);
+    rValue[1] = distribution(generator);
+    rValue[2] = distribution(generator);
+}
+
+ModelPart& CreateTestModelPart(Model& rModel,
+                               const std::string& rElementName,
+                               const std::string& rConditionName,
+                               const std::function<void(ModelPart& rModelPart)>& rAddNodalSolutionStepVariablesFuncion,
+                               const Variable<double>& rDofVariable,
+                               const int BufferSize)
+{
+    ModelPart& r_model_part = rModel.CreateModelPart("test", BufferSize);
+    rAddNodalSolutionStepVariablesFuncion(r_model_part);
+
+    r_model_part.CreateNewNode(1, 0.0, 0.0, 0.0);
+    r_model_part.CreateNewNode(2, 0.0, 1.0, 0.0);
+    r_model_part.CreateNewNode(3, 1.0, 1.0, 0.0);
+
+    for (auto& r_node : r_model_part.Nodes())
+    {
+        r_node.AddDof(rDofVariable).SetEquationId(r_node.Id());
+    }
+
+    Properties::Pointer p_elem_prop = r_model_part.CreateNewProperties(0);
+
+    using nid_list = std::vector<ModelPart::IndexType>;
+
+    r_model_part.CreateNewElement(rElementName, 1, nid_list{3, 2, 1}, p_elem_prop);
+
+    r_model_part.CreateNewCondition(rConditionName, 1, nid_list{1, 2}, p_elem_prop);
+    r_model_part.CreateNewCondition(rConditionName, 2, nid_list{2, 3}, p_elem_prop);
+    r_model_part.CreateNewCondition(rConditionName, 3, nid_list{3, 1}, p_elem_prop);
+
+    r_model_part.Elements().front().Check(r_model_part.GetProcessInfo());
+
+    return r_model_part;
+}
+
+template <class TDataType>
+void RandomFillNodalHistoricalVariable(ModelPart& rModelPart,
+                                       const Variable<TDataType>& rVariable,
+                                       const double MinValue,
+                                       const double MaxValue,
+                                       const int Step)
+{
+    for (auto& node : rModelPart.Nodes())
+    {
+        std::stringstream seed;
+        seed << node.Id() << "_HistoricalV_" << rVariable.Name();
+        TDataType& value = node.FastGetSolutionStepValue(rVariable, Step);
+        AssignRandomValues<TDataType>(value, seed.str(), MinValue, MaxValue);
+    }
+}
+
+template <>
+ModelPart::NodesContainerType& GetContainer(ModelPart& rModelPart)
+{
+    return rModelPart.Nodes();
+}
+
+template <>
+ModelPart::ConditionsContainerType& GetContainer(ModelPart& rModelPart)
+{
+    return rModelPart.Conditions();
+}
+
+template <>
+ModelPart::ElementsContainerType& GetContainer(ModelPart& rModelPart)
+{
+    return rModelPart.Elements();
+}
+
+template <class TContainerType, class TDataType>
+void RandomFillContainerVariable(ModelPart& rModelPart,
+                                 const Variable<TDataType>& rVariable,
+                                 const double MinValue,
+                                 const double MaxValue)
+{
+    TContainerType& container = GetContainer<TContainerType>(rModelPart);
+    for (auto& item : container)
+    {
+        std::stringstream seed;
+        seed << item.Id() << "_NonHistoricalV_" << rVariable.Name();
+        TDataType value = rVariable.Zero();
+        AssignRandomValues<TDataType>(value, seed.str(), MinValue, MaxValue);
+        item.SetValue(rVariable, value);
+    }
+}
+
+void TestEquationIdVector(ModelPart& rModelPart)
+{
+    auto eqn_ids = std::vector<IndexType>{};
+    for (auto& r_element : rModelPart.Elements())
+    {
+        r_element.EquationIdVector(eqn_ids, rModelPart.GetProcessInfo());
+        KRATOS_CHECK_EQUAL(eqn_ids.size(), r_element.GetGeometry().PointsNumber());
+        const auto& r_geometry = r_element.GetGeometry();
+        for (IndexType i_node = 0; i_node < r_geometry.PointsNumber(); ++i_node)
+        {
+            KRATOS_CHECK_EQUAL(eqn_ids[i_node], r_geometry[i_node].Id());
+        }
+    }
+}
+
+void TestGetDofList(ModelPart& rModelPart, const Variable<double>& rVariable)
+{
+    auto dofs = Element::DofsVectorType{};
+    for (auto& r_element : rModelPart.Elements())
+    {
+        r_element.GetDofList(dofs, rModelPart.GetProcessInfo());
+        KRATOS_CHECK_EQUAL(dofs.size(), r_element.GetGeometry().PointsNumber());
+        const auto& r_geometry = r_element.GetGeometry();
+        for (IndexType i_node = 0; i_node < r_geometry.PointsNumber(); ++i_node)
+        {
+            KRATOS_CHECK_EQUAL(dofs[i_node]->GetVariable(), rVariable);
+            KRATOS_CHECK_EQUAL(dofs[i_node]->EquationId(), r_geometry[i_node].Id());
+        }
+    }
+}
+
 // templated method instantiation
+template void RandomFillNodalHistoricalVariable<double>(
+    ModelPart&, const Variable<double>&, const double, const double, const int);
+template void RandomFillNodalHistoricalVariable<array_1d<double, 3>>(
+    ModelPart&, const Variable<array_1d<double, 3>>&, const double, const double, const int);
+
+template void RandomFillContainerVariable<ModelPart::NodesContainerType, array_1d<double, 3>>(
+    ModelPart&, const Variable<array_1d<double, 3>>&, const double, const double);
+template void RandomFillContainerVariable<ModelPart::ConditionsContainerType, array_1d<double, 3>>(
+    ModelPart&, const Variable<array_1d<double, 3>>&, const double, const double);
+template void RandomFillContainerVariable<ModelPart::ElementsContainerType, array_1d<double, 3>>(
+    ModelPart&, const Variable<array_1d<double, 3>>&, const double, const double);
+
+template void RandomFillContainerVariable<ModelPart::NodesContainerType, double>(
+    ModelPart&, const Variable<double>&, const double, const double);
+template void RandomFillContainerVariable<ModelPart::ConditionsContainerType, double>(
+    ModelPart&, const Variable<double>&, const double, const double);
+template void RandomFillContainerVariable<ModelPart::ElementsContainerType, double>(
+    ModelPart&, const Variable<double>&, const double, const double);
+
 template void CalculateResidual(Vector&, ElementType&, ProcessInfo&);
 template void CalculateResidual(Vector&, ConditionType&, ProcessInfo&);
 
