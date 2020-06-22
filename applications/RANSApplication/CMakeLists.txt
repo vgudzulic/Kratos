@@ -40,6 +40,10 @@ if(${KRATOS_BUILD_TESTING} MATCHES ON)
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_epsilon/test_evm_k_epsilon_k_adjoint_element_data.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_epsilon/test_evm_k_epsilon_epsilon_adjoint_element_data.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/stabilization_method_test_utilities.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_epsilon_high_re/evm_k_epsilon_high_re_test_utilities.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_epsilon_high_re/test_evm_k_epsilon_high_re_afc_elements.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_epsilon_high_re/test_evm_k_epsilon_high_re_rfc_elements.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_epsilon_high_re/test_evm_k_epsilon_high_re_cwd_elements.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_omega/evm_k_omega_test_utilities.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_omega/test_evm_k_omega_afc_elements.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_omega/test_evm_k_omega_rfc_elements.cpp
