@@ -536,6 +536,7 @@ ModelPart& CreateTestModelPart(Model& rModel,
     r_model_part.CreateNewCondition(rConditionName, 3, nid_list{3, 1}, p_elem_prop);
 
     r_model_part.Elements().front().Check(r_model_part.GetProcessInfo());
+    r_model_part.Conditions().front().Check(r_model_part.GetProcessInfo());
 
     return r_model_part;
 }

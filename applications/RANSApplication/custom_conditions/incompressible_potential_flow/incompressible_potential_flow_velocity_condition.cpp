@@ -74,10 +74,6 @@ int IncompressiblePotentialFlowVelocityCondition<TDim, TNumNodes>::Check(const P
 
     int Check = BaseType::Check(rCurrentProcessInfo);
 
-    const array_1d<double, 3>& r_normal = this->GetValue(NORMAL);
-    KRATOS_ERROR_IF(norm_2(r_normal) == 0.0)
-        << "NORMAL is not initialized for " << this->Info();
-
     const GeometryType& r_geometry = this->GetGeometry();
 
     for (IndexType i_node = 0; i_node < TNumNodes; ++i_node)
@@ -90,6 +86,21 @@ int IncompressiblePotentialFlowVelocityCondition<TDim, TNumNodes>::Check(const P
     }
 
     return Check;
+
+    KRATOS_CATCH("");
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
+void IncompressiblePotentialFlowVelocityCondition<TDim, TNumNodes>::Initialize()
+{
+    KRATOS_TRY;
+
+    if (RansCalculationUtilities::IsInlet(*this))
+    {
+        const array_1d<double, 3>& rNormal = this->GetValue(NORMAL);
+        KRATOS_ERROR_IF(norm_2(rNormal) == 0.0)
+            << "NORMAL must be calculated before using this " << this->Info() << "\n";
+    }
 
     KRATOS_CATCH("");
 }

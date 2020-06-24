@@ -50,7 +50,8 @@ template <unsigned int TDim, unsigned int TNumNodes>
 Condition::Pointer IncompressiblePotentialFlowPressureCondition<TDim, TNumNodes>::Create(
     IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const
 {
-    return Kratos::make_intrusive<IncompressiblePotentialFlowPressureCondition>(NewId, pGeom, pProperties);
+    return Kratos::make_intrusive<IncompressiblePotentialFlowPressureCondition>(
+        NewId, pGeom, pProperties);
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
@@ -75,10 +76,6 @@ int IncompressiblePotentialFlowPressureCondition<TDim, TNumNodes>::Check(const P
 
     const GeometryType& r_geometry = this->GetGeometry();
 
-    const array_1d<double, 3>& r_normal = this->GetValue(NORMAL);
-    KRATOS_ERROR_IF(norm_2(r_normal) == 0.0)
-        << "NORMAL is not initialized for " << this->Info();
-
     for (IndexType i_node = 0; i_node < TNumNodes; ++i_node)
     {
         const NodeType& r_node = r_geometry[i_node];
@@ -96,6 +93,18 @@ int IncompressiblePotentialFlowPressureCondition<TDim, TNumNodes>::Check(const P
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
+void IncompressiblePotentialFlowPressureCondition<TDim, TNumNodes>::Initialize()
+{
+    KRATOS_TRY;
+
+    const array_1d<double, 3>& rNormal = this->GetValue(NORMAL);
+    KRATOS_ERROR_IF(norm_2(rNormal) == 0.0)
+        << "NORMAL must be calculated before using this " << this->Info() << "\n";
+
+    KRATOS_CATCH("");
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
 void IncompressiblePotentialFlowPressureCondition<TDim, TNumNodes>::EquationIdVector(
     EquationIdVectorType& rResult, ProcessInfo& rCurrentProcessInfo)
 {
@@ -107,8 +116,8 @@ void IncompressiblePotentialFlowPressureCondition<TDim, TNumNodes>::EquationIdVe
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-void IncompressiblePotentialFlowPressureCondition<TDim, TNumNodes>::GetDofList(DofsVectorType& ConditionDofList,
-                                                                  ProcessInfo& CurrentProcessInfo)
+void IncompressiblePotentialFlowPressureCondition<TDim, TNumNodes>::GetDofList(
+    DofsVectorType& ConditionDofList, ProcessInfo& CurrentProcessInfo)
 {
     if (ConditionDofList.size() != TNumNodes)
         ConditionDofList.resize(TNumNodes);
@@ -118,7 +127,8 @@ void IncompressiblePotentialFlowPressureCondition<TDim, TNumNodes>::GetDofList(D
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-void IncompressiblePotentialFlowPressureCondition<TDim, TNumNodes>::GetValuesVector(VectorType& rValues, int Step)
+void IncompressiblePotentialFlowPressureCondition<TDim, TNumNodes>::GetValuesVector(
+    VectorType& rValues, int Step)
 {
     if (rValues.size() != TNumNodes)
         rValues.resize(TNumNodes, false);

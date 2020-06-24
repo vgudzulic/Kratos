@@ -164,6 +164,8 @@ public:
 
     int Check(const ProcessInfo& rCurrentProcessInfo) override;
 
+    void Initialize() override;
+
     void EquationIdVector(EquationIdVectorType& rResult,
                           ProcessInfo& rCurrentProcessInfo) override;
 

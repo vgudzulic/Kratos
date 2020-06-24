@@ -55,6 +55,8 @@ if(${KRATOS_BUILD_TESTING} MATCHES ON)
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_omega_sst/test_evm_k_omega_sst_rfc_elements.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_omega_sst/test_evm_k_omega_sst_cwd_elements.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/test_vms_monolithic_k_based_condition.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/test_incompressible_potential_flow_elements.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/test_incompressible_potential_flow_conditions.cpp
   )
 endif(${KRATOS_BUILD_TESTING} MATCHES ON)
 
