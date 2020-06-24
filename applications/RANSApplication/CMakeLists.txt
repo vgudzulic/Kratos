@@ -54,6 +54,7 @@ if(${KRATOS_BUILD_TESTING} MATCHES ON)
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_omega_sst/test_evm_k_omega_sst_afc_elements.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_omega_sst/test_evm_k_omega_sst_rfc_elements.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/evm_k_omega_sst/test_evm_k_omega_sst_cwd_elements.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp/test_vms_monolithic_k_based_condition.cpp
   )
 endif(${KRATOS_BUILD_TESTING} MATCHES ON)
 

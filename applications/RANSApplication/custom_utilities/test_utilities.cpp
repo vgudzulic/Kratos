@@ -504,6 +504,42 @@ ModelPart& CreateTestModelPart(Model& rModel,
     return r_model_part;
 }
 
+ModelPart& CreateTestModelPart(Model& rModel,
+                               const std::string& rElementName,
+                               const std::string& rConditionName,
+                               const std::function<void(ModelPart& rModelPart)>& rAddNodalSolutionStepVariablesFuncion,
+                               const int BufferSize)
+{
+    ModelPart& r_model_part = rModel.CreateModelPart("test", BufferSize);
+    rAddNodalSolutionStepVariablesFuncion(r_model_part);
+
+    r_model_part.CreateNewNode(1, 0.0, 0.0, 0.0);
+    r_model_part.CreateNewNode(2, 0.0, 1.0, 0.0);
+    r_model_part.CreateNewNode(3, 1.0, 1.0, 0.0);
+
+    for (auto& r_node : r_model_part.Nodes())
+    {
+        r_node.AddDof(VELOCITY_X).SetEquationId(r_node.Id() * 4);
+        r_node.AddDof(VELOCITY_Y).SetEquationId(r_node.Id() * 4 + 1);
+        r_node.AddDof(VELOCITY_Z).SetEquationId(r_node.Id() * 4 + 2);
+        r_node.AddDof(PRESSURE).SetEquationId(r_node.Id() * 4 + 3);
+    }
+
+    Properties::Pointer p_elem_prop = r_model_part.CreateNewProperties(0);
+
+    using nid_list = std::vector<ModelPart::IndexType>;
+
+    r_model_part.CreateNewElement(rElementName, 1, nid_list{3, 2, 1}, p_elem_prop);
+
+    r_model_part.CreateNewCondition(rConditionName, 1, nid_list{1, 2}, p_elem_prop);
+    r_model_part.CreateNewCondition(rConditionName, 2, nid_list{2, 3}, p_elem_prop);
+    r_model_part.CreateNewCondition(rConditionName, 3, nid_list{3, 1}, p_elem_prop);
+
+    r_model_part.Elements().front().Check(r_model_part.GetProcessInfo());
+
+    return r_model_part;
+}
+
 template <class TDataType>
 void RandomFillNodalHistoricalVariable(ModelPart& rModelPart,
                                        const Variable<TDataType>& rVariable,

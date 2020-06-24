@@ -520,6 +520,12 @@ ModelPart& CreateTestModelPart(Model& rModel,
                                const Variable<double>& rDofVariable,
                                const int BufferSize = 2);
 
+ModelPart& CreateTestModelPart(Model& rModel,
+                               const std::string& rElementName,
+                               const std::string& rConditionName,
+                               const std::function<void(ModelPart& rModelPart)>& rAddNodalSolutionStepVariablesFuncion,
+                               const int BufferSize = 2);
+
 template <class TDataType>
 void RandomFillNodalHistoricalVariable(ModelPart& rModelPart,
                                        const Variable<TDataType>& rVariable,
