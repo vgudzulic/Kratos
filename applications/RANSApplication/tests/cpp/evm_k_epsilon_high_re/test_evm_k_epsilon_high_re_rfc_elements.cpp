@@ -61,7 +61,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonKResidualBasedFC2D3N_EquationIdVector, 
     auto& r_model_part = RansEvmKEpsilonKResidualBasedFC2D3N_SetUp(model);
 
     // Test:
-    RansModellingApplicationTestUtilities::TestEquationIdVector(r_model_part);
+    RansModellingApplicationTestUtilities::TestEquationIdVector<ModelPart::ElementsContainerType>(r_model_part);
 }
 
 KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonKResidualBasedFC2D3N_GetDofList, KratosRansFastSuite)
@@ -71,7 +71,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonKResidualBasedFC2D3N_GetDofList, Kratos
     auto& r_model_part = RansEvmKEpsilonKResidualBasedFC2D3N_SetUp(model);
 
     // Test:
-    RansModellingApplicationTestUtilities::TestGetDofList(r_model_part, TURBULENT_KINETIC_ENERGY);
+    RansModellingApplicationTestUtilities::TestGetDofList<ModelPart::ElementsContainerType>(r_model_part, TURBULENT_KINETIC_ENERGY);
 }
 
 KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonKResidualBasedFC2D3N_CalculateLocalSystem, KratosRansFastSuite)
@@ -247,7 +247,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonEpsilonResidualBasedFC2D3N_EquationIdVe
     auto& r_model_part = RansEvmKEpsilonEpsilonResidualBasedFC2D3N_SetUp(model);
 
     // Test:
-    RansModellingApplicationTestUtilities::TestEquationIdVector(r_model_part);
+    RansModellingApplicationTestUtilities::TestEquationIdVector<ModelPart::ElementsContainerType>(r_model_part);
 }
 
 KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonEpsilonResidualBasedFC2D3N_GetDofList, KratosRansFastSuite)
@@ -257,7 +257,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonEpsilonResidualBasedFC2D3N_GetDofList, 
     auto& r_model_part = RansEvmKEpsilonEpsilonResidualBasedFC2D3N_SetUp(model);
 
     // Test:
-    RansModellingApplicationTestUtilities::TestGetDofList(
+    RansModellingApplicationTestUtilities::TestGetDofList<ModelPart::ElementsContainerType>(
         r_model_part, TURBULENT_ENERGY_DISSIPATION_RATE);
 }
 
