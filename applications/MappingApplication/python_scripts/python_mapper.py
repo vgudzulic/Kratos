@@ -1,6 +1,10 @@
+# Importing the Kratos Library
 import KratosMultiphysics as KM
 
-class PythonMapper(object):
+# Other imports
+from abc import ABCMeta, abstractmethod
+
+class PythonMapper(object, metaclass=ABCMeta):
     """Baseclass for python based mappers in Kratos
     The inteface matches the C++ version ("custom_mappers/mapper.h")
     The py-mappers are intentionally NOT derived from the c++ version.
@@ -17,14 +21,24 @@ class PythonMapper(object):
 
         self.echo_level = self.mapper_settings["echo_level"].GetInt()
 
+    # public methods, same as in "custom_mappers/mapper.h"
     def Map(self, variable_origin, variable_destination, mapper_flags=KM.Flags()):
-        raise NotImplementedError('"Map" was not implemented for "{}"'.format(self._ClassName()))
+        CheckVariables(variable_origin, variable_destination)
+        self._MapInternal(variable_origin, variable_destination, mapper_flags)
 
     def InverseMap(self, variable_origin, variable_destination, mapper_flags=KM.Flags()):
-        raise NotImplementedError('"InverseMap" was not implemented for "{}"'.format(self._ClassName()))
+        CheckVariables(variable_origin, variable_destination)
+        self._InverseMapInternal(variable_origin, variable_destination, mapper_flags)
 
-    def UpdateInterface(self):
-        raise NotImplementedError('"UpdateInterface" was not implemented for "{}"'.format(self._ClassName()))
+    @abstractmethod
+    def UpdateInterface(self): pass
+
+    # protected methods
+    @abstractmethod
+    def _MapInternal(self, variable_origin, variable_destination, mapper_flags) : pass
+
+    @abstractmethod
+    def _InverseMapInternal(self, variable_origin, variable_destination, mapper_flags) : pass
 
     @classmethod
     def _GetDefaultSettings(cls):
@@ -36,3 +50,12 @@ class PythonMapper(object):
     @classmethod
     def _ClassName(cls):
         return cls.__name__
+
+def IsDoubleVariable(var):
+    pass
+
+def IsArray3Variable(var):
+    pass
+
+def CheckVariables(variable_origin, variable_destination):
+    pass

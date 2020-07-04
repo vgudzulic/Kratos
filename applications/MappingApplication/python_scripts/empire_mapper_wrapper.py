@@ -1,9 +1,14 @@
+# Importing the Kratos Library
 import KratosMultiphysics as KM
+
+# Mapping imports
 from KratosMultiphysics.MappingApplication import Mapper
 from KratosMultiphysics.MappingApplication.python_mapper import PythonMapper
 
+# other imports
 import os
 import ctypes as ctp
+from abc import ABCMeta, abstractmethod
 
 def CreateMapper(model_part_origin, model_part_destination, mapper_settings):
     empire_mapper_type =  mapper_settings["mapper_type"].GetString()[7:] # returns the mapper-type without preceeding "empire_"
@@ -64,8 +69,8 @@ class EmpireMapperWrapper(PythonMapper):
             EmpireMapperWrapper.mapper_lib.deleteAllMeshes()
             EmpireMapperWrapper.mapper_lib.deleteAllMappers()
 
-    # public methods, same as in "custom_mappers/mapper.h"
-    def Map(self, variable_origin, variable_destination, mapper_flags=KM.Flags()):
+
+    def _MapInternal(self, variable_origin, variable_destination, mapper_flags):
         self.__CheckMapperExists()
         # if not type() # check variables are matching
 
@@ -96,7 +101,7 @@ class EmpireMapperWrapper(PythonMapper):
             variable_destination,
             True, mapper_flags.Is(Mapper.ADD_VALUES), mapper_flags.Is(Mapper.SWAP_SIGN))
 
-    def InverseMap(self, variable_origin, variable_destination, mapper_flags=KM.Flags()):
+    def _InverseMapInternal(self, variable_origin, variable_destination, mapper_flags):
         if mapper_flags.Is(Mapper.USE_TRANSPOSE):
             raise Exception
         # TODO check if using transpose => conservative
@@ -107,12 +112,11 @@ class EmpireMapperWrapper(PythonMapper):
         raise NotImplementedError('"InverseMap" was not implemented for "{}"'.format(self._ClassName()))
 
     def UpdateInterface(self):
-        # this requires recreating the mapper completely!
-        super(EmpireMapperWrapper, self).UpdateInterface() # calling baseclass will raise error as not implemented
+        raise NotImplementedError
 
     # protected methods
-    def _CreateMapper(self):
-        raise NotImplementedError('"_CreateMapper" was not implemented for "{}"'.format(self._ClassName()))
+    @abstractmethod
+    def _CreateMapper(self): pass
 
     # private methods
     def __LoadMapperLib(self):
