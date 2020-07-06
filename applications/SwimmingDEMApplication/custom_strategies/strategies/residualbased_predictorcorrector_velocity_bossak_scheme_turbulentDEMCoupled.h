@@ -33,7 +33,7 @@
 #include "utilities/dof_updater.h"
 #include "utilities/coordinate_transformation_utilities.h"
 #include "processes/process.h"
-#include "../FluidDynamicsApplication/custom_strategies/strategies/residualbased_predictorcorrector_velocity_bossak_scheme_turbulent.h"
+#include "../FluidDynamicsApplication/custom_strategies/schemes/residualbased_predictorcorrector_velocity_bossak_scheme_turbulent.h"
 
 namespace Kratos {
 
@@ -324,7 +324,7 @@ namespace Kratos {
 
                 //adding the dynamic contributions (statics is already included)
                 this->AddDynamicsToLHS(LHS_Contribution, mDamp[thread_id], mMass[thread_id], CurrentProcessInfo);
-                this->AddDynamicsToRHS((*itElem), RHS_Contribution, mDamp[thread_id], mMass[thread_id], CurrentProcessInfo);
+                this->AddDynamicsToRHS(*(*itElem), RHS_Contribution, mDamp[thread_id], mMass[thread_id], CurrentProcessInfo);
 
                 GeometryType& rGeom = (*itElem)->GetGeometry();
                 unsigned int NumNodes = rGeom.PointsNumber();
