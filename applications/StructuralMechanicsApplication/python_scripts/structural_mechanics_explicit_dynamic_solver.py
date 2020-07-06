@@ -36,6 +36,7 @@ class ExplicitMechanicalSolver(MechanicalSolver):
             "delta_time_refresh"         : 1000,
             "max_delta_time"             : 1.0e0,
             "fraction_delta_time"        : 0.333333333333333333333333333333333333,
+            "mass_factor"                : 0.0,
             "rayleigh_alpha"             : 0.0,
             "rayleigh_beta"              : 0.0
         }""")
@@ -109,6 +110,8 @@ class ExplicitMechanicalSolver(MechanicalSolver):
                                                                              self.settings["time_step_prediction_level"].GetDouble())
         elif(scheme_type == "multi_stage"):
             mechanical_scheme = StructuralMechanicsApplication.ExplicitMultiStageKimScheme(self.settings["fraction_delta_time"].GetDouble())
+        elif(scheme_type == "forward_euler_fic"):
+            mechanical_scheme = StructuralMechanicsApplication.ExplicitForwardEulerFICScheme(self.settings["mass_factor"].GetDouble())
 
         else:
             err_msg =  "The requested scheme type \"" + scheme_type + "\" is not available!\n"
