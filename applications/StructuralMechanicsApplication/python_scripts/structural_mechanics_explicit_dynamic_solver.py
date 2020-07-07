@@ -56,6 +56,9 @@ class ExplicitMechanicalSolver(MechanicalSolver):
             self.main_model_part.AddNodalSolutionStepVariable(StructuralMechanicsApplication.FRACTIONAL_ACCELERATION)
             if (self.settings["rotation_dofs"].GetBool()):
                 self.main_model_part.AddNodalSolutionStepVariable(StructuralMechanicsApplication.FRACTIONAL_ANGULAR_ACCELERATION)
+        if(scheme_type == "forward_euler_fic"):
+            self.main_model_part.AddNodalSolutionStepVariable(StructuralMechanicsApplication.NODAL_DISPLACEMENT_STIFFNESS)
+            self.main_model_part.AddNodalSolutionStepVariable(StructuralMechanicsApplication.NODAL_INERTIA)
 
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NODAL_MASS)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.FORCE_RESIDUAL)
@@ -97,6 +100,8 @@ class ExplicitMechanicalSolver(MechanicalSolver):
     #### Specific internal functions ####
     def _create_solution_scheme(self):
         scheme_type = self.settings["scheme_type"].GetString()
+        # print(scheme_type)
+        # paraaa
 
         # Setting the Rayleigh damping parameters
         process_info = self.main_model_part.ProcessInfo
@@ -111,11 +116,12 @@ class ExplicitMechanicalSolver(MechanicalSolver):
         elif(scheme_type == "multi_stage"):
             mechanical_scheme = StructuralMechanicsApplication.ExplicitMultiStageKimScheme(self.settings["fraction_delta_time"].GetDouble())
         elif(scheme_type == "forward_euler_fic"):
+            self.main_model_part.ProcessInfo[KratosMultiphysics.DELTA_TIME] = self.settings["time_stepping"]["time_step"].GetDouble()
             mechanical_scheme = StructuralMechanicsApplication.ExplicitForwardEulerFICScheme(self.settings["mass_factor"].GetDouble())
 
         else:
             err_msg =  "The requested scheme type \"" + scheme_type + "\" is not available!\n"
-            err_msg += "Available options are: \"central_differences\", \"multi_stage\""
+            err_msg += "Available options are: \"central_differences\", \"multi_stage\", \"forward_euler_fic\""
             raise Exception(err_msg)
         return mechanical_scheme
 

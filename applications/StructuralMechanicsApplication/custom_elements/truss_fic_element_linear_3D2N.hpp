@@ -19,7 +19,7 @@
 // External includes
 
 // Project includes
-#include "custom_elements/truss_element_3D2N.hpp"
+#include "custom_elements/truss_element_linear_3D2N.hpp"
 #include "includes/define.h"
 #include "includes/variables.h"
 
@@ -71,57 +71,56 @@ public:
         PropertiesType::Pointer pProperties
     ) const override;
 
-    void CalculateRightHandSide(
-        VectorType& rRightHandSideVector,
-        ProcessInfo& rCurrentProcessInfo) override;
-
-    void CalculateLeftHandSide(
-        MatrixType& rLeftHandSideMatrix,
-        ProcessInfo& rCurrentProcessInfo) override;
+    /**
+     * @brief This function is designed to make the element to assemble an rRHS vector identified by a variable rRHSVariable by assembling it to the nodes on the variable rDestinationVariable (double version)
+     * @details The "AddEXplicit" FUNCTIONS THE ONLY FUNCTIONS IN WHICH AN ELEMENT IS ALLOWED TO WRITE ON ITS NODES.
+     * The caller is expected to ensure thread safety hence SET/UNSETLOCK MUST BE PERFORMED IN THE STRATEGY BEFORE CALLING THIS FUNCTION
+     * @param rRHSVector input variable containing the RHS vector to be assembled
+     * @param rRHSVariable variable describing the type of the RHS vector to be assembled
+     * @param rDestinationVariable variable in the database to which the rRHSVector will be assembled
+     * @param rCurrentProcessInfo the current process info instance
+     */
+    void AddExplicitContribution(
+        const VectorType& rRHSVector,
+        const Variable<VectorType>& rRHSVariable,
+        const Variable<double >& rDestinationVariable,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
 
     /**
-     * @brief This function adds forces from prestressing to the force vector
-     * @param rRightHandSideVector The right hand side of the problem
+     * @brief This function is designed to make the element to assemble an rRHS vector identified by a variable rRHSVariable by assembling it to the nodes on the variable (array_1d<double, 3>) version rDestinationVariable.
+     * @details The "AddEXplicit" FUNCTIONS THE ONLY FUNCTIONS IN WHICH AN ELEMENT IS ALLOWED TO WRITE ON ITS NODES.
+     * The caller is expected to ensure thread safety hence SET/UNSETLOCK MUST BE PERFORMED IN THE STRATEGY BEFORE CALLING THIS FUNCTION
+     * @param rRHSVector input variable containing the RHS vector to be assembled
+     * @param rRHSVariable variable describing the type of the RHS vector to be assembled
+     * @param rDestinationVariable variable in the database to which the rRHSVector will be assembled
+     * @param rCurrentProcessInfo the current process info instance
      */
-    void AddPrestressLinear(VectorType& rRightHandSideVector);
+    void AddExplicitContribution(const VectorType& rRHSVector,
+        const Variable<VectorType>& rRHSVariable,
+        const Variable<array_1d<double, 3> >& rDestinationVariable,
+        const ProcessInfo& rCurrentProcessInfo
+        ) override;
 
-    void CalculateOnIntegrationPoints(
-        const Variable<array_1d<double, 3 > >& rVariable,
-        std::vector< array_1d<double, 3 > >& rOutput,
-        const ProcessInfo& rCurrentProcessInfo) override;
-
-    void CalculateOnIntegrationPoints(
-        const Variable<Vector>& rVariable, std::vector<Vector>& rOutput,
-        const ProcessInfo& rCurrentProcessInfo) override;
+protected:
 
     /**
-     * @brief This function calculates the total stiffness matrix for the element
+     * @brief This method computes directly the lumped mass vector
+     * @param rMassVector The lumped mass vector
      */
-    BoundedMatrix<double,msLocalSize,msLocalSize>
-    CreateElementStiffnessMatrix(ProcessInfo& rCurrentProcessInfo) override;
+    void CalculateLumpedMassVector(VectorType& rMassVector);
 
     /**
-     * @brief This function calculates the original nodal postion for the transformation matrix
-     * @param rReferenceCoordinates The original coordinates
+     * @brief This method computes directly the lumped stiffness vector
+     * @param rStiffnessVector The lumped stiffness vector
      */
-    void WriteTransformationCoordinates(
-        BoundedVector<double,msLocalSize>& rReferenceCoordinates) override;
+    void CalculateLumpedStiffnessVector(VectorType& rStiffnessVector,const ProcessInfo& rCurrentProcessInfo);
 
     /**
-     * @brief This function calculates the current linear-Lagrange strain
+     * @brief This method computes directly the lumped damping vector
+     * @param rDampingVector The lumped damping vector
      */
-    double CalculateLinearStrain();
-
-
-    /**
-     * @brief This function updates the internal forces
-     * @param rinternalForces The internal forces
-     */
-
-    void UpdateInternalForces(
-        BoundedVector<double,msLocalSize>& rInternalForces) override;
-
-    void FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) override;
+    void CalculateLumpedDampingVector(VectorType& rDampingVector, const ProcessInfo& rCurrentProcessInfo);
 
 private:
 
