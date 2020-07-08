@@ -209,6 +209,8 @@ void TrussFICElementLinear3D2N::CalculateLumpedDampingVector(
         CalculateLumpedMassVector(mass_vector);
         for (IndexType i = 0; i < msLocalSize; ++i)
             rDampingVector[i] += alpha * mass_vector[i];
+
+        KRATOS_WATCH(mass_vector)
     }
 
     // 3.-Calculate Stiffness Vector:
@@ -217,7 +219,11 @@ void TrussFICElementLinear3D2N::CalculateLumpedDampingVector(
         CalculateLumpedStiffnessVector(stiffness_vector,rCurrentProcessInfo);
         for (IndexType i = 0; i < msLocalSize; ++i)
             rDampingVector[i] += beta * stiffness_vector[i];
+
+        KRATOS_WATCH(stiffness_vector)
     }
+
+    KRATOS_WATCH(rDampingVector)
 
     KRATOS_CATCH( "" )
 }

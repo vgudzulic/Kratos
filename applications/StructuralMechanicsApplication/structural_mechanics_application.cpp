@@ -60,6 +60,7 @@ KratosStructuralMechanicsApplication::KratosStructuralMechanicsApplication()
       mTrussLinearElement3D2N(0, Element::GeometryType::Pointer(new Line3D2<NodeType >(Element::GeometryType::PointsArrayType(2)))),
       mCableElement3D2N(0, Element::GeometryType::Pointer(new Line3D2<NodeType >(Element::GeometryType::PointsArrayType(2)))),
       mTrussFICElementLinear3D2N(0, Element::GeometryType::Pointer(new Line3D2<NodeType >(Element::GeometryType::PointsArrayType(2)))),
+      mTrussSymplecticEulerElementLinear3D2N(0, Element::GeometryType::Pointer(new Line3D2<NodeType >(Element::GeometryType::PointsArrayType(2)))),
       // Adding the beam elements
       mCrBeamElement3D2N(0, Element::GeometryType::Pointer(new Line3D2<NodeType >(Element::GeometryType::PointsArrayType(2)))),
       mCrLinearBeamElement3D2N(0, Element::GeometryType::Pointer(new Line3D2<NodeType >(Element::GeometryType::PointsArrayType(2)))),
@@ -535,6 +536,7 @@ void KratosStructuralMechanicsApplication::Register() {
     KRATOS_REGISTER_ELEMENT("TrussLinearElement3D2N", mTrussLinearElement3D2N)
     KRATOS_REGISTER_ELEMENT("CableElement3D2N", mCableElement3D2N)
     KRATOS_REGISTER_ELEMENT("TrussFICElementLinear3D2N", mTrussFICElementLinear3D2N)
+    KRATOS_REGISTER_ELEMENT("TrussSymplecticEulerElementLinear3D2N", mTrussSymplecticEulerElementLinear3D2N)
 
     // Register the beam element
     KRATOS_REGISTER_ELEMENT("CrBeamElement3D2N", mCrBeamElement3D2N)
