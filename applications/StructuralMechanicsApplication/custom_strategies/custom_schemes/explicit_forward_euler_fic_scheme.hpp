@@ -347,15 +347,10 @@ public:
         const double nodal_damping = itCurrentNode->GetValue(NODAL_DISPLACEMENT_DAMPING);
         const array_1d<double, 3>& r_current_residual = itCurrentNode->FastGetSolutionStepValue(FORCE_RESIDUAL);
         array_1d<double, 3>& r_current_aux_displacement = itCurrentNode->FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS);
-        const array_1d<double, 3>& r_previous_aux_displacement = itCurrentNode->FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS,1);
-
-        //TODO: check this
-        KRATOS_WATCH(r_current_aux_displacement)
-        KRATOS_WATCH(r_previous_aux_displacement)
+        // const array_1d<double, 3>& r_previous_aux_displacement = itCurrentNode->FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS,1);
 
         // Solution of the explicit equation:
         if (nodal_damping > numerical_limit)
-            //TODO: check this
             // noalias(r_current_aux_displacement) = r_previous_aux_displacement + mDeltaTime * r_current_residual / nodal_damping;
             noalias(r_current_aux_displacement) += mDeltaTime * r_current_residual / nodal_damping;
         else
@@ -379,18 +374,6 @@ public:
         array_1d<double, 3>& r_current_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT);
         const array_1d<double, 3>& r_current_aux_displacement = itCurrentNode->FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS);
 
-        const array_1d<double, 3>& r_previous_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT,1);
-        const array_1d<double, 3>& r_previous_velocity = itCurrentNode->FastGetSolutionStepValue(VELOCITY,1);
-        array_1d<double, 3>& r_current_velocity = itCurrentNode->FastGetSolutionStepValue(VELOCITY);
-        array_1d<double, 3>& r_current_acceleration = itCurrentNode->FastGetSolutionStepValue(ACCELERATION);
-
-        noalias(r_current_acceleration) = (1.0/mDeltaTime) * (r_current_velocity - r_previous_velocity);
-        noalias(r_current_velocity) = (1.0/mDeltaTime) * (r_current_displacement - r_previous_displacement);
-
-        KRATOS_WATCH(r_current_displacement)
-        KRATOS_WATCH(r_previous_displacement)
-        KRATOS_WATCH(r_current_velocity)
-
         std::array<bool, 3> fix_displacements = {false, false, false};
         fix_displacements[0] = (itCurrentNode->GetDof(DISPLACEMENT_X, DisplacementPosition).IsFixed());
         fix_displacements[1] = (itCurrentNode->GetDof(DISPLACEMENT_Y, DisplacementPosition + 1).IsFixed());
@@ -406,6 +389,14 @@ public:
             }
         else
             noalias(r_current_displacement) = ZeroVector(3);
+
+        const array_1d<double, 3>& r_previous_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT,1);
+        const array_1d<double, 3>& r_previous_velocity = itCurrentNode->FastGetSolutionStepValue(VELOCITY,1);
+        array_1d<double, 3>& r_current_velocity = itCurrentNode->FastGetSolutionStepValue(VELOCITY);
+        array_1d<double, 3>& r_current_acceleration = itCurrentNode->FastGetSolutionStepValue(ACCELERATION);
+
+        noalias(r_current_velocity) = (1.0/mDeltaTime) * (r_current_displacement - r_previous_displacement);
+        noalias(r_current_acceleration) = (1.0/mDeltaTime) * (r_current_velocity - r_previous_velocity);
     }
 
     /**
