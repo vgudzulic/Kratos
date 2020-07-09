@@ -12,15 +12,15 @@
 //
 //
 
-#if !defined(KRATOS_EXPLICIT_SYMPLECTIC_EULER_SCHEME_HPP_INCLUDED)
-#define KRATOS_EXPLICIT_SYMPLECTIC_EULER_SCHEME_HPP_INCLUDED
+#if !defined(KRATOS_EXPLICIT_VELOCITY_VERLET_SCHEME_HPP_INCLUDED)
+#define KRATOS_EXPLICIT_VELOCITY_VERLET_SCHEME_HPP_INCLUDED
 
 /* System includes */
 
 /* External includes */
 
 /* Project includes */
-#include "custom_strategies/custom_schemes/explicit_forward_euler_fic_scheme.hpp"
+#include "custom_strategies/custom_schemes/explicit_symplectic_euler_scheme.hpp"
 #include "utilities/variable_utils.h"
 #include "custom_utilities/explicit_integration_utilities.h"
 
@@ -47,7 +47,7 @@ namespace Kratos {
 ///@{
 
 /**
- * @class ExplicitSymplecticEulerScheme
+ * @class ExplicitVelocityVerletScheme
  * @ingroup StructuralMechanicsApplciation
  * @brief An explicit forward euler scheme with a split of the inertial term
  * @author Ignasi de Pouplana
@@ -55,8 +55,8 @@ namespace Kratos {
 template <class TSparseSpace,
           class TDenseSpace //= DenseSpace<double>
           >
-class ExplicitSymplecticEulerScheme
-    : public ExplicitForwardEulerFICScheme<TSparseSpace, TDenseSpace> {
+class ExplicitVelocityVerletScheme
+    : public ExplicitSymplecticEulerScheme<TSparseSpace, TDenseSpace> {
 
 public:
     ///@name Type Definitions
@@ -89,8 +89,8 @@ public:
 
     using ExplicitForwardEulerFICScheme<TSparseSpace,TDenseSpace>::mDeltaTime;
 
-    /// Counted pointer of ExplicitSymplecticEulerScheme
-    KRATOS_CLASS_POINTER_DEFINITION(ExplicitSymplecticEulerScheme);
+    /// Counted pointer of ExplicitVelocityVerletScheme
+    KRATOS_CLASS_POINTER_DEFINITION(ExplicitVelocityVerletScheme);
 
     ///@}
     ///@name Life Cycle
@@ -98,70 +98,101 @@ public:
 
     /**
      * @brief Default constructor.
-     * @details The ExplicitSymplecticEulerScheme method
+     * @details The ExplicitVelocityVerletScheme method
      */
-    ExplicitSymplecticEulerScheme(const double MassFactor = 1.0)
-        : ExplicitForwardEulerFICScheme<TSparseSpace, TDenseSpace>(MassFactor)
+    ExplicitVelocityVerletScheme(const double MassFactor = 1.0)
+        : ExplicitSymplecticEulerScheme<TSparseSpace, TDenseSpace>(MassFactor)
     {
 
     }
 
     /** Destructor.
     */
-    virtual ~ExplicitSymplecticEulerScheme() {}
+    virtual ~ExplicitVelocityVerletScheme() {}
 
     ///@}
     ///@name Operators
     ///@{
 
 
-    /**
-     * @brief This method initializes the residual in the nodes of the model part
-     * @param rModelPart The model of the problem to solve
-     */
-    void InitializeResidual(ModelPart& rModelPart)
+     void Predict(
+        ModelPart& rModelPart,
+        DofsArrayType& rDofSet,
+        TSystemMatrixType& A,
+        TSystemVectorType& Dx,
+        TSystemVectorType& b
+    ) override
     {
-        KRATOS_TRY
+        KRATOS_TRY;
+
+        // The current process info
+        const ProcessInfo& r_current_process_info = rModelPart.GetProcessInfo();
 
         // The array of nodes
         NodesArrayType& r_nodes = rModelPart.Nodes();
 
-        // Auxiliar values
-        const array_1d<double, 3> zero_array = ZeroVector(3);
-        // Initializing the variables
-        VariableUtils().SetVariable(FORCE_RESIDUAL, zero_array,r_nodes);
+        /// Working in 2D/3D (the definition of DOMAIN_SIZE is check in the Check method)
+        const SizeType dim = r_current_process_info[DOMAIN_SIZE];
+
+        // Step Update
+        // The first step is time =  initial_time ( 0.0) + delta time
+        // mTime.Current = r_current_process_info[TIME];
+        mDeltaTime = r_current_process_info[DELTA_TIME];
+
+        // The iterator of the first node
+        const auto it_node_begin = rModelPart.NodesBegin();
+
+        // Getting dof position
+        const IndexType disppos = it_node_begin->GetDofPosition(DISPLACEMENT_X);
+
+        #pragma omp parallel for schedule(guided,512)
+        for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
+            // Current step information "N+1" (before step update).
+            this->PredictTranslationalDegreesOfFreedom(it_node_begin + i, disppos, dim);
+        } // for Node parallel
+
+
+        this->CalculateAndAddRHS(rModelPart);
 
         KRATOS_CATCH("")
     }
 
     /**
-     * @brief This method initializes some rutines related with the explicit scheme
-     * @param rModelPart The model of the problem to solve
+     * @brief This method updates the translation DoF
+     * @param itCurrentNode The iterator of the current node
+     * @param DisplacementPosition The position of the displacement dof on the database
      * @param DomainSize The current dimention of the problem
      */
-    void InitializeExplicitScheme(
-        ModelPart& rModelPart,
+    void PredictTranslationalDegreesOfFreedom(
+        NodeIterator itCurrentNode,
+        const IndexType DisplacementPosition,
         const SizeType DomainSize = 3
         )
     {
-        KRATOS_TRY
+        const double nodal_mass = itCurrentNode->GetValue(NODAL_MASS);
+        const array_1d<double, 3>& r_current_residual = itCurrentNode->FastGetSolutionStepValue(FORCE_RESIDUAL);
+        array_1d<double, 3>& r_current_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT);
+        array_1d<double, 3>& r_current_velocity = itCurrentNode->FastGetSolutionStepValue(VELOCITY);
 
-        /// The array of ndoes
-        NodesArrayType& r_nodes = rModelPart.Nodes();
+        std::array<bool, 3> fix_displacements = {false, false, false};
+        fix_displacements[0] = (itCurrentNode->GetDof(DISPLACEMENT_X, DisplacementPosition).IsFixed());
+        fix_displacements[1] = (itCurrentNode->GetDof(DISPLACEMENT_Y, DisplacementPosition + 1).IsFixed());
+        if (DomainSize == 3)
+            fix_displacements[2] = (itCurrentNode->GetDof(DISPLACEMENT_Z, DisplacementPosition + 2).IsFixed());
 
-        // The first iterator of the array of nodes
-        const auto it_node_begin = rModelPart.NodesBegin();
-
-        /// Initialise the database of the nodes
-        #pragma omp parallel for schedule(guided,512)
-        for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
-            auto it_node = (it_node_begin + i);
-            it_node->SetValue(NODAL_MASS, 0.0);
-            array_1d<double, 3>& r_current_residual = it_node->FastGetSolutionStepValue(FORCE_RESIDUAL);
-            noalias(r_current_residual) = ZeroVector(3);
+        // Solution of the explicit equation:
+        if (nodal_mass > numerical_limit){
+            for (IndexType j = 0; j < DomainSize; j++) {
+                if (fix_displacements[j] == false) {
+                    r_current_displacement[j] += r_current_velocity[j]*mDeltaTime + 0.5 * r_current_residual[j]/nodal_mass * mDeltaTime * mDeltaTime;
+                    r_current_velocity[j] += 0.5 * mDeltaTime * r_current_residual[j]/nodal_mass;
+                }
+            }
         }
-
-        KRATOS_CATCH("")
+        else {
+            noalias(r_current_displacement) = ZeroVector(3);
+            noalias(r_current_velocity) = ZeroVector(3);
+        }
     }
 
     /**
@@ -233,10 +264,10 @@ public:
             fix_displacements[2] = (itCurrentNode->GetDof(DISPLACEMENT_Z, DisplacementPosition + 2).IsFixed());
 
         // Solution of the explicit equation:
-        if (nodal_mass > numerical_limit) {
+        if (nodal_mass > numerical_limit){
             for (IndexType j = 0; j < DomainSize; j++) {
                 if (fix_displacements[j] == false) {
-                    r_current_velocity[j] += mDeltaTime * r_current_residual[j]/nodal_mass;
+                    r_current_velocity[j] += 0.5 * mDeltaTime * r_current_residual[j]/nodal_mass;
                 }
             }
         }
@@ -245,10 +276,8 @@ public:
         }
 
         const array_1d<double, 3>& r_previous_velocity = itCurrentNode->FastGetSolutionStepValue(VELOCITY,1);
-        array_1d<double, 3>& r_current_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT);
         array_1d<double, 3>& r_current_acceleration = itCurrentNode->FastGetSolutionStepValue(ACCELERATION);
 
-        noalias(r_current_displacement) += r_current_velocity * mDeltaTime;
         noalias(r_current_acceleration) = (1.0/mDeltaTime) * (r_current_velocity - r_previous_velocity);
     }
 
@@ -338,7 +367,7 @@ private:
 
     ///@}
 
-}; /* Class ExplicitSymplecticEulerScheme */
+}; /* Class ExplicitVelocityVerletScheme */
 
 ///@}
 
@@ -349,4 +378,4 @@ private:
 
 } /* namespace Kratos.*/
 
-#endif /* KRATOS_EXPLICIT_SYMPLECTIC_EULER_SCHEME_HPP_INCLUDED  defined */
+#endif /* KRATOS_EXPLICIT_VELOCITY_VERLET_SCHEME_HPP_INCLUDED  defined */

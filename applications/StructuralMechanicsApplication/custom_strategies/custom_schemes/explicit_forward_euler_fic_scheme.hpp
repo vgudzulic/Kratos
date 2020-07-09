@@ -350,11 +350,13 @@ public:
         // const array_1d<double, 3>& r_previous_aux_displacement = itCurrentNode->FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS,1);
 
         // Solution of the explicit equation:
-        if (nodal_damping > numerical_limit)
+        if (nodal_damping > numerical_limit){
             // noalias(r_current_aux_displacement) = r_previous_aux_displacement + mDeltaTime * r_current_residual / nodal_damping;
             noalias(r_current_aux_displacement) += mDeltaTime * r_current_residual / nodal_damping;
-        else
+        }
+        else{
             noalias(r_current_aux_displacement) = ZeroVector(3);
+        }
     }
 
     /**
@@ -381,14 +383,16 @@ public:
             fix_displacements[2] = (itCurrentNode->GetDof(DISPLACEMENT_Z, DisplacementPosition + 2).IsFixed());
 
         // Solution of the explicit equation:
-        if (nodal_mass > numerical_limit)
+        if (nodal_mass > numerical_limit){
             for (IndexType j = 0; j < DomainSize; j++) {
                 if (fix_displacements[j] == false) {
                     r_current_displacement[j] = (mDeltaTime * r_current_aux_displacement[j] + r_current_inertial_residual[j]) / nodal_mass;
                 }
             }
-        else
+        }
+        else{
             noalias(r_current_displacement) = ZeroVector(3);
+        }
 
         const array_1d<double, 3>& r_previous_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT,1);
         const array_1d<double, 3>& r_previous_velocity = itCurrentNode->FastGetSolutionStepValue(VELOCITY,1);

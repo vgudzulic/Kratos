@@ -32,6 +32,7 @@
 #include "custom_strategies/custom_schemes/explicit_multi_stage_kim_scheme.hpp"
 #include "custom_strategies/custom_schemes/explicit_forward_euler_fic_scheme.hpp"
 #include "custom_strategies/custom_schemes/explicit_symplectic_euler_scheme.hpp"
+#include "custom_strategies/custom_schemes/explicit_velocity_verlet_scheme.hpp"
 #include "custom_strategies/custom_schemes/eigensolver_dynamic_scheme.hpp"
 
 // Convergence criterias
@@ -82,6 +83,7 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
     typedef ExplicitMultiStageKimScheme< SparseSpaceType, LocalSpaceType >  ExplicitMultiStageKimSchemeType;
     typedef ExplicitForwardEulerFICScheme< SparseSpaceType, LocalSpaceType >  ExplicitForwardEulerFICSchemeType;
     typedef ExplicitSymplecticEulerScheme< SparseSpaceType, LocalSpaceType >  ExplicitSymplecticEulerSchemeType;
+    typedef ExplicitVelocityVerletScheme< SparseSpaceType, LocalSpaceType >  ExplicitVelocityVerletSchemeType;
 
 
     // Custom convergence criterion types
@@ -170,6 +172,11 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
     py::class_< ExplicitSymplecticEulerSchemeType,typename ExplicitSymplecticEulerSchemeType::Pointer, BaseSchemeType >(m,"ExplicitSymplecticEulerScheme")
         .def(py::init< const double>())
         ;
+
+    py::class_< ExplicitVelocityVerletSchemeType,typename ExplicitVelocityVerletSchemeType::Pointer, BaseSchemeType >(m,"ExplicitVelocityVerletScheme")
+        .def(py::init< const double>())
+        ;
+
 
 
     //********************************************************************

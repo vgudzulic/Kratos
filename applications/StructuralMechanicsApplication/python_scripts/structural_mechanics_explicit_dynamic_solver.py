@@ -118,9 +118,12 @@ class ExplicitMechanicalSolver(MechanicalSolver):
         elif(scheme_type == "forward_euler_fic"):
             self.main_model_part.ProcessInfo[KratosMultiphysics.DELTA_TIME] = self.settings["time_stepping"]["time_step"].GetDouble()
             mechanical_scheme = StructuralMechanicsApplication.ExplicitForwardEulerFICScheme(self.settings["mass_factor"].GetDouble())
-        elif(scheme_type == "symplectic_forward_euler"):
+        elif(scheme_type == "symplectic_euler"):
             self.main_model_part.ProcessInfo[KratosMultiphysics.DELTA_TIME] = self.settings["time_stepping"]["time_step"].GetDouble()
             mechanical_scheme = StructuralMechanicsApplication.ExplicitSymplecticEulerScheme(self.settings["mass_factor"].GetDouble())
+        elif(scheme_type == "velocity_verlet"):
+            self.main_model_part.ProcessInfo[KratosMultiphysics.DELTA_TIME] = self.settings["time_stepping"]["time_step"].GetDouble()
+            mechanical_scheme = StructuralMechanicsApplication.ExplicitVelocityVerletScheme(self.settings["mass_factor"].GetDouble())
 
         else:
             err_msg =  "The requested scheme type \"" + scheme_type + "\" is not available!\n"

@@ -53,6 +53,34 @@ TrussFICElementLinear3D2N::Create(IndexType NewId,
 TrussFICElementLinear3D2N::~TrussFICElementLinear3D2N() {}
 
 
+int TrussFICElementLinear3D2N::Check(const ProcessInfo& rCurrentProcessInfo) const
+{
+    KRATOS_TRY
+
+    int ierr = TrussElement3D2N::Check(rCurrentProcessInfo);
+    if(ierr != 0) return ierr;
+
+    double alpha = 0.0;
+    if( GetProperties().Has(RAYLEIGH_ALPHA) )
+        alpha = GetProperties()[RAYLEIGH_ALPHA];
+    else if( rCurrentProcessInfo.Has(RAYLEIGH_ALPHA) )
+        alpha = rCurrentProcessInfo[RAYLEIGH_ALPHA];
+
+    double beta  = 0.0;
+    if( GetProperties().Has(RAYLEIGH_BETA) )
+        beta = GetProperties()[RAYLEIGH_BETA];
+    else if( rCurrentProcessInfo.Has(RAYLEIGH_BETA) )
+        beta = rCurrentProcessInfo[RAYLEIGH_BETA];
+
+    if( std::abs(alpha) < std::numeric_limits<double>::epsilon() &&
+        std::abs(beta) < std::numeric_limits<double>::epsilon() ) {
+        KRATOS_ERROR << "Rayleigh Alpha and Rayleigh Beta are zero and this element needs the damping matrix (estimated with the rayleigh method) to be different from zero." << std::endl;
+    }
+
+    return ierr;
+
+    KRATOS_CATCH("")
+}
 
 void TrussFICElementLinear3D2N::AddExplicitContribution(
     const VectorType& rRHSVector,
