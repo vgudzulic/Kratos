@@ -321,12 +321,6 @@ public:
         #pragma omp parallel for schedule(guided,512)
         for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
             // Current step information "N+1" (before step update).
-            this->UpdateAuxiliarTranslationalVariable(it_node_begin + i);
-        } // for Node parallel
-
-        #pragma omp parallel for schedule(guided,512)
-        for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
-            // Current step information "N+1" (before step update).
             this->UpdateTranslationalDegreesOfFreedom(it_node_begin + i, disppos, dim);
         } // for Node parallel
 
@@ -340,8 +334,10 @@ public:
      * @param DisplacementPosition The position of the displacement dof on the database
      * @param DomainSize The current dimention of the problem
      */
-    void UpdateAuxiliarTranslationalVariable(
-        NodeIterator itCurrentNode
+    void UpdateTranslationalDegreesOfFreedom(
+        NodeIterator itCurrentNode,
+        const IndexType DisplacementPosition,
+        const SizeType DomainSize = 3
         )
     {
         const double nodal_damping = itCurrentNode->GetValue(NODAL_DISPLACEMENT_DAMPING);
@@ -357,24 +353,10 @@ public:
         else{
             noalias(r_current_aux_displacement) = ZeroVector(3);
         }
-    }
 
-    /**
-     * @brief This method updates the translation DoF
-     * @param itCurrentNode The iterator of the current node
-     * @param DisplacementPosition The position of the displacement dof on the database
-     * @param DomainSize The current dimention of the problem
-     */
-    void UpdateTranslationalDegreesOfFreedom(
-        NodeIterator itCurrentNode,
-        const IndexType DisplacementPosition,
-        const SizeType DomainSize = 3
-        )
-    {
         const double nodal_mass = itCurrentNode->GetValue(NODAL_MASS);
         const array_1d<double, 3>& r_current_inertial_residual = itCurrentNode->FastGetSolutionStepValue(NODAL_INERTIA);
         array_1d<double, 3>& r_current_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT);
-        const array_1d<double, 3>& r_current_aux_displacement = itCurrentNode->FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS);
 
         std::array<bool, 3> fix_displacements = {false, false, false};
         fix_displacements[0] = (itCurrentNode->GetDof(DISPLACEMENT_X, DisplacementPosition).IsFixed());
