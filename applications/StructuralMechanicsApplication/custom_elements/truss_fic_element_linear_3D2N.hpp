@@ -30,7 +30,7 @@ namespace Kratos {
  * @author Ignasi de Pouplana
  */
 
-class TrussFICElementLinear3D2N : public TrussElementLinear3D2N
+class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) TrussFICElementLinear3D2N : public TrussElementLinear3D2N
 {
 public:
     KRATOS_CLASS_INTRUSIVE_POINTER_DEFINITION(TrussFICElementLinear3D2N);
