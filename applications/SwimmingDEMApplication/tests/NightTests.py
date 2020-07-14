@@ -51,6 +51,10 @@ class sdem_pfem_coupling_one_way_test(SPFEMTF.TestFactory):
      file_name = "PFEM-DEM_tests/sdem_pfem_coupling_one_way_test"
      file_parameters = "PFEM-DEM_tests/ProjectParameters.json"
 
+class CFD_DEM_two_way_test(FDEMTF.TestFactory):
+     file_name = "CFD_DEM_two_way_tests/Two_way_testFluid"
+     file_parameters = "CFD_DEM_two_way_tests/ProjectParameters.json"
+
 def SetTestSuite(suites):
     night_suite = suites['nightly']
 
@@ -64,6 +68,7 @@ def SetTestSuite(suites):
           interpolation_test_linear,
           interpolation_test_nonlinear_time_no_substepping,
           fluid_dem_coupling_one_way_test,
+          CFD_DEM_two_way_test,
           sdem_pfem_coupling_one_way_test
           ])
     )
