@@ -20,50 +20,19 @@ namespace Kratos
 // using namespace GeometryFunctions;
 
 SplitForwardEulerSphericParticle::SplitForwardEulerSphericParticle()
-    : SphericParticle(), mRealMass(0)
-{
-    mRadius = 0;
-    mRealMass = 0;
-    mStressTensor = NULL;
-    mSymmStressTensor = NULL;
-    mpTranslationalIntegrationScheme = NULL;
-    mpRotationalIntegrationScheme = NULL;
-    mpInlet = NULL;
+    : SphericParticle(), mRealMass(0) {
 }
 
 SplitForwardEulerSphericParticle::SplitForwardEulerSphericParticle(IndexType NewId, GeometryType::Pointer pGeometry)
-    : SphericParticle(NewId, pGeometry), mRealMass(0){
-    mRadius = 0;
-    mRealMass = 0;
-    mStressTensor = NULL;
-    mSymmStressTensor = NULL;
-    mpTranslationalIntegrationScheme = NULL;
-    mpRotationalIntegrationScheme = NULL;
-    mpInlet = NULL;
+    : SphericParticle(NewId, pGeometry), mRealMass(0) {
 }
 
 SplitForwardEulerSphericParticle::SplitForwardEulerSphericParticle(IndexType NewId, GeometryType::Pointer pGeometry,  PropertiesType::Pointer pProperties)
-    : SphericParticle(NewId, pGeometry, pProperties), mRealMass(0)
-{
-    mRadius = 0;
-    mRealMass = 0;
-    mStressTensor = NULL;
-    mSymmStressTensor = NULL;
-    mpTranslationalIntegrationScheme = NULL;
-    mpRotationalIntegrationScheme = NULL;
-    mpInlet = NULL;
+    : SphericParticle(NewId, pGeometry, pProperties), mRealMass(0) {
 }
 
 SplitForwardEulerSphericParticle::SplitForwardEulerSphericParticle(IndexType NewId, NodesArrayType const& ThisNodes)
-    : SphericParticle(NewId, ThisNodes), mRealMass(0)
-{
-    mRadius = 0;
-    mRealMass = 0;
-    mStressTensor = NULL;
-    mSymmStressTensor = NULL;
-    mpTranslationalIntegrationScheme = NULL;
-    mpRotationalIntegrationScheme = NULL;
-    mpInlet = NULL;
+    : SphericParticle(NewId, ThisNodes), mRealMass(0) {
 }
 
 Element::Pointer SplitForwardEulerSphericParticle::Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const
@@ -73,155 +42,14 @@ Element::Pointer SplitForwardEulerSphericParticle::Create(IndexType NewId, Nodes
 
 /// Destructor.
 SplitForwardEulerSphericParticle::~SplitForwardEulerSphericParticle(){
-    if (mStressTensor!=NULL) {
-        delete mStressTensor;
-        mStressTensor = NULL;
-        delete mSymmStressTensor;
-        mSymmStressTensor = NULL;
-    }
-    if (mpTranslationalIntegrationScheme!=NULL) {
-        if(mpTranslationalIntegrationScheme != mpRotationalIntegrationScheme) delete mpTranslationalIntegrationScheme;
-        mpTranslationalIntegrationScheme = NULL;
-    }
-    if (mpRotationalIntegrationScheme!=NULL) {
-        delete mpRotationalIntegrationScheme;
-        mpRotationalIntegrationScheme = NULL;
-    }
 }
 
 SplitForwardEulerSphericParticle& SplitForwardEulerSphericParticle::operator=(const SplitForwardEulerSphericParticle& rOther) {
     SphericParticle::operator=(rOther);
-    mElasticEnergy = rOther.mElasticEnergy;
-    mInelasticFrictionalEnergy = rOther.mInelasticFrictionalEnergy;
-    mInelasticViscodampingEnergy = rOther.mInelasticViscodampingEnergy;
-    mNeighbourElements = rOther.mNeighbourElements;
-    mContactingNeighbourIds = rOther.mContactingNeighbourIds;
-    mContactingFaceNeighbourIds = rOther.mContactingFaceNeighbourIds;
-    mNeighbourRigidFaces = rOther.mNeighbourRigidFaces;
-    mNeighbourPotentialRigidFaces = rOther.mNeighbourPotentialRigidFaces;
-    mContactConditionWeights = rOther.mContactConditionWeights;
-    mContactConditionContactTypes = rOther.mContactConditionContactTypes;
-    mConditionContactPoints = rOther.mConditionContactPoints;
-    mNeighbourRigidFacesTotalContactForce = rOther.mNeighbourRigidFacesTotalContactForce;
-    mNeighbourRigidFacesElasticContactForce = rOther.mNeighbourRigidFacesElasticContactForce;
-    mNeighbourElasticContactForces = rOther.mNeighbourElasticContactForces;
-    mNeighbourElasticExtraContactForces = rOther.mNeighbourElasticExtraContactForces;
-    mContactMoment = rOther.mContactMoment;
-    mPartialRepresentativeVolume = rOther.mPartialRepresentativeVolume; //TODO: to continuum!
-    mFemOldNeighbourIds = rOther.mFemOldNeighbourIds;
-    mRadius = rOther.mRadius;
-    mSearchRadius = rOther.mSearchRadius;
-    mRealMass = rOther.mRealMass;
-    mClusterId = rOther.mClusterId;
-    mGlobalDamping = rOther.mGlobalDamping;
-
-    if(rOther.mStressTensor != NULL) {
-        mStressTensor  = new BoundedMatrix<double, 3, 3>(3,3);
-        *mStressTensor = *rOther.mStressTensor;
-
-        mSymmStressTensor  = new BoundedMatrix<double, 3, 3>(3,3);
-        *mSymmStressTensor = *rOther.mSymmStressTensor;
-    }
-    else {
-
-        mStressTensor     = NULL;
-        mSymmStressTensor = NULL;
-    }
-
-    mFastProperties = rOther.mFastProperties; //This might be unsafe
-
-    DEMIntegrationScheme::Pointer& translational_integration_scheme = GetProperties()[DEM_TRANSLATIONAL_INTEGRATION_SCHEME_POINTER];
-    DEMIntegrationScheme::Pointer& rotational_integration_scheme = GetProperties()[DEM_ROTATIONAL_INTEGRATION_SCHEME_POINTER];
-    SetIntegrationScheme(translational_integration_scheme, rotational_integration_scheme);
-
-    mDiscontinuumConstitutiveLaw = GetProperties()[DEM_DISCONTINUUM_CONSTITUTIVE_LAW_POINTER]->Clone();
-
-    SetValue(WALL_POINT_CONDITION_POINTERS, std::vector<Condition*>());
-    SetValue(WALL_POINT_CONDITION_ELASTIC_FORCES, std::vector<array_1d<double, 3> >());
-    SetValue(WALL_POINT_CONDITION_TOTAL_FORCES, std::vector<array_1d<double, 3> >());
 
     return *this;
 }
 
-
-
-
-void SplitForwardEulerSphericParticle::Initialize(const ProcessInfo& r_process_info)
-{
-    KRATOS_TRY
-
-    SetValue(NEIGHBOUR_IDS, DenseVector<int>());
-
-    MemberDeclarationFirstStep(r_process_info);
-
-    NodeType& node = GetGeometry()[0];
-
-    SetRadius(node.GetSolutionStepValue(RADIUS));
-    SetMass(GetDensity() * CalculateVolume());
-
-    if (this->IsNot(BLOCKED)) node.GetSolutionStepValue(PARTICLE_MATERIAL) = GetParticleMaterial();
-
-    mClusterId = -1;
-
-    if (this->Is(DEMFlags::HAS_ROTATION)) {
-        node.GetSolutionStepValue(PARTICLE_MOMENT_OF_INERTIA) = CalculateMomentOfInertia();
-
-        Quaternion<double  > Orientation = Quaternion<double>::Identity();
-        node.GetSolutionStepValue(ORIENTATION) = Orientation;
-
-        array_1d<double, 3> angular_momentum;
-        CalculateLocalAngularMomentum(angular_momentum);
-        noalias(node.GetSolutionStepValue(ANGULAR_MOMENTUM)) = angular_momentum;
-
-        array_1d<double, 3>& delta_rotation = node.GetSolutionStepValue(DELTA_ROTATION);
-        delta_rotation = ZeroVector(3);
-
-        array_1d<double, 3>& rotation_angle = node.GetSolutionStepValue(PARTICLE_ROTATION_ANGLE);
-        rotation_angle = ZeroVector(3);
-    }
-
-    else {
-        array_1d<double, 3>& angular_velocity = node.GetSolutionStepValue(ANGULAR_VELOCITY); //TODO: do we need this when there is no rotation??
-        angular_velocity = ZeroVector(3);
-    }
-
-    if (node.GetDof(VELOCITY_X).IsFixed())         {node.Set(DEMFlags::FIXED_VEL_X,true);}
-    else                                           {node.Set(DEMFlags::FIXED_VEL_X,false);}
-    if (node.GetDof(VELOCITY_Y).IsFixed())         {node.Set(DEMFlags::FIXED_VEL_Y,true);}
-    else                                           {node.Set(DEMFlags::FIXED_VEL_Y,false);}
-    if (node.GetDof(VELOCITY_Z).IsFixed())         {node.Set(DEMFlags::FIXED_VEL_Z,true);}
-    else                                           {node.Set(DEMFlags::FIXED_VEL_Z,false);}
-    if (node.GetDof(ANGULAR_VELOCITY_X).IsFixed()) {node.Set(DEMFlags::FIXED_ANG_VEL_X,true);}
-    else                                           {node.Set(DEMFlags::FIXED_ANG_VEL_X,false);}
-    if (node.GetDof(ANGULAR_VELOCITY_Y).IsFixed()) {node.Set(DEMFlags::FIXED_ANG_VEL_Y,true);}
-    else                                           {node.Set(DEMFlags::FIXED_ANG_VEL_Y,false);}
-    if (node.GetDof(ANGULAR_VELOCITY_Z).IsFixed()) {node.Set(DEMFlags::FIXED_ANG_VEL_Z,true);}
-    else                                           {node.Set(DEMFlags::FIXED_ANG_VEL_Z,false);}
-
-    double& elastic_energy = this->GetElasticEnergy();
-    elastic_energy = 0.0;
-    double& inelastic_frictional_energy = this->GetInelasticFrictionalEnergy();
-    inelastic_frictional_energy = 0.0;
-    double& inelastic_viscodamping_energy = this->GetInelasticViscodampingEnergy();
-    inelastic_viscodamping_energy = 0.0;
-
-    CreateDiscontinuumConstitutiveLaws(r_process_info);
-
-    DEMIntegrationScheme::Pointer& translational_integration_scheme = GetProperties()[DEM_TRANSLATIONAL_INTEGRATION_SCHEME_POINTER];
-    DEMIntegrationScheme::Pointer& rotational_integration_scheme = GetProperties()[DEM_ROTATIONAL_INTEGRATION_SCHEME_POINTER];
-    SetIntegrationScheme(translational_integration_scheme, rotational_integration_scheme);
-
-    SetValue(WALL_POINT_CONDITION_POINTERS, std::vector<Condition*>());
-    SetValue(WALL_POINT_CONDITION_ELASTIC_FORCES, std::vector<array_1d<double, 3> >());
-    SetValue(WALL_POINT_CONDITION_TOTAL_FORCES, std::vector<array_1d<double, 3> >());
-
-    KRATOS_CATCH( "" )
-}
-
-void SplitForwardEulerSphericParticle::SetIntegrationScheme(DEMIntegrationScheme::Pointer& translational_integration_scheme, DEMIntegrationScheme::Pointer& rotational_integration_scheme) {
-    mpTranslationalIntegrationScheme = translational_integration_scheme->CloneRaw();
-    mpRotationalIntegrationScheme = rotational_integration_scheme->CloneRaw();
-}
 
 void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_process_info, double dt, const array_1d<double,3>& gravity, int search_control)
 {
@@ -885,7 +713,7 @@ void SplitForwardEulerSphericParticle::ComputeBallToBallContactForce(SphericPart
     }// for each neighbor
 
     KRATOS_CATCH("")
-}// ComputeBallToBallContactForce
+}
 
 void SplitForwardEulerSphericParticle::EvaluateBallToBallForcesForPositiveIndentiations(SphericParticle::ParticleDataBuffer & data_buffer,
                                                                        const ProcessInfo& r_process_info,

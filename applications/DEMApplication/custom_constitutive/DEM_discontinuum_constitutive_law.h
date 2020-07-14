@@ -116,6 +116,23 @@ namespace Kratos {
         virtual double LocalPeriod(const int i, SphericParticle* element1,SphericParticle* element2);
 
 
+        virtual std::vector<double> CalculateElasticConstants(double &kn_el,
+                double &kt_el,
+                double initial_dist,
+                double equiv_young,
+                double equiv_poisson,
+                double calculation_area,
+                SphericParticle* element1,
+                SphericParticle* element2);
+
+        virtual std::vector<double> CalculateViscoDampingCoeff(double &equiv_visco_damp_coeff_normal,
+                double &equiv_visco_damp_coeff_tangential,
+                SphericParticle* element1,
+                SphericParticle* element2,
+                double kn_el,
+                double kt_el);
+
+
     private:
 
         friend class Serializer;
