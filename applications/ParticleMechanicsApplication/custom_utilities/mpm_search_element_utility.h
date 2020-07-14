@@ -884,7 +884,7 @@ namespace MPMSearchElementUtility
         std::vector<typename Element::Pointer>& rMissingElements,
         const double Tolerance)
     {
-        #pragma omp for
+        #pragma omp parallel for
         for (int i = 0; i < static_cast<int>(rMPMModelPart.Elements().size()); ++i) {
             auto element_itr = (rMPMModelPart.ElementsBegin() + i);
             array_1d<double, 3> local_coordinates;
@@ -938,7 +938,7 @@ namespace MPMSearchElementUtility
         std::vector<typename Condition::Pointer>& rMissingConditions,
         const double Tolerance)
     {
-        #pragma omp for
+        #pragma omp parallel for
         for (int i = 0; i < static_cast<int>(rMPMModelPart.Conditions().size()); ++i) {
             auto condition_itr = rMPMModelPart.Conditions().begin() + i;
 
