@@ -50,6 +50,24 @@ SplitForwardEulerSphericParticle& SplitForwardEulerSphericParticle::operator=(co
     return *this;
 }
 
+void SplitForwardEulerSphericParticle::Initialize(const ProcessInfo& r_process_info)
+{
+    KRATOS_TRY
+
+    SphericParticle::Initialize(r_process_info);
+
+    NodeType& node = GetGeometry()[0];
+
+    node.SetValue(NODAL_STIFFNESS,0.0);
+    node.SetValue(NODAL_DAMPING,0.0);
+
+    if (this->Is(DEMFlags::HAS_ROTATION)) {
+        node.SetValue(NODAL_ROTATIONAL_STIFFNESS,0.0);
+        node.SetValue(NODAL_ROTATIONAL_DAMPING,0.0);
+    }
+
+    KRATOS_CATCH( "" )
+}
 
 void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_process_info, double dt, const array_1d<double,3>& gravity, int search_control)
 {
@@ -71,11 +89,15 @@ void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_pro
     array_1d<double, 3>& elastic_force       = this_node.FastGetSolutionStepValue(ELASTIC_FORCES);
     array_1d<double, 3>& contact_force       = this_node.FastGetSolutionStepValue(CONTACT_FORCES);
     array_1d<double, 3>& rigid_element_force = this_node.FastGetSolutionStepValue(RIGID_ELEMENT_FORCE);
+    double& nodal_stiffness = this_node.GetValue(NODAL_STIFFNESS);
+    double& nodal_damping = this_node.GetValue(NODAL_DAMPING);
 
     mContactMoment.clear();
     elastic_force.clear();
     contact_force.clear();
     rigid_element_force.clear();
+    nodal_stiffness = 0.0;
+    nodal_damping = 0.0;
 
     InitializeForceComputation(r_process_info);
 
@@ -84,6 +106,15 @@ void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_pro
     ComputeBallToBallContactForce(data_buffer, r_process_info, elastic_force, contact_force, RollingResistance);
 
     ComputeBallToRigidFaceContactForce(data_buffer, elastic_force, contact_force, RollingResistance, rigid_element_force, r_process_info, search_control);
+
+    ComputeBallToBallStiffnessAndDamping(data_buffer, nodal_stiffness, nodal_damping);
+
+    // TODO: is this necessary ?
+    ComputeBallToRigidFaceStiffnessAndDamping(data_buffer, nodal_stiffness, nodal_damping, r_process_info, search_control);
+
+    if (std::abs(nodal_damping) < std::numeric_limits<double>::epsilon()) {
+        nodal_damping = r_process_info[RAYLEIGH_ALPHA] * this_node.FastGetSolutionStepValue(NODAL_MASS);
+    }
 
     if (this->IsNot(DEMFlags::BELONGS_TO_A_CLUSTER)){
         ComputeAdditionalForces(additional_forces, additionally_applied_moment, r_process_info, gravity);
@@ -122,6 +153,33 @@ void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_pro
     #endif
 
     FinalizeForceComputation(data_buffer);
+    KRATOS_CATCH("")
+}
+
+void SplitForwardEulerSphericParticle::ComputeBallToBallStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
+                                                    double& r_nodal_stiffness,
+                                                    double& r_nodal_damping)
+{
+    KRATOS_TRY
+
+    //LOOP OVER NEIGHBORS:
+    for (int i = 0; data_buffer.SetNextNeighbourOrExit(i); ++i){
+
+        if (CalculateRelativePositionsOrSkipContact(data_buffer)) {
+
+            double normal_stiffness, tangential_stiffness, normal_damping_coeff, tangential_damping_coeff;
+
+            mDiscontinuumConstitutiveLaw->InitializeContact(this, data_buffer.mpOtherParticle, data_buffer.mIndentation);
+            normal_stiffness = mDiscontinuumConstitutiveLaw->mKn;
+            tangential_stiffness = mDiscontinuumConstitutiveLaw->mKt;
+
+            mDiscontinuumConstitutiveLaw->CalculateViscoDampingCoeff(normal_damping_coeff, tangential_damping_coeff, this, data_buffer.mpOtherParticle,normal_stiffness,tangential_stiffness);
+
+            r_nodal_stiffness += std::sqrt(normal_stiffness*normal_stiffness+2.0*tangential_stiffness*tangential_stiffness);
+            r_nodal_damping += std::sqrt(normal_damping_coeff*normal_damping_coeff+2.0*tangential_damping_coeff*tangential_damping_coeff);
+        }
+    }// for each neighbor
+
     KRATOS_CATCH("")
 }
 

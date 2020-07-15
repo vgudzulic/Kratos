@@ -317,6 +317,10 @@ virtual void ComputeBallToBallContactForce(ParticleDataBuffer & data_buffer,
                                            array_1d<double, 3>& rContactForce,
                                            double& RollingResistance);
 
+virtual void ComputeBallToBallStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
+                                                  double& r_nodal_stiffness,
+                                                  double& r_nodal_damping);
+
 virtual void EvaluateDeltaDisplacement(ParticleDataBuffer & data_buffer,
                                        double DeltDisp[3],
                                        double RelVel[3],
