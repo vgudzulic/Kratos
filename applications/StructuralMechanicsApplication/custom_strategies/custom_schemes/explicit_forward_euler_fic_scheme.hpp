@@ -318,6 +318,10 @@ public:
         // Getting dof position
         const IndexType disppos = it_node_begin->GetDofPosition(DISPLACEMENT_X);
 
+        // TODO
+        KRATOS_WATCH((it_node_begin+1)->GetValue(NODAL_DISPLACEMENT_DAMPING))
+        KRATOS_WATCH((it_node_begin+1)->GetValue(NODAL_DISPLACEMENT_DAMPING)*it_node_begin->GetValue(NODAL_MASS))
+
         #pragma omp parallel for schedule(guided,512)
         for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
             // Current step information "N+1" (before step update).
@@ -365,10 +369,10 @@ public:
             fix_displacements[2] = (itCurrentNode->GetDof(DISPLACEMENT_Z, DisplacementPosition + 2).IsFixed());
 
         // Solution of the explicit equation:
-        if (nodal_mass > numerical_limit){
+        if (mDeltaTime + nodal_mass > numerical_limit){
             for (IndexType j = 0; j < DomainSize; j++) {
                 if (fix_displacements[j] == false) {
-                    r_current_displacement[j] = (mDeltaTime * r_current_aux_displacement[j] + r_current_inertial_residual[j]) / nodal_mass;
+                    r_current_displacement[j] = (mDeltaTime * r_current_aux_displacement[j] + r_current_inertial_residual[j]) / (mDeltaTime + nodal_mass);
                 }
             }
         }

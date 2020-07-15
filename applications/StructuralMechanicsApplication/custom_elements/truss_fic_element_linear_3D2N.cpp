@@ -110,8 +110,7 @@ void TrussFICElementLinear3D2N::AddExplicitContribution(
             r_nodal_damping += element_damping_vector[index];
 
             #pragma omp atomic
-            r_nodal_mass += rCurrentProcessInfo[DELTA_TIME]*1.0 +
-                            rCurrentProcessInfo[MASS_FACTOR]*element_mass_vector[index]/element_damping_vector[index];
+            r_nodal_mass += rCurrentProcessInfo[MASS_FACTOR]*element_mass_vector[index]/element_damping_vector[index];
 
 
         }
@@ -237,8 +236,6 @@ void TrussFICElementLinear3D2N::CalculateLumpedDampingVector(
         CalculateLumpedMassVector(mass_vector);
         for (IndexType i = 0; i < msLocalSize; ++i)
             rDampingVector[i] += alpha * mass_vector[i];
-
-        KRATOS_WATCH(mass_vector)
     }
 
     // 3.-Calculate Stiffness Vector:
@@ -247,11 +244,7 @@ void TrussFICElementLinear3D2N::CalculateLumpedDampingVector(
         CalculateLumpedStiffnessVector(stiffness_vector,rCurrentProcessInfo);
         for (IndexType i = 0; i < msLocalSize; ++i)
             rDampingVector[i] += beta * stiffness_vector[i];
-
-        KRATOS_WATCH(stiffness_vector)
     }
-
-    KRATOS_WATCH(rDampingVector)
 
     KRATOS_CATCH( "" )
 }
