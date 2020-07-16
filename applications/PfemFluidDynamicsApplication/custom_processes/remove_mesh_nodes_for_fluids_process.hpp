@@ -149,6 +149,17 @@ namespace Kratos
 					// double  MeanRadius=0;
 					any_node_removed_on_distance = RemoveNodesOnDistance(inside_nodes_removed, boundary_nodes_removed);
 				}
+
+				// //////////////////  ADD THIS TO CHANGE WATER LEVEL IN VAJONT CASE, OTHERWISE LET IT HIDDEN /////////////////////
+				// const ProcessInfo &rCurrentProcessInfo = mrModelPart.GetProcessInfo();
+				// double currentTime = rCurrentProcessInfo[TIME];
+				// double timeInterval = rCurrentProcessInfo[DELTA_TIME];
+				// if (currentTime < 2.0 * timeInterval)
+				// {
+				//  	any_node_removed_on_distance = RemoveNodesForVajontCase(inside_nodes_removed, boundary_nodes_removed);
+				// }
+				// //////////////////  ADD THIS TO CHANGE WATER LEVEL IN VAJONT CASE, OTHERWISE LET IT HIDDEN /////////////////////
+
 				// REMOVE ON DISTANCE
 				////////////////////////////////////////////////////////////
 
@@ -157,6 +168,24 @@ namespace Kratos
 
 				if (any_node_removed || mrRemesh.UseBoundingBox == true)
 					this->CleanRemovedNodes(mrModelPart);
+			}
+
+			bool fixEastLobeVajont = false;
+			bool fixWestLobeVajont = false;
+
+			const ProcessInfo &rCurrentProcessInfo = mrModelPart.GetProcessInfo();
+			double currentTime = rCurrentProcessInfo[TIME];
+			double timeInterval = rCurrentProcessInfo[DELTA_TIME];
+			if (currentTime < 2.0 * timeInterval)
+			{
+				if (fixEastLobeVajont == true)
+				{
+					FixEastLobeInVajontCase();
+				}
+				if (fixWestLobeVajont == true)
+				{
+					FixWestLobeInVajontCase();
+				}
 			}
 
 			// number of removed nodes:
@@ -292,6 +321,46 @@ namespace Kratos
 		//**************************************************************************
 		//**************************************************************************
 
+		void FixEastLobeInVajontCase()
+		{
+			KRATOS_TRY
+			std::cout << "FixEastLobeInVajontCase() " << std::endl;
+			for (ModelPart::NodesContainerType::const_iterator in = mrModelPart.NodesBegin(); in != mrModelPart.NodesEnd(); in++)
+			{
+				double density = in->FastGetSolutionStepValue(DENSITY);
+				double posYtoFix = 1760 - 0.43269 * (in->X() - 1034);
+				if (((in->Y() > 1580 && in->X() > 1450) || (in->Y() > posYtoFix && in->X() <= 1450)) && density > 1200)
+				{
+					in->Fix(VELOCITY_X);
+					in->Fix(VELOCITY_Y);
+					in->Fix(VELOCITY_Z);
+					// in->Fix(PRESSURE);
+				}
+			}
+
+			KRATOS_CATCH(" ")
+		}
+
+		void FixWestLobeInVajontCase()
+		{
+			KRATOS_TRY
+			std::cout << "FixWestLobeInVajontCase() " << std::endl;
+			for (ModelPart::NodesContainerType::const_iterator in = mrModelPart.NodesBegin(); in != mrModelPart.NodesEnd(); in++)
+			{
+				double density = in->FastGetSolutionStepValue(DENSITY);
+				double posYtoFix = 1760 - 0.43269 * (in->X() - 1034);
+				if (((in->Y() < 1580 && in->X() > 1450) || (in->Y() < posYtoFix && in->X() <= 1450)) && density > 1200)
+				{
+					in->Fix(VELOCITY_X);
+					in->Fix(VELOCITY_Y);
+					in->Fix(VELOCITY_Z);
+					// in->Fix(PRESSURE);
+				}
+			}
+
+			KRATOS_CATCH(" ")
+		}
+
 		bool RemoveNodesOnError(int &error_removed_nodes)
 		{
 			KRATOS_TRY
@@ -345,6 +414,39 @@ namespace Kratos
 				}
 			}
 
+			return any_node_removed;
+
+			KRATOS_CATCH(" ")
+		}
+
+		bool RemoveNodesForVajontCase(int &inside_nodes_removed, int &boundary_nodes_removed)
+		{
+			KRATOS_TRY
+			bool any_node_removed = false;
+			unsigned int erasedNodesForVajontCase = 0;
+			for (ModelPart::NodesContainerType::const_iterator in = mrModelPart.NodesBegin(); in != mrModelPart.NodesEnd(); in++)
+			{
+				//double posX = in->X();
+				//double posY = in->Y();
+				double posZ = in->Z();
+				double newWaterLevel = 675;
+				double alertLevel = newWaterLevel - 5;
+				double nodeDensity = in->FastGetSolutionStepValue(DENSITY);
+				if (posZ > alertLevel && in->IsNot(TO_ERASE) && in->IsNot(RIGID) && nodeDensity < 1001)
+				{
+					in->Set(TO_ERASE);
+					any_node_removed = true;
+					// inside_nodes_removed++;
+					erasedNodesForVajontCase++;
+				}
+			}
+			std::cout << "erasedNodesForVajontCase " << erasedNodesForVajontCase << std::endl;
+			//Build boundary after removing boundary nodes due distance criterion
+			if (mEchoLevel > 1)
+			{
+				std::cout << "boundary_nodes_removed " << boundary_nodes_removed << std::endl;
+				std::cout << "inside_nodes_removed " << inside_nodes_removed << std::endl;
+			}
 			return any_node_removed;
 
 			KRATOS_CATCH(" ")
@@ -597,13 +699,17 @@ namespace Kratos
 								{
 									//look if we are already erasing any of the other nodes
 									unsigned int contact_nodes = 0;
+									unsigned int erased_nodes = 0;
 									for (std::vector<Node<3>::Pointer>::iterator nn = neighbours.begin(); nn != neighbours.begin() + n_points_in_radius; nn++)
 									{
 										if ((*nn)->Is(BOUNDARY) && (*nn)->Is(CONTACT))
 											contact_nodes += 1;
+
+										if ((*nn)->Is(TO_ERASE))
+											erased_nodes += 1;
 									}
 
-									if (contact_nodes < 1)
+									if (erased_nodes < 1 && contact_nodes < 1)
 									{ //we release the node if no other nodes neighbours are being erased
 										in->Set(TO_ERASE);
 										any_node_removed = true;

@@ -63,7 +63,7 @@ namespace Kratos
 
         const double dynamic_viscosity = this->GetEffectiveDynamicViscosity(rValues);
         const double friction_angle = r_properties[FRICTION_ANGLE];
-        const double cohesion = r_properties[COHESION];
+        double cohesion = r_properties[COHESION];
         const double adaptive_exponent = r_properties[ADAPTIVE_EXPONENT];
         double effective_dynamic_viscosity = 0;
 
@@ -84,17 +84,35 @@ namespace Kratos
                       4.0 * r_strain_vector[2] * r_strain_vector[2]);
 
         // Ensuring that the case of equivalent_strain_rate = 0 is not problematic
-        const double tolerance=1e-12;
+        const double tolerance = 1e-12;
         if (equivalent_strain_rate < tolerance)
         {
             effective_dynamic_viscosity = dynamic_viscosity;
         }
         else
         {
-            const double friction_angle_rad= friction_angle*Globals::Pi/180.0;
-            const double tanFi=std::tan(friction_angle_rad);
+            double friction_angle_rad = friction_angle * Globals::Pi / 180.0;
+            double tanFi = std::tan(friction_angle_rad);
             double regularization = 1.0 - std::exp(-adaptive_exponent * equivalent_strain_rate);
-            effective_dynamic_viscosity = dynamic_viscosity + regularization * (cohesion + tanFi * fabs(mean_pressure) / equivalent_strain_rate); 
+            bool boundaryElement = false;
+            unsigned int numNodes = r_geometry.size();
+            for (unsigned int i = 0; i < numNodes; ++i)
+            {
+
+                if (r_geometry[i].Is(RIGID) )
+                {
+                    boundaryElement = true;
+                }
+            }
+            if (boundaryElement == true)
+            {
+                //tanFi = 0.087; // 5 degrees (I have used this for all cases, Pynol included)
+                tanFi = 0.105; // 6 degrees (crosta)
+                //tanFi=0.19438; //Pinyol at the base
+                // tanFi = 0.44;//Fritz case
+                cohesion = 0.000010000;
+            }
+            effective_dynamic_viscosity = dynamic_viscosity + regularization * (cohesion + tanFi * fabs(mean_pressure) / equivalent_strain_rate);
         }
 
         const double strain_trace = r_strain_vector[0] + r_strain_vector[1];
@@ -108,7 +126,7 @@ namespace Kratos
             this->EffectiveViscousConstitutiveMatrix2D(effective_dynamic_viscosity, rValues.GetConstitutiveMatrix());
         }
     }
-    
+
     std::string FrictionalViscoplastic2DLaw::Info() const { return "FrictionalViscoplastic2DLaw"; }
 
     //******************CHECK CONSISTENCY IN THE CONSTITUTIVE LAW******************
