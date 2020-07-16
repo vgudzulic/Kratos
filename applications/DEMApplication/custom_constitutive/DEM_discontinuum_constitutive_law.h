@@ -55,7 +55,6 @@ namespace Kratos {
                 SphericParticle* element1,
                 SphericParticle* element2);
 
-
         virtual void CalculateElasticEnergy(double& normal_elastic_energy,
                                                                 double indentation,
                                                                 double& cohesive_force,
@@ -74,6 +73,13 @@ namespace Kratos {
                 double &equiv_visco_damp_coeff_tangential,
                 SphericParticle* element1,
                 SphericParticle* element2,
+                double kn_el,
+                double kt_el);
+
+        virtual void CalculateViscoDampingCoeffWithFEM(double &equiv_visco_damp_coeff_normal,
+                double &equiv_visco_damp_coeff_tangential,
+                SphericParticle* element,
+                Condition* wall,
                 double kn_el,
                 double kt_el);
 

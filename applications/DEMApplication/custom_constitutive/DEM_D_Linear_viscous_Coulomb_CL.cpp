@@ -146,8 +146,8 @@ namespace Kratos {
         const double other_gamma = element2->GetProperties()[DAMPING_GAMMA];
         const double equiv_gamma = 0.5 * (my_gamma + other_gamma);
 
-        equiv_visco_damp_coeff_normal     = 2.0 * equiv_gamma * sqrt(equiv_mass * mKn);
-        equiv_visco_damp_coeff_tangential = 2.0 * equiv_gamma * sqrt(equiv_mass * mKt);
+        equiv_visco_damp_coeff_normal     = 2.0 * equiv_gamma * sqrt(equiv_mass * kn_el);
+        equiv_visco_damp_coeff_tangential = 2.0 * equiv_gamma * sqrt(equiv_mass * kt_el);
 
         KRATOS_CATCH("")
     }
@@ -337,6 +337,23 @@ namespace Kratos {
         ViscoDampingLocalContactForce[1] = - tangential_damping_coefficient * LocalRelVel[1];
         ViscoDampingLocalContactForce[2] = - normal_damping_coefficient     * LocalRelVel[2];
 
+    }
+
+    void DEM_D_Linear_viscous_Coulomb::CalculateViscoDampingCoeffWithFEM(double &equiv_visco_damp_coeff_normal,
+            double &equiv_visco_damp_coeff_tangential,
+            SphericParticle* element,
+            Condition* wall,
+            double kn_el,
+            double kt_el) {
+
+        KRATOS_TRY
+
+        const double my_mass    = element->GetMass();
+        const double gamma = element->GetProperties()[DAMPING_GAMMA];
+        equiv_visco_damp_coeff_normal     = 2.0 * gamma * sqrt(my_mass * kn_el);
+        equiv_visco_damp_coeff_tangential = 2.0 * gamma * sqrt(my_mass * kt_el);
+
+        KRATOS_CATCH("")
     }
 
     double DEM_D_Linear_viscous_Coulomb::CalculateNormalForce(const double indentation) {

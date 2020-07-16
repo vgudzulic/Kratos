@@ -98,6 +98,13 @@ namespace Kratos {
                 double kn_el,
                 double kt_el) override;
 
+        void CalculateViscoDampingCoeffWithFEM(double &equiv_visco_damp_coeff_normal,
+                double &equiv_visco_damp_coeff_tangential,
+                SphericParticle* element,
+                Condition* wall,
+                double kn_el,
+                double kt_el) override;
+
         void CalculateViscoDampingForceWithFEM(double LocalRelVel[3],
                                         double ViscoDampingLocalContactForce[3],
                                         SphericParticle* const element,

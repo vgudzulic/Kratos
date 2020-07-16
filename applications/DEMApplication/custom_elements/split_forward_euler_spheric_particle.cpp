@@ -109,8 +109,8 @@ void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_pro
 
     ComputeBallToBallStiffnessAndDamping(data_buffer, nodal_stiffness, nodal_damping);
 
-    // TODO: is this necessary ?
-    ComputeBallToRigidFaceStiffnessAndDamping(data_buffer, nodal_stiffness, nodal_damping, r_process_info, search_control);
+    // TODO:
+    ComputeBallToRigidFaceStiffnessAndDamping(data_buffer, nodal_stiffness, nodal_damping, r_process_info);
 
     if (std::abs(nodal_damping) < std::numeric_limits<double>::epsilon()) {
         nodal_damping = r_process_info[RAYLEIGH_ALPHA] * this_node.FastGetSolutionStepValue(NODAL_MASS);
@@ -157,8 +157,8 @@ void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_pro
 }
 
 void SplitForwardEulerSphericParticle::ComputeBallToBallStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
-                                                    double& r_nodal_stiffness,
-                                                    double& r_nodal_damping)
+                                                                            double& r_nodal_stiffness,
+                                                                            double& r_nodal_damping)
 {
     KRATOS_TRY
 
@@ -175,10 +175,176 @@ void SplitForwardEulerSphericParticle::ComputeBallToBallStiffnessAndDamping(Sphe
 
             mDiscontinuumConstitutiveLaw->CalculateViscoDampingCoeff(normal_damping_coeff, tangential_damping_coeff, this, data_buffer.mpOtherParticle,normal_stiffness,tangential_stiffness);
 
-            r_nodal_stiffness += std::sqrt(normal_stiffness*normal_stiffness+2.0*tangential_stiffness*tangential_stiffness);
-            r_nodal_damping += std::sqrt(normal_damping_coeff*normal_damping_coeff+2.0*tangential_damping_coeff*tangential_damping_coeff);
+            r_nodal_stiffness += CalculateStiffnessNorm(normal_stiffness,tangential_stiffness);
+            r_nodal_damping += CalculateDampingNorm(normal_damping_coeff,tangential_damping_coeff);
+
+            if (this->Is(DEMFlags::HAS_ROTATION)) {
+                // TODO
+            }
+
         }
     }// for each neighbor
+
+    KRATOS_CATCH("")
+}
+
+double CalculateStiffnessNorm(const double& r_normal_stiffness, const double& r_tangential_stiffness) {
+    return std::sqrt(r_normal_stiffness*r_normal_stiffness+2.0*r_tangential_stiffness*r_tangential_stiffness);
+}
+
+double CalculateDampingNorm(const double& r_normal_damping_coeff, const double& r_tangential_damping_coeff) {
+    return std::sqrt(r_normal_damping_coeff*r_normal_damping_coeff+2.0*r_tangential_damping_coeff*r_tangential_damping_coeff);
+}
+
+void SplitForwardEulerSphericParticle::ComputeBallToRigidFaceStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
+                                                                                double& r_nodal_stiffness,
+                                                                                double& r_nodal_damping)
+{
+    KRATOS_TRY
+
+
+    RenewData();
+
+    std::vector<DEMWall*>& rNeighbours   = this->mNeighbourRigidFaces;
+    array_1d<double, 3> velocity         = GetGeometry()[0].FastGetSolutionStepValue(VELOCITY);
+    const array_1d<double,3>& AngularVel = GetGeometry()[0].FastGetSolutionStepValue(ANGULAR_VELOCITY);
+
+    for (unsigned int i = 0; i < rNeighbours.size(); i++) {
+        DEMWall* wall = rNeighbours[i];
+        if(wall == NULL) continue;
+        if(this->Is(DEMFlags::STICKY)) {
+            DEMIntegrationScheme& dem_scheme = this->GetTranslationalIntegrationScheme();
+            GluedToWallScheme* p_glued_scheme = dynamic_cast<GluedToWallScheme*>(&dem_scheme);
+            Condition* p_condition = p_glued_scheme->pGetCondition();
+            if(p_condition == wall) continue;
+        }
+        if(wall->IsPhantom()){
+            wall->CheckSide(this);
+            continue;
+        }
+
+        double LocalElasticContactForce[3]       = {0.0};
+        double GlobalElasticContactForce[3]      = {0.0};
+        double ViscoDampingLocalContactForce[3]  = {0.0};
+        double cohesive_force                    =  0.0;
+        DEM_SET_COMPONENTS_TO_ZERO_3x3(data_buffer.mLocalCoordSystem)
+        DEM_SET_COMPONENTS_TO_ZERO_3x3(data_buffer.mOldLocalCoordSystem)
+        array_1d<double, 3> wall_delta_disp_at_contact_point = ZeroVector(3);
+        array_1d<double, 3> wall_velocity_at_contact_point = ZeroVector(3);
+        bool sliding = false;
+
+        double ini_delta = GetInitialDeltaWithFEM(i);
+        double DistPToB = 0.0;
+
+        int ContactType = -1;
+        array_1d<double, 4>& Weight = this->mContactConditionWeights[i];
+
+        rNeighbours[i]->ComputeConditionRelativeData(i, this, data_buffer.mLocalCoordSystem, DistPToB, Weight, wall_delta_disp_at_contact_point, wall_velocity_at_contact_point, ContactType);
+
+        if (ContactType == 1 || ContactType == 2 || ContactType == 3) {
+
+            double indentation = -(DistPToB - GetInteractionRadius()) - ini_delta;
+            double DeltDisp[3] = {0.0};
+            double DeltVel [3] = {0.0};
+
+            DeltVel[0] = velocity[0] - wall_velocity_at_contact_point[0];
+            DeltVel[1] = velocity[1] - wall_velocity_at_contact_point[1];
+            DeltVel[2] = velocity[2] - wall_velocity_at_contact_point[2];
+
+            // For translation movement delta displacement
+            const array_1d<double, 3>& delta_displ  = this->GetGeometry()[0].FastGetSolutionStepValue(DELTA_DISPLACEMENT);
+            DeltDisp[0] = delta_displ[0] - wall_delta_disp_at_contact_point[0];
+            DeltDisp[1] = delta_displ[1] - wall_delta_disp_at_contact_point[1];
+            DeltDisp[2] = delta_displ[2] - wall_delta_disp_at_contact_point[2];
+
+            if (this->Is(DEMFlags::HAS_ROTATION)) {
+                const array_1d<double,3> negative_delta_rotation = -1.0*GetGeometry()[0].FastGetSolutionStepValue(DELTA_ROTATION);
+                array_1d<double, 3> actual_arm_vector, old_arm_vector;
+                actual_arm_vector[0] = -data_buffer.mLocalCoordSystem[2][0] * DistPToB;
+                actual_arm_vector[1] = -data_buffer.mLocalCoordSystem[2][1] * DistPToB;
+                actual_arm_vector[2] = -data_buffer.mLocalCoordSystem[2][2] * DistPToB;
+
+                double tangential_vel[3]           = {0.0};
+                double tangential_displacement_due_to_rotation[3]  = {0.0};
+                GeometryFunctions::CrossProduct(AngularVel, actual_arm_vector, tangential_vel);
+
+                Quaternion<double> NegativeDeltaOrientation = Quaternion<double>::Identity();
+                GeometryFunctions::OrientationFromRotationAngle(NegativeDeltaOrientation, negative_delta_rotation);
+
+                NegativeDeltaOrientation.RotateVector3(actual_arm_vector, old_arm_vector);
+
+                // Contribution of the rotation
+                tangential_displacement_due_to_rotation[0] = (actual_arm_vector[0] - old_arm_vector[0]);
+                tangential_displacement_due_to_rotation[1] = (actual_arm_vector[1] - old_arm_vector[1]);
+                tangential_displacement_due_to_rotation[2] = (actual_arm_vector[2] - old_arm_vector[2]);
+
+                DEM_ADD_SECOND_TO_FIRST(DeltVel, tangential_vel)
+                DEM_ADD_SECOND_TO_FIRST(DeltDisp, tangential_displacement_due_to_rotation)
+            }
+
+            double LocalDeltDisp[3] = {0.0};
+            GeometryFunctions::VectorGlobal2Local(data_buffer.mLocalCoordSystem, DeltDisp, LocalDeltDisp);
+
+            double OldLocalElasticContactForce[3] = {0.0};
+
+            GeometryFunctions::VectorGlobal2Local(data_buffer.mLocalCoordSystem, mNeighbourRigidFacesElasticContactForce[i], OldLocalElasticContactForce);
+            const double previous_indentation = indentation + LocalDeltDisp[2];
+            data_buffer.mLocalRelVel[0] = 0.0;
+            data_buffer.mLocalRelVel[1] = 0.0;
+            data_buffer.mLocalRelVel[2] = 0.0;
+
+            if (indentation > 0.0) {
+
+                GeometryFunctions::VectorGlobal2Local(data_buffer.mLocalCoordSystem, DeltVel, data_buffer.mLocalRelVel);
+                mDiscontinuumConstitutiveLaw->CalculateForcesWithFEM(r_process_info,
+                                                                    OldLocalElasticContactForce,
+                                                                    LocalElasticContactForce,
+                                                                    LocalDeltDisp,
+                                                                    data_buffer.mLocalRelVel,
+                                                                    indentation,
+                                                                    previous_indentation,
+                                                                    ViscoDampingLocalContactForce,
+                                                                    cohesive_force,
+                                                                    this,
+                                                                    wall,
+                                                                    sliding);
+
+                // TODO
+                double normal_stiffness, tangential_stiffness, normal_damping_coeff, tangential_damping_coeff;
+
+
+                // mDiscontinuumConstitutiveLaw->InitializeContact(this, data_buffer.mpOtherParticle, data_buffer.mIndentation);
+                mDiscontinuumConstitutiveLaw->InitializeContactWithFEM();
+                normal_stiffness = mDiscontinuumConstitutiveLaw->mKn;
+                tangential_stiffness = mDiscontinuumConstitutiveLaw->mKt;
+
+                mDiscontinuumConstitutiveLaw->CalculateViscoDampingCoeff(normal_damping_coeff, tangential_damping_coeff, this, data_buffer.mpOtherParticle,normal_stiffness,tangential_stiffness);
+
+                r_nodal_stiffness +=
+                r_nodal_damping +=
+
+            }
+
+            if (this->Is(DEMFlags::HAS_ROTATION)) {
+                // TODO
+            }
+
+            double LocalContactForce[3]  = {0.0};
+            double GlobalContactForce[3] = {0.0};
+
+            AddUpFEMForcesAndProject(data_buffer.mLocalCoordSystem, LocalContactForce, LocalElasticContactForce, GlobalContactForce,
+                                     GlobalElasticContactForce, ViscoDampingLocalContactForce, cohesive_force, r_elastic_force,
+                                     r_contact_force, mNeighbourRigidFacesElasticContactForce[i], mNeighbourRigidFacesTotalContactForce[i]);
+
+            rigid_element_force[0] -= GlobalContactForce[0];
+            rigid_element_force[1] -= GlobalContactForce[1];
+            rigid_element_force[2] -= GlobalContactForce[2];
+
+            if (this->Is(DEMFlags::HAS_ROTATION)) {
+                ComputeMoments(LocalContactForce[2], GlobalContactForce, RollingResistance, data_buffer.mLocalCoordSystem[2], this, indentation, true, i); //WARNING: sending itself as the neighbor!!
+            }
+        } //ContactType if
+    } //rNeighbours.size loop
 
     KRATOS_CATCH("")
 }
