@@ -278,6 +278,7 @@ namespace Kratos {
 
         KRATOS_TRY
 
+        // TODO: should we let this blank ?
         const double my_mass    = element->GetMass();
         const double gamma = element->GetProperties()[DAMPING_GAMMA];
         equiv_visco_damp_coeff_normal     = 2.0 * gamma * sqrt(my_mass * kn_el);
