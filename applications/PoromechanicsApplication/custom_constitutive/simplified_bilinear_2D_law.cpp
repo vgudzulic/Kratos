@@ -21,20 +21,19 @@ void SimplifiedBilinear2DLaw::ComputeEquivalentStrain(ConstitutiveLawVariables& 
                                                     Parameters& rValues)
 {
     const Vector& StrainVector = rValues.GetStrainVector();
-
+	//Triangular area
     if( rValues.GetOptions().Is(ConstitutiveLaw::COMPUTE_STRAIN_ENERGY) ) // No contact between interfaces
     {
 		rVariables.EquivalentStrain = 1.0;
         if (mStateVariable == 1.0)
-        {
-            if(fabs(rVariables.YoungModulus * StrainVector[0]) > rVariables.MaxTensileStress) 
-            {
-			    rVariables.EquivalentStrain = 0.0;
-			}
-            if(fabs(rVariables.YoungModulus * StrainVector[1]) > rVariables.MaxTensileStress) 
-            {
-			    rVariables.EquivalentStrain = 0.0;
-			}
+        {	 
+			double tau = rVariables.YoungModulus * StrainVector[0];
+		    double sigma = rVariables.YoungModulus * StrainVector[1];
+		   
+		    double broken_limit = (-rVariables.FrictionCoefficient * rVariables.YoungModulus * StrainVector[1])+ rVariables.Cohesion;
+		    	    
+		    if (sigma > (rVariables.Cohesion/rVariables.FrictionCoefficient)) rVariables.EquivalentStrain = 0.0;
+		    if (abs (tau) > broken_limit) rVariables.EquivalentStrain = 0.0;
         }
     }
 
@@ -43,14 +42,13 @@ void SimplifiedBilinear2DLaw::ComputeEquivalentStrain(ConstitutiveLawVariables& 
         rVariables.EquivalentStrain = 1.0;
         if (mStateVariable == 1.0)
         {
-		    if(fabs(rVariables.YoungModulus * StrainVector[0]) > rVariables.MaxTensileStress)
-            {
-			    rVariables.EquivalentStrain = 0.0;
-			}   
-			if(fabs(rVariables.YoungModulus * StrainVector[1]) > rVariables.MaxCompresiveStress)
-            {
-			   rVariables.EquivalentStrain = 0.0;
-			}          
+			double tau = rVariables.YoungModulus * StrainVector[0];
+		    double sigma = rVariables.YoungModulus * StrainVector[1];
+		   
+		    double broken_limit = (-rVariables.FrictionCoefficient * rVariables.YoungModulus * StrainVector[1])+ rVariables.Cohesion;
+		    	    
+		    if (sigma > (rVariables.Cohesion/rVariables.FrictionCoefficient)) rVariables.EquivalentStrain = 0.0;
+		    if (abs (tau) > broken_limit) rVariables.EquivalentStrain = 0.0;
 		}
 	}
 }
@@ -62,7 +60,7 @@ void SimplifiedBilinear2DLaw::ComputeConstitutiveMatrix(Matrix& rConstitutiveMat
                                                                 Parameters& rValues)
 {
     const Vector& StrainVector = rValues.GetStrainVector();
-
+	
     if( rValues.GetOptions().Is(ConstitutiveLaw::COMPUTE_STRAIN_ENERGY) ) // No contact between interfaces
     {
         // Tensile constitutive matrix
