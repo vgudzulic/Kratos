@@ -60,10 +60,11 @@ void SplitForwardEulerSphericParticle::Initialize(const ProcessInfo& r_process_i
 
     node.SetValue(NODAL_STIFFNESS,0.0);
     node.SetValue(NODAL_DAMPING,0.0);
+    node.SetValue(NODAL_AUX_MASS,0.0);
 
-    if (this->Is(DEMFlags::HAS_ROTATION)) {
-        node.SetValue(NODAL_ROTATIONAL_STIFFNESS,0.0);
+    if (this->Is(DEMFlags::HAS_ROTATION)) {        
         node.SetValue(NODAL_ROTATIONAL_DAMPING,0.0);
+        node.SetValue(NODAL_ROTATIONAL_AUX_MASS,0.0);
     }
 
     KRATOS_CATCH( "" )
@@ -91,6 +92,8 @@ void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_pro
     array_1d<double, 3>& rigid_element_force = this_node.FastGetSolutionStepValue(RIGID_ELEMENT_FORCE);
     double& nodal_stiffness = this_node.GetValue(NODAL_STIFFNESS);
     double& nodal_damping = this_node.GetValue(NODAL_DAMPING);
+    double& nodal_aux_mass = this_node.GetValue(NODAL_AUX_MASS);
+    const double& nodal_mass = this_node.FastGetSolutionStepValue(NODAL_MASS);
 
     mContactMoment.clear();
     elastic_force.clear();
@@ -112,8 +115,8 @@ void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_pro
     // TODO:
     ComputeBallToRigidFaceStiffnessAndDamping(data_buffer, nodal_stiffness, nodal_damping, r_process_info);
 
-    if (std::abs(nodal_damping) < std::numeric_limits<double>::epsilon()) {
-        nodal_damping = r_process_info[RAYLEIGH_ALPHA] * this_node.FastGetSolutionStepValue(NODAL_MASS);
+    if (nodal_damping > std::numeric_limits<double>::epsilon()) {
+        nodal_aux_mass = r_process_info[INERTIAL_FACTOR] * nodal_mass/nodal_damping;
     }
 
     if (this->IsNot(DEMFlags::BELONGS_TO_A_CLUSTER)){
@@ -455,7 +458,7 @@ void SplitForwardEulerSphericParticle::ComputeNewNeighboursHistoricalData(DenseV
         for (unsigned int j = 0; j < vector_of_ids_of_neighbours.size(); j++) {
             if (int(temp_neighbours_ids[i]) == vector_of_ids_of_neighbours[j] && vector_of_ids_of_neighbours[j] != -1) {
                 noalias(temp_neighbour_elastic_contact_forces[i]) = mNeighbourElasticContactForces[j];
-                noalias(temp_neighbour_elastic_extra_contact_forces[i]) = mNeighbourElasticExtraContactForces[j]; //TODO: remove this from discontinuum!!
+                noalias(temp_neighbour_elastic_extra_contact_forces[i]) = mNeighbourElasticExtraContactForces[j];
                 break;
             }
         }
@@ -905,7 +908,6 @@ void SplitForwardEulerSphericParticle::ComputeBallToBallContactForce(SphericPart
             // Transforming to global forces and adding up
             AddUpForcesAndProject(data_buffer.mOldLocalCoordSystem, data_buffer.mLocalCoordSystem, LocalContactForce, LocalElasticContactForce, LocalElasticExtraContactForce, GlobalContactForce,
                                   GlobalElasticContactForce, GlobalElasticExtraContactForce, TotalGlobalElasticContactForce, ViscoDampingLocalContactForce, cohesive_force, other_ball_to_ball_forces, r_elastic_force, r_contact_force, i, r_process_info);
-            //TODO: make different AddUpForces for continuum and discontinuum (different arguments, different operations!)
 
             // ROTATION FORCES
             if (this->Is(DEMFlags::HAS_ROTATION) && !data_buffer.mMultiStageRHS) {
@@ -916,7 +918,7 @@ void SplitForwardEulerSphericParticle::ComputeBallToBallContactForce(SphericPart
                 AddNeighbourContributionToStressTensor(r_process_info,GlobalElasticContactForce, data_buffer.mLocalCoordSystem[2], data_buffer.mDistance, data_buffer.mRadiusSum, this);
             }
 
-            if (r_process_info[IS_TIME_TO_PRINT] && r_process_info[CONTACT_MESH_OPTION] == 1) { //TODO: we should avoid calling a processinfo for each neighbour. We can put it once per time step in the buffer??
+            if (r_process_info[IS_TIME_TO_PRINT] && r_process_info[CONTACT_MESH_OPTION] == 1) {
                 unsigned int neighbour_iterator_id = data_buffer.mpOtherParticle->Id();
                 if ((i < (int)mNeighbourElements.size()) && this->Id() < neighbour_iterator_id) {
                     CalculateOnContactElements(i, LocalContactForce);

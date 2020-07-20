@@ -269,7 +269,7 @@ namespace Kratos {
         KRATOS_CATCH("")
     }
 
-    void DEM_D_Linear_viscous_Coulomb::CalculateViscoDampingCoeffWithFEM(double &equiv_visco_damp_coeff_normal,
+    void DEMDiscontinuumConstitutiveLaw::CalculateViscoDampingCoeffWithFEM(double &equiv_visco_damp_coeff_normal,
             double &equiv_visco_damp_coeff_tangential,
             SphericParticle* element,
             Condition* wall,

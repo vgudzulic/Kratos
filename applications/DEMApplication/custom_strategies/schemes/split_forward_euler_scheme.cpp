@@ -27,23 +27,33 @@ namespace Kratos {
             const double delta_t,
             const bool Fix_vel[3]) {
 
-        STEP_DISPLACEMENT
+        const double nodal_damping = i.GetValue(NODAL_DAMPING);
 
-        array_1d<double, 3 >& fluid_vel = i.FastGetSolutionStepValue(FLUID_VEL_PROJECTED);
-
-        double mass_inv = 1.0 / mass;
-        for (int k = 0; k < 3; k++) {
-            if (Fix_vel[k] == false) {
-                vel[k] += delta_t * force_reduction_factor * force[k] * mass_inv;
-                delta_displ[k] = delta_t * vel[k];
-                displ[k] += delta_displ[k];
-                coor[k] = initial_coor[k] + displ[k];
-            } else {
-                delta_displ[k] = delta_t * vel[k];
-                displ[k] += delta_displ[k];
-                coor[k] = initial_coor[k] + displ[k];
+        if (nodal_damping > std::numeric_limits<double>::epsilon()) {
+            const double nodal_aux_mass = i.GetValue(NODAL_AUX_MASS);
+            array_1d<double, 3 >& aux_displacement = i.FastGetSolutionStepValue(STEP_DISPLACEMENT);
+            for (int k = 0; k < 3; k++) {
+                if (Fix_vel[k] == false) {
+                    aux_displacement[k] += delta_t * force[k] / nodal_damping;
+                    delta_displ[k] = (delta_t * aux_displacement[k] + nodal_aux_mass * displ[k]) / (delta_t + nodal_aux_mass) - displ[k];
+                    displ[k] += delta_displ[k];
+                    coor[k] = initial_coor[k] + displ[k];
+                    vel[k] = delta_displ[k] / delta_t;
+                } else {
+                    delta_displ[k] = delta_t * vel[k];
+                    displ[k] += delta_displ[k];
+                    coor[k] = initial_coor[k] + displ[k];
+                }
             }
-        } // dimensions
+        } else {
+            // TODO: is this right?
+            for (int k = 0; k < 3; k++) {
+                delta_displ[k] = delta_t * vel[k] + 0.5 * force[k] / mass * delta_t*delta_t;
+                displ[k] += delta_displ[k];
+                coor[k] = initial_coor[k] + displ[k];
+                vel[k] = delta_displ[k] / delta_t;
+            }
+        }
     }
 
     void SplitForwardEulerScheme::CalculateNewRotationalVariablesOfSpheres(
@@ -58,10 +68,30 @@ namespace Kratos {
                 const double delta_t,
                 const bool Fix_Ang_vel[3]) {
 
-        array_1d<double, 3 > angular_acceleration;
-        CalculateLocalAngularAcceleration(moment_of_inertia, torque, moment_reduction_factor, angular_acceleration);
+        const double nodal_rotational_damping = i.GetValue(NODAL_ROTATIONAL_DAMPING);
 
-        UpdateRotationalVariables(StepFlag, i, rotated_angle, delta_rotation, angular_velocity, angular_acceleration, delta_t, Fix_Ang_vel);
+        if (nodal_rotational_damping > std::numeric_limits<double>::epsilon()) {
+            const double nodal_rotational_aux_mass = i.GetValue(NODAL_ROTATIONAL_AUX_MASS);
+            array_1d<double, 3 >& aux_rotated_angle = i.FastGetSolutionStepValue(STEP_ROTATION);
+            for (int k = 0; k < 3; k++) {
+                if (Fix_Ang_vel[k] == false) {
+                    aux_rotated_angle[k] += delta_t * torque[k] / nodal_rotational_damping;
+                    delta_rotation[k] = (delta_t * aux_rotated_angle[k] + nodal_rotational_aux_mass * rotated_angle[k]) / (delta_t + nodal_rotational_aux_mass) - rotated_angle[k];
+                    rotated_angle[k] += delta_rotation[k];
+                    angular_velocity[k] = delta_rotation[k] / delta_t;
+                } else {
+                    delta_rotation[k] = delta_t * angular_velocity[k];
+                    rotated_angle[k] += delta_rotation[k];
+                }
+            }
+        } else {
+            // TODO: is this right?
+            for (int k = 0; k < 3; k++) {
+                delta_rotation[k] = delta_t * angular_velocity[k] + 0.5 * torque[k] / moment_of_inertia * delta_t*delta_t;
+                rotated_angle[k] += delta_rotation[k];
+                angular_velocity[k] = delta_rotation[k] / delta_t;
+            }
+        }
     }
 
     void SplitForwardEulerScheme::CalculateNewRotationalVariablesOfRigidBodyElements(
@@ -86,6 +116,7 @@ namespace Kratos {
         CalculateLocalAngularAccelerationByEulerEquations(local_angular_velocity, moments_of_inertia, local_torque, moment_reduction_factor, local_angular_acceleration);
         GeometryFunctions::QuaternionVectorLocal2Global(Orientation, local_angular_acceleration, angular_acceleration);
 
+        // TODO: this is from symplectic euler...
         UpdateRotationalVariables(StepFlag, i, rotated_angle, delta_rotation, angular_velocity, angular_acceleration, delta_t, Fix_Ang_vel);
 
         double ang = DEM_INNER_PRODUCT_3(delta_rotation, delta_rotation);
@@ -115,18 +146,6 @@ namespace Kratos {
                 delta_rotation[k] = angular_velocity[k] * delta_t;
                 rotated_angle[k] += delta_rotation[k];
             }
-        }
-    }
-
-    void SplitForwardEulerScheme::CalculateLocalAngularAcceleration(
-                const double moment_of_inertia,
-                const array_1d<double, 3 >& torque,
-                const double moment_reduction_factor,
-                array_1d<double, 3 >& angular_acceleration) {
-
-        double moment_of_inertia_inv = 1.0 / moment_of_inertia;
-        for (int j = 0; j < 3; j++) {
-            angular_acceleration[j] = moment_reduction_factor * torque[j] * moment_of_inertia_inv;
         }
     }
 
