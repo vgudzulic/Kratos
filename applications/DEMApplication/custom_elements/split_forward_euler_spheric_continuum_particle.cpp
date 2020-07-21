@@ -44,11 +44,11 @@ Element::Pointer SplitForwardEulerSphericContinuumParticle::Create(IndexType New
 SplitForwardEulerSphericContinuumParticle::~SplitForwardEulerSphericContinuumParticle(){
 }
 
-SplitForwardEulerSphericContinuumParticle& SplitForwardEulerSphericContinuumParticle::operator=(const SplitForwardEulerSphericContinuumParticle& rOther) {
-    SphericContinuumParticle::operator=(rOther);
+// SplitForwardEulerSphericContinuumParticle& SplitForwardEulerSphericContinuumParticle::operator=(const SplitForwardEulerSphericContinuumParticle& rOther) {
+//     SphericContinuumParticle::operator=(rOther);
 
-    return *this;
-}
+//     return *this;
+// }
 
 void SplitForwardEulerSphericContinuumParticle::Initialize(const ProcessInfo& r_process_info)
 {
@@ -73,7 +73,7 @@ void SplitForwardEulerSphericContinuumParticle::CalculateRightHandSide(ProcessIn
     // Creating a data buffer to store those variables that we want to reuse so that we can keep function parameter lists short
 
     SphericParticle::BufferPointerType p_buffer = CreateParticleDataBuffer(this); // all memory will be freed once this shared pointer goes out of scope
-    ParticleDataBuffer& data_buffer = *p_buffer;
+    SphericParticle::ParticleDataBuffer& data_buffer = *p_buffer;
     data_buffer.SetBoundingBox(r_process_info[DOMAIN_IS_PERIODIC], r_process_info[DOMAIN_MIN_CORNER], r_process_info[DOMAIN_MAX_CORNER]);
 
     NodeType& this_node = GetGeometry()[0];
@@ -93,7 +93,7 @@ void SplitForwardEulerSphericContinuumParticle::CalculateRightHandSide(ProcessIn
     double& nodal_aux_mass = this_node.GetValue(NODAL_AUX_MASS);
     double nodal_rotational_stiffness;
     double& nodal_rotational_damping = this_node.GetValue(NODAL_ROTATIONAL_DAMPING);
-    const double& moment_of_inertia = this_node.FastGetSolutionStepValue(PARTICLE_MOMENT_OF_INERTIA)
+    const double& moment_of_inertia = this_node.FastGetSolutionStepValue(PARTICLE_MOMENT_OF_INERTIA);
     double& nodal_rotational_aux_mass = this_node.GetValue(NODAL_ROTATIONAL_AUX_MASS);
 
     mContactMoment.clear();

@@ -54,8 +54,6 @@ Element::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes, Proper
 virtual ~SplitForwardEulerCylinderContinuumParticle();
 
 
-void CalculateRightHandSide(ProcessInfo& r_process_info, double dt, const array_1d<double,3>& gravity, int search_control) override;
-
 /// Turn back information as a string.
 virtual std::string Info() const override
 {

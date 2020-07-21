@@ -44,11 +44,11 @@ Element::Pointer SplitForwardEulerCylinderContinuumParticle::Create(IndexType Ne
 SplitForwardEulerCylinderContinuumParticle::~SplitForwardEulerCylinderContinuumParticle(){
 }
 
-SplitForwardEulerCylinderContinuumParticle& SplitForwardEulerCylinderContinuumParticle::operator=(const SplitForwardEulerCylinderContinuumParticle& rOther) {
-    SplitForwardEulerSphericContinuumParticle::operator=(rOther);
+// SplitForwardEulerCylinderContinuumParticle& SplitForwardEulerCylinderContinuumParticle::operator=(const SplitForwardEulerCylinderContinuumParticle& rOther) {
+//     SplitForwardEulerSphericContinuumParticle::operator=(rOther);
 
-    return *this;
-}
+//     return *this;
+// }
 
 void SplitForwardEulerCylinderContinuumParticle::ContactAreaWeighting() //MISMI 10: POOYAN this could be done by calculating on the bars. not looking at the neighbous of my neighbours.
 {

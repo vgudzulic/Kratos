@@ -54,7 +54,7 @@ Element::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes, Proper
 virtual ~SplitForwardEulerSphericContinuumParticle();
 
 
-typedef typename SphericContinuumParticle::ParticleDataBuffer ParticleDataBuffer;
+// typedef typename SphericContinuumParticle::ParticleDataBuffer ParticleDataBuffer;
 
 void CalculateRightHandSide(ProcessInfo& r_process_info, double dt, const array_1d<double,3>& gravity, int search_control) override;
 

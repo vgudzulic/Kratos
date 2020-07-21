@@ -93,7 +93,7 @@ void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_pro
     double& nodal_aux_mass = this_node.GetValue(NODAL_AUX_MASS);
     double nodal_rotational_stiffness;
     double& nodal_rotational_damping = this_node.GetValue(NODAL_ROTATIONAL_DAMPING);
-    const double& moment_of_inertia = this_node.FastGetSolutionStepValue(PARTICLE_MOMENT_OF_INERTIA)
+    const double& moment_of_inertia = this_node.FastGetSolutionStepValue(PARTICLE_MOMENT_OF_INERTIA);
     double& nodal_rotational_aux_mass = this_node.GetValue(NODAL_ROTATIONAL_AUX_MASS);
 
     mContactMoment.clear();
