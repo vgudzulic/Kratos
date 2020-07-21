@@ -202,6 +202,9 @@ class DEMAnalysisStage(AnalysisStage):
             return TaylorScheme()
         elif self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Velocity_Verlet':
             return VelocityVerletScheme()
+        elif self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Split_Forward_Euler':
+            self.spheres_model_part.ProcessInfo.SetValue(INERTIAL_FACTOR, 1.0)
+            return SplitForwardEulerScheme()
 
         return None
 

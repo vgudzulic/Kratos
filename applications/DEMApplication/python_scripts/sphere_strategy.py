@@ -560,6 +560,8 @@ class ExplicitStrategy(object):
             class_name = 'TaylorScheme'
         elif name == 'Velocity_Verlet':
             class_name = 'VelocityVerletScheme'
+        elif name == 'Split_Forward_Euler':
+            class_name = 'SplitForwardEulerScheme'
 
         return class_name
 
@@ -576,6 +578,8 @@ class ExplicitStrategy(object):
             class_name = 'TaylorScheme'
         elif name_rotational == 'Velocity_Verlet':
             class_name = 'VelocityVerletScheme'
+        elif name_rotational == 'Split_Forward_Euler':
+            class_name = 'SplitForwardEulerScheme'
         elif name_rotational == 'Runge_Kutta':
             class_name = 'RungeKuttaScheme'
         elif name_rotational == 'Quaternion_Integration':
