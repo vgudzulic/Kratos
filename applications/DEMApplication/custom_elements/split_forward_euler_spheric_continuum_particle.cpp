@@ -8,7 +8,7 @@
 // External includes
 
 // Project includes
-#include "split_forward_euler_spheric_particle.h"
+#include "split_forward_euler_spheric_continuum_particle.h"
 #include "custom_utilities/GeometryFunctions.h"
 #include "custom_utilities/AuxiliaryFunctions.h"
 #include "custom_utilities/discrete_particle_configure.h"
@@ -19,42 +19,42 @@ namespace Kratos
 {
 // using namespace GeometryFunctions;
 
-SplitForwardEulerSphericParticle::SplitForwardEulerSphericParticle()
-    : SphericParticle(), mRealMass(0) {
+SplitForwardEulerSphericContinuumParticle::SplitForwardEulerSphericContinuumParticle()
+    : SphericContinuumParticle(), mRealMass(0) {
 }
 
-SplitForwardEulerSphericParticle::SplitForwardEulerSphericParticle(IndexType NewId, GeometryType::Pointer pGeometry)
-    : SphericParticle(NewId, pGeometry), mRealMass(0) {
+SplitForwardEulerSphericContinuumParticle::SplitForwardEulerSphericContinuumParticle(IndexType NewId, GeometryType::Pointer pGeometry)
+    : SphericContinuumParticle(NewId, pGeometry), mRealMass(0) {
 }
 
-SplitForwardEulerSphericParticle::SplitForwardEulerSphericParticle(IndexType NewId, GeometryType::Pointer pGeometry,  PropertiesType::Pointer pProperties)
-    : SphericParticle(NewId, pGeometry, pProperties), mRealMass(0) {
+SplitForwardEulerSphericContinuumParticle::SplitForwardEulerSphericContinuumParticle(IndexType NewId, GeometryType::Pointer pGeometry,  PropertiesType::Pointer pProperties)
+    : SphericContinuumParticle(NewId, pGeometry, pProperties), mRealMass(0) {
 }
 
-SplitForwardEulerSphericParticle::SplitForwardEulerSphericParticle(IndexType NewId, NodesArrayType const& ThisNodes)
-    : SphericParticle(NewId, ThisNodes), mRealMass(0) {
+SplitForwardEulerSphericContinuumParticle::SplitForwardEulerSphericContinuumParticle(IndexType NewId, NodesArrayType const& ThisNodes)
+    : SphericContinuumParticle(NewId, ThisNodes), mRealMass(0) {
 }
 
-Element::Pointer SplitForwardEulerSphericParticle::Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const
+Element::Pointer SplitForwardEulerSphericContinuumParticle::Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const
 {
-    return Element::Pointer(new SplitForwardEulerSphericParticle(NewId, GetGeometry().Create(ThisNodes), pProperties));
+    return Element::Pointer(new SplitForwardEulerSphericContinuumParticle(NewId, GetGeometry().Create(ThisNodes), pProperties));
 }
 
 /// Destructor.
-SplitForwardEulerSphericParticle::~SplitForwardEulerSphericParticle(){
+SplitForwardEulerSphericContinuumParticle::~SplitForwardEulerSphericContinuumParticle(){
 }
 
-SplitForwardEulerSphericParticle& SplitForwardEulerSphericParticle::operator=(const SplitForwardEulerSphericParticle& rOther) {
-    SphericParticle::operator=(rOther);
+SplitForwardEulerSphericContinuumParticle& SplitForwardEulerSphericContinuumParticle::operator=(const SplitForwardEulerSphericContinuumParticle& rOther) {
+    SphericContinuumParticle::operator=(rOther);
 
     return *this;
 }
 
-void SplitForwardEulerSphericParticle::Initialize(const ProcessInfo& r_process_info)
+void SplitForwardEulerSphericContinuumParticle::Initialize(const ProcessInfo& r_process_info)
 {
     KRATOS_TRY
 
-    SphericParticle::Initialize(r_process_info);
+    SphericContinuumParticle::Initialize(r_process_info);
 
     NodeType& node = GetGeometry()[0];
 
@@ -66,7 +66,7 @@ void SplitForwardEulerSphericParticle::Initialize(const ProcessInfo& r_process_i
     KRATOS_CATCH( "" )
 }
 
-void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_process_info, double dt, const array_1d<double,3>& gravity, int search_control)
+void SplitForwardEulerSphericContinuumParticle::CalculateRightHandSide(ProcessInfo& r_process_info, double dt, const array_1d<double,3>& gravity, int search_control)
 {
     KRATOS_TRY
 
@@ -164,7 +164,7 @@ void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_pro
     KRATOS_CATCH("")
 }
 
-void SplitForwardEulerSphericParticle::ComputeBallToBallStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
+void SplitForwardEulerSphericContinuumParticle::ComputeBallToBallStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
                                                                             double& r_nodal_stiffness,
                                                                             double& r_nodal_damping,
                                                                             double& r_nodal_rotational_stiffness,
@@ -172,23 +172,51 @@ void SplitForwardEulerSphericParticle::ComputeBallToBallStiffnessAndDamping(Sphe
 {
     KRATOS_TRY
 
-    //LOOP OVER NEIGHBORS:
-    for (int i = 0; data_buffer.SetNextNeighbourOrExit(i); ++i){
+    Vector& cont_ini_neigh_area = this->GetValue(NEIGHBOURS_CONTACT_AREAS);
 
-        if (CalculateRelativePositionsOrSkipContact(data_buffer)) {
+    for (int i = 0; data_buffer.SetNextNeighbourOrExit(i); ++i) {
 
-            double normal_stiffness, tangential_stiffness, normal_damping_coeff, tangential_damping_coeff;
-            mDiscontinuumConstitutiveLaw->InitializeContact(this, data_buffer.mpOtherParticle, data_buffer.mIndentation);
-            normal_stiffness = mDiscontinuumConstitutiveLaw->mKn;
-            tangential_stiffness = mDiscontinuumConstitutiveLaw->mKt;
-            mDiscontinuumConstitutiveLaw->CalculateViscoDampingCoeff(normal_damping_coeff, tangential_damping_coeff, this, data_buffer.mpOtherParticle, normal_stiffness, tangential_stiffness);
+        if (mNeighbourElements[i] == NULL) continue;
+        if (this->Is(NEW_ENTITY) && mNeighbourElements[i]->Is(NEW_ENTITY)) continue;
+        SphericContinuumParticle* neighbour_iterator = dynamic_cast<SphericContinuumParticle*>(mNeighbourElements[i]);
+        data_buffer.mpOtherParticle = neighbour_iterator;
 
-            r_nodal_stiffness += CalculateStiffnessNorm(normal_stiffness,tangential_stiffness);
-            r_nodal_damping += CalculateDampingNorm(normal_damping_coeff,tangential_damping_coeff);
+        noalias(data_buffer.mOtherToMeVector) = this->GetGeometry()[0].Coordinates() - data_buffer.mpOtherParticle->GetGeometry()[0].Coordinates();
+        const double& other_radius = data_buffer.mpOtherParticle->GetRadius();
+        data_buffer.mDistance = DEM_MODULUS_3(data_buffer.mOtherToMeVector);
+        double radius_sum = GetRadius() + other_radius;
+        double initial_delta = GetInitialDelta(i);
+        double initial_dist = radius_sum - initial_delta;
+        double indentation = initial_dist - data_buffer.mDistance;
+        double myYoung = GetYoung();
+        double myPoisson = GetPoisson();
+        
+        // Getting neighbor properties
+        double other_young = data_buffer.mpOtherParticle->GetYoung();
+        double other_poisson = data_buffer.mpOtherParticle->GetPoisson();
+        double equiv_poisson;
+        if ((myPoisson + other_poisson) != 0.0) { equiv_poisson = 2.0 * myPoisson * other_poisson / (myPoisson + other_poisson); }
+        else { equiv_poisson = 0.0; }
+        double equiv_young = 2.0 * myYoung * other_young / (myYoung + other_young);
+        double calculation_area = 0.0;
 
-            if (this->Is(DEMFlags::HAS_ROTATION) && !data_buffer.mMultiStageRHS) {
+        double normal_stiffness = 0.0;
+        double tangential_stiffness = 0.0;
+        double normal_damping_coeff = 0.0;
+        double tangential_damping_coeff = 0.0;
+
+        if (i < (int)mContinuumInitialNeighborsSize) {
+            mContinuumConstitutiveLawArray[i]->GetContactArea(GetRadius(), other_radius, cont_ini_neigh_area, i, calculation_area);
+            mContinuumConstitutiveLawArray[i]->CalculateElasticConstants(normal_stiffness, tangential_stiffness, initial_dist, equiv_young, equiv_poisson, calculation_area, this, neighbour_iterator);
+            mContinuumConstitutiveLawArray[i]->CalculateViscoDampingCoeff(normal_damping_coeff, tangential_damping_coeff, this, neighbour_iterator, normal_stiffness, tangential_stiffness);
+        }
+        r_nodal_stiffness += CalculateStiffnessNorm(normal_stiffness,tangential_stiffness);
+        r_nodal_damping += CalculateDampingNorm(normal_damping_coeff,tangential_damping_coeff);
+
+        if (this->Is(DEMFlags::HAS_ROTATION)) {
+            if (i < (int)mContinuumInitialNeighborsSize && mIniNeighbourFailureId[i] == 0) {
                 // TODO: is this right ?
-                double arm_length = GetInteractionRadius() - data_buffer.mIndentation;
+                double arm_length = GetInteractionRadius() - indentation;
                 double normal_rotational_stiffness = normal_stiffness * arm_length*arm_length;
                 double tangential_rotational_stiffness = tangential_stiffness * arm_length*arm_length;
                 double normal_rotational_damping_coeff = normal_damping_coeff * arm_length*arm_length;
@@ -203,7 +231,15 @@ void SplitForwardEulerSphericParticle::ComputeBallToBallStiffnessAndDamping(Sphe
     KRATOS_CATCH("")
 }
 
-void SplitForwardEulerSphericParticle::ComputeBallToRigidFaceStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
+double CalculateStiffnessNorm(const double& r_normal_stiffness, const double& r_tangential_stiffness) {
+    return std::sqrt(r_normal_stiffness*r_normal_stiffness+2.0*r_tangential_stiffness*r_tangential_stiffness);
+}
+
+double CalculateDampingNorm(const double& r_normal_damping_coeff, const double& r_tangential_damping_coeff) {
+    return std::sqrt(r_normal_damping_coeff*r_normal_damping_coeff+2.0*r_tangential_damping_coeff*r_tangential_damping_coeff);
+}
+
+void SplitForwardEulerSphericContinuumParticle::ComputeBallToRigidFaceStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
                                                                                 double& r_nodal_stiffness,
                                                                                 double& r_nodal_damping,
                                                                                 double& r_nodal_rotational_stiffness,
@@ -272,7 +308,7 @@ void SplitForwardEulerSphericParticle::ComputeBallToRigidFaceStiffnessAndDamping
     KRATOS_CATCH("")
 }
 
-void SplitForwardEulerSphericParticle::AddUpForcesAndProject(double OldCoordSystem[3][3],
+void SplitForwardEulerSphericContinuumParticle::AddUpForcesAndProject(double OldCoordSystem[3][3],
                                             double LocalCoordSystem[3][3],
                                             double LocalContactForce[3],
                                             double LocalElasticContactForce[3],
@@ -319,7 +355,7 @@ void SplitForwardEulerSphericParticle::AddUpForcesAndProject(double OldCoordSyst
     DEM_ADD_SECOND_TO_FIRST(r_contact_force, TotalGlobalContactForce )
 }
 
-void SplitForwardEulerSphericParticle::AddUpMomentsAndProject(double LocalCoordSystem[3][3],
+void SplitForwardEulerSphericContinuumParticle::AddUpMomentsAndProject(double LocalCoordSystem[3][3],
                                              double LocalElasticRotationalMoment[3],
                                              double LocalViscoRotationalMoment[3]) {
 
@@ -337,7 +373,7 @@ void SplitForwardEulerSphericParticle::AddUpMomentsAndProject(double LocalCoordS
     DEM_ADD_SECOND_TO_FIRST(mContactMoment, GlobalContactRotationalMoment)
 }
 
-void SplitForwardEulerSphericParticle::AddUpFEMForcesAndProject(double LocalCoordSystem[3][3],
+void SplitForwardEulerSphericContinuumParticle::AddUpFEMForcesAndProject(double LocalCoordSystem[3][3],
                                                double LocalContactForce[3],
                                                double LocalElasticContactForce[3],
                                                double GlobalContactForce[3],
@@ -363,14 +399,6 @@ void SplitForwardEulerSphericParticle::AddUpFEMForcesAndProject(double LocalCoor
     DEM_ADD_SECOND_TO_FIRST(r_elastic_force, GlobalElasticContactForce)
     DEM_ADD_SECOND_TO_FIRST(r_contact_force, GlobalContactForce)
 
-}
-
-double SplitForwardEulerCylinderParticle::CalculateStiffnessNorm(const double& r_normal_stiffness, const double& r_tangential_stiffness) {
-    return std::sqrt(r_normal_stiffness*r_normal_stiffness+2.0*r_tangential_stiffness*r_tangential_stiffness);
-}
-
-double SplitForwardEulerCylinderParticle::CalculateDampingNorm(const double& r_normal_damping_coeff, const double& r_tangential_damping_coeff) {
-    return std::sqrt(r_normal_damping_coeff*r_normal_damping_coeff+2.0*r_tangential_damping_coeff*r_tangential_damping_coeff);
 }
 
 }  // namespace Kratos.

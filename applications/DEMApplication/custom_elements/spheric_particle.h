@@ -399,7 +399,7 @@ virtual void AddUpForcesAndProject(double OldCoordSystem[3][3],
                                    array_1d<double, 3>& rElasticForce,
                                    array_1d<double, 3>& rContactForce,
                                    const unsigned int i_neighbour_count,
-                                   ProcessInfo& r_process_info) final;
+                                   ProcessInfo& r_process_info);
 
 virtual void AddUpFEMForcesAndProject(double LocalCoordSystem[3][3],
                                       double LocalContactForce[3],
@@ -411,11 +411,11 @@ virtual void AddUpFEMForcesAndProject(double LocalCoordSystem[3][3],
                                       array_1d<double, 3>& rElasticForce,
                                       array_1d<double, 3>& rContactForce,
                                       array_1d<double, 3>& elastic_force_backup,
-                                      array_1d<double, 3>& total_force_backup) final;
+                                      array_1d<double, 3>& total_force_backup);
 
 virtual void AddUpMomentsAndProject(double LocalCoordSystem[3][3],
                                     double ElasticLocalRotationalMoment[3],
-                                    double ViscoLocalRotationalMoment[3]) final;
+                                    double ViscoLocalRotationalMoment[3]);
 
 virtual void ComputeWear(double LocalRelVel[3],
                          double mTimeStep,

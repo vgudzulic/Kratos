@@ -11,8 +11,8 @@
 //
 //
 
-#if !defined(KRATOS_SPLIT_FORWARD_EULER_SPHERIC_PARTICLE_H_INCLUDED )
-#define  KRATOS_SPLIT_FORWARD_EULER_SPHERIC_PARTICLE_H_INCLUDED
+#if !defined(KRATOS_SPLIT_FORWARD_EULER_SPHERIC_CONTINUUM_PARTICLE_H_INCLUDED )
+#define  KRATOS_SPLIT_FORWARD_EULER_SPHERIC_CONTINUUM_PARTICLE_H_INCLUDED
 
 // System includes
 #include <string>
@@ -20,7 +20,7 @@
 
 // Project includes
 #include "includes/define.h"
-#include "spheric_particle.h"
+#include "spheric_continuum_particle.h"
 #include "../custom_utilities/AuxiliaryFunctions.h"
 #include "../custom_constitutive/DEM_discontinuum_constitutive_law.h"
 #include "../custom_conditions/RigidFace.h"
@@ -35,13 +35,13 @@ namespace Kratos
 
 class DEMWall;
 
-class KRATOS_API(DEM_APPLICATION) SplitForwardEulerSphericParticle : public SphericParticle
+class KRATOS_API(DEM_APPLICATION) SplitForwardEulerSphericContinuumParticle : public SphericContinuumParticle
 {
 
 public:
 
-/// Pointer definition of SplitForwardEulerSphericParticle
-KRATOS_CLASS_INTRUSIVE_POINTER_DEFINITION(SplitForwardEulerSphericParticle);
+/// Pointer definition of SplitForwardEulerSphericContinuumParticle
+KRATOS_CLASS_INTRUSIVE_POINTER_DEFINITION(SplitForwardEulerSphericContinuumParticle);
 
 typedef GlobalPointersVector<Condition> ConditionWeakVectorType;
 typedef GlobalPointersVector<Condition >::iterator ConditionWeakIteratorType;
@@ -50,37 +50,36 @@ typedef GlobalPointersVector<Element> ParticleWeakVectorType;
 typedef ParticleWeakVectorType::ptr_iterator ParticleWeakIteratorType_ptr;
 typedef GlobalPointersVector<Element >::iterator ParticleWeakIteratorType;
 /// Default constructor.
-SplitForwardEulerSphericParticle();
-SplitForwardEulerSphericParticle( IndexType NewId, GeometryType::Pointer pGeometry );
-SplitForwardEulerSphericParticle( IndexType NewId, NodesArrayType const& ThisNodes);
-SplitForwardEulerSphericParticle( IndexType NewId, GeometryType::Pointer pGeometry,  PropertiesType::Pointer pProperties );
+SplitForwardEulerSphericContinuumParticle( IndexType NewId, GeometryType::Pointer pGeometry );
+SplitForwardEulerSphericContinuumParticle( IndexType NewId, NodesArrayType const& ThisNodes);
+SplitForwardEulerSphericContinuumParticle( IndexType NewId, GeometryType::Pointer pGeometry,  PropertiesType::Pointer pProperties );
 
 Element::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const override;
 
 /// Destructor.
-virtual ~SplitForwardEulerSphericParticle();
+virtual ~SplitForwardEulerSphericContinuumParticle();
 
-SplitForwardEulerSphericParticle& operator=(const SplitForwardEulerSphericParticle& rOther);
 
-typedef typename SphericParticle::ParticleDataBuffer ParticleDataBuffer;
+typedef typename SphericContinuumParticle::ParticleDataBuffer ParticleDataBuffer;
 
-typedef std::unique_ptr<ParticleDataBuffer> BufferPointerType;
-
-void Initialize(const ProcessInfo& r_process_info) override;
 void CalculateRightHandSide(ProcessInfo& r_process_info, double dt, const array_1d<double,3>& gravity, int search_control) override;
 
 /// Turn back information as a string.
 virtual std::string Info() const override
 {
 std::stringstream buffer;
-buffer << "SplitForwardEulerSphericParticle" ;
+buffer << "SplitForwardEulerSphericContinuumParticle" ;
 return buffer.str();
 }
 
 /// Print information about this object.
-virtual void PrintInfo(std::ostream& rOStream) const override {rOStream << "SplitForwardEulerSphericParticle";}
+virtual void PrintInfo(std::ostream& rOStream) const override {rOStream << "SplitForwardEulerSphericContinuumParticle";}
 
 protected:
+
+SplitForwardEulerSphericContinuumParticle();
+
+void Initialize(const ProcessInfo& r_process_info) override;
 
 virtual void ComputeBallToBallStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
                                                                             double& r_nodal_stiffness,
@@ -137,7 +136,7 @@ friend class Serializer;
 
 virtual void save(Serializer& rSerializer) const override
 {
-    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, SphericParticle );
+    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, SphericContinuumParticle );
 
     // public members
 
@@ -146,22 +145,25 @@ virtual void save(Serializer& rSerializer) const override
 
 virtual void load(Serializer& rSerializer) override
 {
-    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, SphericParticle );
+    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, SphericContinuumParticle );
 
     // public members
 
     // protected members
 }
 
-}; // Class SplitForwardEulerSphericParticle
+// SplitForwardEulerSphericContinuumParticle& operator=(const SplitForwardEulerSphericContinuumParticle& rOther);
+
+
+}; // Class SplitForwardEulerSphericContinuumParticle
 
 /// input stream function
 inline std::istream& operator >> (std::istream& rIStream,
-            SplitForwardEulerSphericParticle& rThis){ return rIStream;}
+            SplitForwardEulerSphericContinuumParticle& rThis){ return rIStream;}
 
 /// output stream function
 inline std::ostream& operator << (std::ostream& rOStream,
-            const SplitForwardEulerSphericParticle& rThis)
+            const SplitForwardEulerSphericContinuumParticle& rThis)
 {
 rThis.PrintInfo(rOStream);
 rOStream << std::endl;
@@ -172,4 +174,4 @@ return rOStream;
 
 }  // namespace Kratos.
 
-#endif // KRATOS_SPLIT_FORWARD_EULER_SPHERIC_PARTICLE_H_INCLUDED  defined
+#endif // KRATOS_SPLIT_FORWARD_EULER_SPHERIC_CONTINUUM_PARTICLE_H_INCLUDED  defined
