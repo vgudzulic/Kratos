@@ -20,19 +20,19 @@ namespace Kratos
 // using namespace GeometryFunctions;
 
 SplitForwardEulerCylinderParticle::SplitForwardEulerCylinderParticle()
-    : SplitForwardEulerSphericParticle(), mRealMass(0) {
+    : SplitForwardEulerSphericParticle() {
 }
 
 SplitForwardEulerCylinderParticle::SplitForwardEulerCylinderParticle(IndexType NewId, GeometryType::Pointer pGeometry)
-    : SplitForwardEulerSphericParticle(NewId, pGeometry), mRealMass(0) {
+    : SplitForwardEulerSphericParticle(NewId, pGeometry) {
 }
 
 SplitForwardEulerCylinderParticle::SplitForwardEulerCylinderParticle(IndexType NewId, GeometryType::Pointer pGeometry,  PropertiesType::Pointer pProperties)
-    : SplitForwardEulerSphericParticle(NewId, pGeometry, pProperties), mRealMass(0) {
+    : SplitForwardEulerSphericParticle(NewId, pGeometry, pProperties) {
 }
 
 SplitForwardEulerCylinderParticle::SplitForwardEulerCylinderParticle(IndexType NewId, NodesArrayType const& ThisNodes)
-    : SplitForwardEulerSphericParticle(NewId, ThisNodes), mRealMass(0) {
+    : SplitForwardEulerSphericParticle(NewId, ThisNodes) {
 }
 
 Element::Pointer SplitForwardEulerCylinderParticle::Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const

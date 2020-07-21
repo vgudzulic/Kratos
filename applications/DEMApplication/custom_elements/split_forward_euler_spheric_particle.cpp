@@ -20,19 +20,19 @@ namespace Kratos
 // using namespace GeometryFunctions;
 
 SplitForwardEulerSphericParticle::SplitForwardEulerSphericParticle()
-    : SphericParticle(), mRealMass(0) {
+    : SphericParticle() {
 }
 
 SplitForwardEulerSphericParticle::SplitForwardEulerSphericParticle(IndexType NewId, GeometryType::Pointer pGeometry)
-    : SphericParticle(NewId, pGeometry), mRealMass(0) {
+    : SphericParticle(NewId, pGeometry) {
 }
 
 SplitForwardEulerSphericParticle::SplitForwardEulerSphericParticle(IndexType NewId, GeometryType::Pointer pGeometry,  PropertiesType::Pointer pProperties)
-    : SphericParticle(NewId, pGeometry, pProperties), mRealMass(0) {
+    : SphericParticle(NewId, pGeometry, pProperties) {
 }
 
 SplitForwardEulerSphericParticle::SplitForwardEulerSphericParticle(IndexType NewId, NodesArrayType const& ThisNodes)
-    : SphericParticle(NewId, ThisNodes), mRealMass(0) {
+    : SphericParticle(NewId, ThisNodes) {
 }
 
 Element::Pointer SplitForwardEulerSphericParticle::Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const
@@ -272,6 +272,14 @@ void SplitForwardEulerSphericParticle::ComputeBallToRigidFaceStiffnessAndDamping
     KRATOS_CATCH("")
 }
 
+double SplitForwardEulerSphericParticle::CalculateStiffnessNorm(const double& r_normal_stiffness, const double& r_tangential_stiffness) {
+    return std::sqrt(r_normal_stiffness*r_normal_stiffness+2.0*r_tangential_stiffness*r_tangential_stiffness);
+}
+
+double SplitForwardEulerSphericParticle::CalculateDampingNorm(const double& r_normal_damping_coeff, const double& r_tangential_damping_coeff) {
+    return std::sqrt(r_normal_damping_coeff*r_normal_damping_coeff+2.0*r_tangential_damping_coeff*r_tangential_damping_coeff);
+}
+
 void SplitForwardEulerSphericParticle::AddUpForcesAndProject(double OldCoordSystem[3][3],
                                             double LocalCoordSystem[3][3],
                                             double LocalContactForce[3],
@@ -363,14 +371,6 @@ void SplitForwardEulerSphericParticle::AddUpFEMForcesAndProject(double LocalCoor
     DEM_ADD_SECOND_TO_FIRST(r_elastic_force, GlobalElasticContactForce)
     DEM_ADD_SECOND_TO_FIRST(r_contact_force, GlobalContactForce)
 
-}
-
-double SplitForwardEulerCylinderParticle::CalculateStiffnessNorm(const double& r_normal_stiffness, const double& r_tangential_stiffness) {
-    return std::sqrt(r_normal_stiffness*r_normal_stiffness+2.0*r_tangential_stiffness*r_tangential_stiffness);
-}
-
-double SplitForwardEulerCylinderParticle::CalculateDampingNorm(const double& r_normal_damping_coeff, const double& r_tangential_damping_coeff) {
-    return std::sqrt(r_normal_damping_coeff*r_normal_damping_coeff+2.0*r_tangential_damping_coeff*r_tangential_damping_coeff);
 }
 
 }  // namespace Kratos.

@@ -20,19 +20,19 @@ namespace Kratos
 // using namespace GeometryFunctions;
 
 SplitForwardEulerSphericContinuumParticle::SplitForwardEulerSphericContinuumParticle()
-    : SphericContinuumParticle(), mRealMass(0) {
+    : SphericContinuumParticle() {
 }
 
 SplitForwardEulerSphericContinuumParticle::SplitForwardEulerSphericContinuumParticle(IndexType NewId, GeometryType::Pointer pGeometry)
-    : SphericContinuumParticle(NewId, pGeometry), mRealMass(0) {
+    : SphericContinuumParticle(NewId, pGeometry) {
 }
 
 SplitForwardEulerSphericContinuumParticle::SplitForwardEulerSphericContinuumParticle(IndexType NewId, GeometryType::Pointer pGeometry,  PropertiesType::Pointer pProperties)
-    : SphericContinuumParticle(NewId, pGeometry, pProperties), mRealMass(0) {
+    : SphericContinuumParticle(NewId, pGeometry, pProperties) {
 }
 
 SplitForwardEulerSphericContinuumParticle::SplitForwardEulerSphericContinuumParticle(IndexType NewId, NodesArrayType const& ThisNodes)
-    : SphericContinuumParticle(NewId, ThisNodes), mRealMass(0) {
+    : SphericContinuumParticle(NewId, ThisNodes) {
 }
 
 Element::Pointer SplitForwardEulerSphericContinuumParticle::Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const
@@ -231,14 +231,6 @@ void SplitForwardEulerSphericContinuumParticle::ComputeBallToBallStiffnessAndDam
     KRATOS_CATCH("")
 }
 
-double CalculateStiffnessNorm(const double& r_normal_stiffness, const double& r_tangential_stiffness) {
-    return std::sqrt(r_normal_stiffness*r_normal_stiffness+2.0*r_tangential_stiffness*r_tangential_stiffness);
-}
-
-double CalculateDampingNorm(const double& r_normal_damping_coeff, const double& r_tangential_damping_coeff) {
-    return std::sqrt(r_normal_damping_coeff*r_normal_damping_coeff+2.0*r_tangential_damping_coeff*r_tangential_damping_coeff);
-}
-
 void SplitForwardEulerSphericContinuumParticle::ComputeBallToRigidFaceStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
                                                                                 double& r_nodal_stiffness,
                                                                                 double& r_nodal_damping,
@@ -306,6 +298,14 @@ void SplitForwardEulerSphericContinuumParticle::ComputeBallToRigidFaceStiffnessA
     } //rNeighbours.size loop
 
     KRATOS_CATCH("")
+}
+
+double SplitForwardEulerSphericContinuumParticle::CalculateStiffnessNorm(const double& r_normal_stiffness, const double& r_tangential_stiffness) {
+    return std::sqrt(r_normal_stiffness*r_normal_stiffness+2.0*r_tangential_stiffness*r_tangential_stiffness);
+}
+
+double SplitForwardEulerSphericContinuumParticle::CalculateDampingNorm(const double& r_normal_damping_coeff, const double& r_tangential_damping_coeff) {
+    return std::sqrt(r_normal_damping_coeff*r_normal_damping_coeff+2.0*r_tangential_damping_coeff*r_tangential_damping_coeff);
 }
 
 void SplitForwardEulerSphericContinuumParticle::AddUpForcesAndProject(double OldCoordSystem[3][3],

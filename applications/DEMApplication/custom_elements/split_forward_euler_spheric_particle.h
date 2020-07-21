@@ -43,12 +43,6 @@ public:
 /// Pointer definition of SplitForwardEulerSphericParticle
 KRATOS_CLASS_INTRUSIVE_POINTER_DEFINITION(SplitForwardEulerSphericParticle);
 
-typedef GlobalPointersVector<Condition> ConditionWeakVectorType;
-typedef GlobalPointersVector<Condition >::iterator ConditionWeakIteratorType;
-
-typedef GlobalPointersVector<Element> ParticleWeakVectorType;
-typedef ParticleWeakVectorType::ptr_iterator ParticleWeakIteratorType_ptr;
-typedef GlobalPointersVector<Element >::iterator ParticleWeakIteratorType;
 /// Default constructor.
 SplitForwardEulerSphericParticle();
 SplitForwardEulerSphericParticle( IndexType NewId, GeometryType::Pointer pGeometry );
@@ -64,7 +58,7 @@ SplitForwardEulerSphericParticle& operator=(const SplitForwardEulerSphericPartic
 
 typedef typename SphericParticle::ParticleDataBuffer ParticleDataBuffer;
 
-typedef std::unique_ptr<ParticleDataBuffer> BufferPointerType;
+// typedef std::unique_ptr<ParticleDataBuffer> BufferPointerType;
 
 void Initialize(const ProcessInfo& r_process_info) override;
 void CalculateRightHandSide(ProcessInfo& r_process_info, double dt, const array_1d<double,3>& gravity, int search_control) override;

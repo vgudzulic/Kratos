@@ -43,12 +43,6 @@ public:
 /// Pointer definition of SplitForwardEulerSphericContinuumParticle
 KRATOS_CLASS_INTRUSIVE_POINTER_DEFINITION(SplitForwardEulerSphericContinuumParticle);
 
-typedef GlobalPointersVector<Condition> ConditionWeakVectorType;
-typedef GlobalPointersVector<Condition >::iterator ConditionWeakIteratorType;
-
-typedef GlobalPointersVector<Element> ParticleWeakVectorType;
-typedef ParticleWeakVectorType::ptr_iterator ParticleWeakIteratorType_ptr;
-typedef GlobalPointersVector<Element >::iterator ParticleWeakIteratorType;
 /// Default constructor.
 SplitForwardEulerSphericContinuumParticle( IndexType NewId, GeometryType::Pointer pGeometry );
 SplitForwardEulerSphericContinuumParticle( IndexType NewId, NodesArrayType const& ThisNodes);

@@ -43,12 +43,6 @@ public:
 /// Pointer definition of SplitForwardEulerCylinderParticle
 KRATOS_CLASS_INTRUSIVE_POINTER_DEFINITION(SplitForwardEulerCylinderParticle);
 
-typedef GlobalPointersVector<Condition> ConditionWeakVectorType;
-typedef GlobalPointersVector<Condition >::iterator ConditionWeakIteratorType;
-
-typedef GlobalPointersVector<Element> ParticleWeakVectorType;
-typedef ParticleWeakVectorType::ptr_iterator ParticleWeakIteratorType_ptr;
-typedef GlobalPointersVector<Element >::iterator ParticleWeakIteratorType;
 /// Default constructor.
 SplitForwardEulerCylinderParticle();
 SplitForwardEulerCylinderParticle( IndexType NewId, GeometryType::Pointer pGeometry );
