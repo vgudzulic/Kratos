@@ -123,11 +123,11 @@ void SplitForwardEulerSphericContinuumParticle::CalculateRightHandSide(ProcessIn
     if (nodal_rotational_damping > std::numeric_limits<double>::epsilon()) {
         nodal_rotational_aux_mass = r_process_info[INERTIAL_FACTOR] * moment_of_inertia/nodal_rotational_damping;
     }
-    KRATOS_WATCH(this->Id())
-    KRATOS_WATCH(nodal_stiffness)
-    KRATOS_WATCH(nodal_damping)
-    KRATOS_WATCH(mass)
-    KRATOS_WATCH(r_process_info[INERTIAL_FACTOR])
+    // KRATOS_WATCH(this->Id())
+    // KRATOS_WATCH(nodal_stiffness)
+    // KRATOS_WATCH(nodal_damping)
+    // KRATOS_WATCH(mass)
+    // KRATOS_WATCH(r_process_info[INERTIAL_FACTOR])
 
     if (this->IsNot(DEMFlags::BELONGS_TO_A_CLUSTER)){
         ComputeAdditionalForces(additional_forces, additionally_applied_moment, r_process_info, gravity);
