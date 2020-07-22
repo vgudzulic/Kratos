@@ -519,9 +519,9 @@ class Procedures(object):
         #model_part.AddNodalSolutionStepVariable(SPRAYED_MATERIAL)
 
         if self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Split_Forward_Euler':
-            model_part.AddNodalSolutionStepVariable(STEP_DISPLACEMENT)
+            model_part.AddNodalSolutionStepVariable(AUX_DISPLACEMENT)
             if self.DEM_parameters["RotationOption"].GetBool():
-                model_part.AddNodalSolutionStepVariable(STEP_ROTATION)
+                model_part.AddNodalSolutionStepVariable(AUX_ROTATION)
 
     @classmethod
     def AddRigidFaceVariables(self, model_part, DEM_parameters):
