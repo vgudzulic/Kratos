@@ -39,6 +39,7 @@
 #include "custom_conditions/monolithic_dem_coupled_wall_condition.h"
 #include "custom_conditions/calculate_laplacian_simplex_condition.h"
 #include "custom_elements/swimming_particle.h"
+#include "custom_elements/bed_swimming_particle.h"
 
 #include "../DEMApplication/custom_elements/spheric_particle.h"
 #include "../DEMApplication/custom_elements/nanoparticle.h"
@@ -151,15 +152,16 @@ private:
     const ComputeVelocityLaplacianSimplex<2> mComputeVelocityLaplacianSimplex2D;
     const ComputeVelocityLaplacianSimplex<3> mComputeVelocityLaplacianSimplex3D;
 
-    const  MonolithicDEMCoupledWallCondition<2,2> mMonolithicDEMCoupledWallCondition2D;
-    const  MonolithicDEMCoupledWallCondition<3,3> mMonolithicDEMCoupledWallCondition3D;
+    const MonolithicDEMCoupledWallCondition<2,2> mMonolithicDEMCoupledWallCondition2D;
+    const MonolithicDEMCoupledWallCondition<3,3> mMonolithicDEMCoupledWallCondition3D;
 
-    const  ComputeLaplacianSimplexCondition<2,2> mComputeLaplacianSimplexCondition2D;
-    const  ComputeLaplacianSimplexCondition<3,3> mComputeLaplacianSimplexCondition3D;
+    const ComputeLaplacianSimplexCondition<2,2> mComputeLaplacianSimplexCondition2D;
+    const ComputeLaplacianSimplexCondition<3,3> mComputeLaplacianSimplexCondition3D;
 
     const ShellRigid mRigidShellElement;
 
     const SwimmingParticle<SphericParticle> mSphericSwimmingParticle3D;
+    const BedSwimmingParticle<SphericParticle> mBedSwimmingParticle3D;
     const SwimmingParticle<NanoParticle> mSwimmingNanoParticle3D;
     const SwimmingParticle<AnalyticSphericParticle> mSwimmingAnalyticParticle3D;
     /// Assignment operator.

@@ -94,8 +94,8 @@ typedef ModelPart::ElementsContainerType                      ElementsArrayType;
 typedef ElementsArrayType::ContainerType                      ResultElementsContainerType;
 typedef std::vector<ResultElementsContainerType>              VectorResultElementsContainerType;
 typedef ModelPart::ElementsContainerType::iterator            ElementIteratorType;
-typedef SwimmingParticle<TBaseTypeOfSwimmingParticle>  ParticleType;
-
+typedef SwimmingParticle<TBaseTypeOfSwimmingParticle>         ParticleType;
+typedef BedSwimmingParticle<TBaseTypeOfSwimmingParticle>      BedParticleType;
 typedef ModelPart::NodesContainerType                         NodesArrayType;
 typedef NodesArrayType::ContainerType                         ResultNodesContainerType;
 typedef std::vector<ResultNodesContainerType>                 VectorResultNodesContainerType;
@@ -142,12 +142,16 @@ BinBasedDEMFluidCoupledMapping(Parameters& rParameters)
             "coupling_type": 1,
             "viscosity_modification_type" : 0,
             "n_particles_per_depth_distance" : 1,
-            "body_force_per_unit_mass_variable_name" : "BODY_FORCE"
+            "body_force_per_unit_mass_variable_name" : "BODY_FORCE",
+            "c_augmentation" : 1.0,
+            "is_bed_option"  : false
         }  )" );
 
     rParameters.ValidateAndAssignDefaults(default_parameters);
     mMinFluidFraction = rParameters["backward_coupling"]["min_fluid_fraction"].GetDouble();
     mCouplingType = rParameters["coupling_type"].GetInt();
+    mCAugmentation = rParameters["c_augmentation"].GetDouble();
+    mBedOption = rParameters["is_bed_option"].GetBool();
     mTimeAveragingType = rParameters["forward_coupling"]["time_averaging_type"].GetInt();
     mViscosityModificationType = rParameters["viscosity_modification_type"].GetInt();
     mParticlesPerDepthDistance = rParameters["n_particles_per_depth_distance"].GetInt();
@@ -279,6 +283,8 @@ int mTimeAveragingType;
 int mViscosityModificationType;
 int mParticlesPerDepthDistance;
 int mNumberOfDEMSamplesSoFarInTheCurrentFluidStep;
+double mCAugmentation;
+bool mBedOption;
 
 array_1d<double, 3> mGravity;
 VariablesList mDEMCouplingVariables;
@@ -321,10 +327,14 @@ array_1d<double, 3> CalculateAcceleration(const Geometry<Node<3> >& geom, const 
 double CalculateNormOfSymmetricGradient(const Geometry<Node<3> >& geom, const int index);
 array_1d<double, 3> CalculateVorticity(const Geometry<Node<3> >& geom, const int index);
 void Project(Element::Pointer p_elem, const Vector& N, Node<3>::Pointer p_node, const VariableData *r_destination_variable, double alpha);
+void DistributeDimensionalContributionToFluidFraction(Element::Pointer p_elem, const Vector& N, BedParticleType& particle);
 void DistributeDimensionalContributionToFluidFraction(Element::Pointer p_elem, const Vector& N, ParticleType& particle);
+void DistributeDimensionalEraseContributionToFluidFraction(Element::Pointer p_elem, const Vector& N, BedParticleType& particle);
 void Distribute(Element::Pointer p_elem, const Vector& N, Node<3>::Pointer p_node,const VariableData *r_destination_variable);
 void ComputeHomogenizedNodalVariable(const ParticleType& particle, const ResultNodesContainerType& neighbours, const DistanceType& weights, const VariableData *r_destination_variable);
+void CalculateFluidFractionBed(Element::Pointer p_elem);
 void CalculateFluidFraction(ModelPart& r_fluid_model_part);
+void AddingBedToFluidFraction(ModelPart& r_fluid_model_part);
 void CalculateFluidMassFraction(ModelPart& r_fluid_model_part);
 void Interpolate(Element::Pointer p_elem, const Vector& N, Node<3>::Pointer p_node, const Variable<array_1d<double, 3> >& r_origin_variable, const Variable<array_1d<double, 3> >& r_destination_variable, double alpha);
 void Interpolate(Element::Pointer p_elem, const Vector& N, Node<3>::Pointer p_node, const Variable<double>& r_origin_variable, const Variable<double>& r_destination_variable, double alpha);
@@ -336,8 +346,11 @@ void InterpolateVorticity(Element::Pointer p_elem, const Vector& N, Node<3>::Poi
 void InterpolateVorticity(Element::Pointer p_elem, const Vector& N, Node<3>::Pointer p_node, const Variable<array_1d<double, 3> >& r_destination_variable, double alpha);
 void TransferWithConstantWeighing(Element::Pointer p_elem, const Vector& N, Node<3>::Pointer p_node, const Variable<array_1d<double, 3> >& r_destination_variable, const Variable<array_1d<double, 3> >& r_origin_variable);
 void TransferWithLinearWeighing(Element::Pointer p_elem, const array_1d<double,TDim + 1>& N, Node<3>::Pointer p_node, const Variable<array_1d<double, 3> >& r_destination_variable, const Variable<array_1d<double, 3> >& r_origin_variable);
+void CalculateNodalFluidFractionWithConstantWeighing(Element::Pointer p_elem, const Vector& N, BedParticleType& particle);
 void CalculateNodalFluidFractionWithConstantWeighing(Element::Pointer p_elem, const Vector& N, ParticleType& particle);
+void CalculateNodalFluidFractionWithLinearWeighing(Element::Pointer p_elem, const Vector& N, BedParticleType& particle);
 void CalculateNodalFluidFractionWithLinearWeighing(Element::Pointer p_elem, const Vector& N, ParticleType& particle);
+void CalculateEraseNodalFluidFractionWithLinearWeighing(Element::Pointer p_elem, const Vector& N, BedParticleType& particle);
 void CalculateNodalFluidFractionByLumpedL2Projection(Element::Pointer p_elem, const Vector& N, Node<3>::Pointer p_node);
 //void CalculateFluidFractionGradient(ModelPart& r_model_part);
 void TransferByAveraging(const ParticleType& particle, const ResultNodesContainerType& neighbours, const DistanceType& weights, const Variable<array_1d<double, 3> >& r_destination_variable, const Variable<array_1d<double, 3> >& r_origin_variable);
@@ -351,6 +364,7 @@ void ResetFLuidVelocityRate(const NodeIteratorType& node_it);
 void Clear(ModelPart& r_model_part, const VariableData* r_variable);
 void Clear(ModelPart& r_model_part, const Variable<double>& r_variable);
 inline void ClearVariable(const NodeIteratorType& node_it, const VariableData *var);
+inline void ClearVariable(Geometry<Node<3> >& geom, const VariableData& var);
 void CalculateFluidNodesMaxNodalArea(ModelPart& r_fluid_model_part);
 inline void ClearVariable(const NodeIteratorType& node_it, const VariableData& var);
 inline unsigned int GetNearestNode(const Vector& N);
