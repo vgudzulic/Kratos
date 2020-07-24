@@ -558,22 +558,22 @@ void BinBasedDEMFluidCoupledMapping<TDim, TBaseTypeOfSwimmingParticle>::Interpol
             continue;
         }
         if(mBedOption){
-        Element::Pointer p_element;
-        BedParticleType& particle = dynamic_cast<BedParticleType&> (*i_particle);
-        // looking for the fluid element in which the DEM node falls
-        const bool element_located = bin_of_objects_fluid.FindPointOnMesh(i_particle->GetGeometry()[0].Coordinates(),
+            Element::Pointer p_element;
+            BedParticleType& particle = dynamic_cast<BedParticleType&> (*i_particle);
+            // looking for the fluid element in which the DEM node falls
+            const bool element_located = bin_of_objects_fluid.FindPointOnMesh(i_particle->GetGeometry()[0].Coordinates(),
                                                                           shape_function_values_at_point,
                                                                           p_element,
                                                                           results.begin(),
                                                                           max_results);
-        if (i_particle->GetGeometry()[0].Is(TO_ERASE)) {
-            if (element_located) {
-                DistributeDimensionalEraseContributionToFluidFraction(p_element, shape_function_values_at_point, particle);
-                CalculateFluidFractionBed(p_element);
+            if (i_particle->GetGeometry()[0].Is(TO_ERASE)) {
+                if (element_located) {
+                    DistributeDimensionalEraseContributionToFluidFraction(p_element, shape_function_values_at_point, particle);
+                    CalculateFluidFractionBed(p_element);
+                    Geometry<Node<3> >& geom =p_element->GetGeometry();
+                    ClearVariable(geom, FLUID_FRACTION);
+                }
             }
-        }
-        Geometry<Node<3> >& geom =p_element->GetGeometry();
-        ClearVariable(geom, FLUID_FRACTION);
         }
         else{
             break;
