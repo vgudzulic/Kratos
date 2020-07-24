@@ -61,7 +61,7 @@ void SplitForwardEulerSphericParticle::Initialize(const ProcessInfo& r_process_i
     node.SetValue(NODAL_DAMPING,0.0);
     node.SetValue(NODAL_AUX_MASS,0.0);
     node.SetValue(NODAL_ROTATIONAL_DAMPING,0.0);
-    node.SetValue(NODAL_ROTATIONAL_AUX_MASS,0.0);
+    node.SetValue(NODAL_AUX_INERTIA,0.0);
 
     KRATOS_CATCH( "" )
 }
@@ -94,7 +94,7 @@ void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_pro
     double nodal_rotational_stiffness;
     double& nodal_rotational_damping = this_node.GetValue(NODAL_ROTATIONAL_DAMPING);
     const double& moment_of_inertia = this_node.FastGetSolutionStepValue(PARTICLE_MOMENT_OF_INERTIA);
-    double& nodal_rotational_aux_mass = this_node.GetValue(NODAL_ROTATIONAL_AUX_MASS);
+    double& nodal_aux_inertia = this_node.GetValue(NODAL_AUX_INERTIA);
 
     mContactMoment.clear();
     elastic_force.clear();
@@ -113,15 +113,23 @@ void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_pro
 
     ComputeBallToRigidFaceContactForce(data_buffer, elastic_force, contact_force, RollingResistance, rigid_element_force, r_process_info, search_control);
 
-    ComputeBallToBallStiffnessAndDamping(data_buffer, nodal_stiffness, nodal_damping, nodal_rotational_stiffness, nodal_rotational_damping);
+    unsigned int num_sum = 0;
 
-    ComputeBallToRigidFaceStiffnessAndDamping(data_buffer, nodal_stiffness, nodal_damping, nodal_rotational_stiffness, nodal_rotational_damping);
+    ComputeBallToBallStiffnessAndDamping(data_buffer, num_sum, nodal_stiffness, nodal_damping, nodal_rotational_stiffness, nodal_rotational_damping);
+
+    ComputeBallToRigidFaceStiffnessAndDamping(data_buffer, num_sum, nodal_stiffness, nodal_damping, nodal_rotational_stiffness, nodal_rotational_damping);
+
+    if (num_sum > 0) {
+        nodal_damping = nodal_damping / num_sum;
+        nodal_rotational_damping = nodal_rotational_damping / num_sum;
+    }
+    // TODO: should I calculate the nodal_damping proportional to the mass in case that there are no neighbors ?
 
     if (nodal_damping > std::numeric_limits<double>::epsilon()) {
         nodal_aux_mass = r_process_info[INERTIAL_FACTOR] * mass/nodal_damping;
     }
     if (nodal_rotational_damping > std::numeric_limits<double>::epsilon()) {
-        nodal_rotational_aux_mass = r_process_info[INERTIAL_FACTOR] * moment_of_inertia/nodal_rotational_damping;
+        nodal_aux_inertia = r_process_info[INERTIAL_FACTOR] * moment_of_inertia/nodal_rotational_damping;
     }
 
     if (this->IsNot(DEMFlags::BELONGS_TO_A_CLUSTER)){
@@ -165,6 +173,7 @@ void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_pro
 }
 
 void SplitForwardEulerSphericParticle::ComputeBallToBallStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
+                                                                            unsigned int& r_num_sum,
                                                                             double& r_nodal_stiffness,
                                                                             double& r_nodal_damping,
                                                                             double& r_nodal_rotational_stiffness,
@@ -185,14 +194,15 @@ void SplitForwardEulerSphericParticle::ComputeBallToBallStiffnessAndDamping(Sphe
 
             r_nodal_stiffness += CalculateStiffnessNorm(normal_stiffness,tangential_stiffness);
             r_nodal_damping += CalculateDampingNorm(normal_damping_coeff,tangential_damping_coeff);
+            r_num_sum ++;
 
             if (this->Is(DEMFlags::HAS_ROTATION) && !data_buffer.mMultiStageRHS) {
                 // TODO: is this right ?
                 double arm_length = GetInteractionRadius() - data_buffer.mIndentation;
-                double normal_rotational_stiffness = normal_stiffness * arm_length*arm_length;
-                double tangential_rotational_stiffness = tangential_stiffness * arm_length*arm_length;
-                double normal_rotational_damping_coeff = normal_damping_coeff * arm_length*arm_length;
-                double tangential_rotational_damping_coeff = tangential_damping_coeff * arm_length*arm_length;
+                double normal_rotational_stiffness = normal_stiffness * arm_length*1.0;
+                double tangential_rotational_stiffness = tangential_stiffness * arm_length*1.0;
+                double normal_rotational_damping_coeff = normal_damping_coeff * arm_length*1.0;
+                double tangential_rotational_damping_coeff = tangential_damping_coeff * arm_length*1.0;
 
                 r_nodal_rotational_stiffness += CalculateStiffnessNorm(normal_rotational_stiffness,tangential_rotational_stiffness);
                 r_nodal_rotational_damping += CalculateDampingNorm(normal_rotational_damping_coeff,tangential_rotational_damping_coeff);
@@ -204,6 +214,7 @@ void SplitForwardEulerSphericParticle::ComputeBallToBallStiffnessAndDamping(Sphe
 }
 
 void SplitForwardEulerSphericParticle::ComputeBallToRigidFaceStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
+                                                                                unsigned int& r_num_sum,
                                                                                 double& r_nodal_stiffness,
                                                                                 double& r_nodal_damping,
                                                                                 double& r_nodal_rotational_stiffness,
@@ -253,14 +264,15 @@ void SplitForwardEulerSphericParticle::ComputeBallToRigidFaceStiffnessAndDamping
 
                 r_nodal_stiffness += CalculateStiffnessNorm(normal_stiffness,tangential_stiffness);
                 r_nodal_damping += CalculateDampingNorm(normal_damping_coeff,tangential_damping_coeff);
+                r_num_sum ++;
 
                 if (this->Is(DEMFlags::HAS_ROTATION)) {
                     // TODO: is this right ?
                     double arm_length = GetInteractionRadius() - indentation;
-                    double normal_rotational_stiffness = normal_stiffness * arm_length*arm_length;
-                    double tangential_rotational_stiffness = tangential_stiffness * arm_length*arm_length;
-                    double normal_rotational_damping_coeff = normal_damping_coeff * arm_length*arm_length;
-                    double tangential_rotational_damping_coeff = tangential_damping_coeff * arm_length*arm_length;
+                    double normal_rotational_stiffness = normal_stiffness * arm_length*1.0;
+                    double tangential_rotational_stiffness = tangential_stiffness * arm_length*1.0;
+                    double normal_rotational_damping_coeff = normal_damping_coeff * arm_length*1.0;
+                    double tangential_rotational_damping_coeff = tangential_damping_coeff * arm_length*1.0;
 
                     r_nodal_rotational_stiffness += CalculateStiffnessNorm(normal_rotational_stiffness,tangential_rotational_stiffness);
                     r_nodal_rotational_damping += CalculateDampingNorm(normal_rotational_damping_coeff,tangential_rotational_damping_coeff);

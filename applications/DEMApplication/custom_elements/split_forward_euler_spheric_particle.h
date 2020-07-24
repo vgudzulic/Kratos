@@ -77,12 +77,14 @@ virtual void PrintInfo(std::ostream& rOStream) const override {rOStream << "Spli
 protected:
 
 virtual void ComputeBallToBallStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
+                                                                            unsigned int& r_num_sum,
                                                                             double& r_nodal_stiffness,
                                                                             double& r_nodal_damping,
                                                                             double& r_nodal_rotational_stiffness,
                                                                             double& r_nodal_rotational_damping);
 
 virtual void ComputeBallToRigidFaceStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
+                                                                                unsigned int& r_num_sum,
                                                                                 double& r_nodal_stiffness,
                                                                                 double& r_nodal_damping,
                                                                                 double& r_nodal_rotational_stiffness,
