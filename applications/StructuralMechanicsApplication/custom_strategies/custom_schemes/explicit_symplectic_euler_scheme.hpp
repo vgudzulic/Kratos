@@ -100,8 +100,8 @@ public:
      * @brief Default constructor.
      * @details The ExplicitSymplecticEulerScheme method
      */
-    ExplicitSymplecticEulerScheme(const double MassFactor = 1.0)
-        : ExplicitForwardEulerFICScheme<TSparseSpace, TDenseSpace>(MassFactor)
+    ExplicitSymplecticEulerScheme(const double MassFactor, const double L2Tolerance)
+        : ExplicitForwardEulerFICScheme<TSparseSpace, TDenseSpace>(MassFactor,L2Tolerance)
     {
 
     }
@@ -207,6 +207,9 @@ public:
             this->UpdateTranslationalDegreesOfFreedom(it_node_begin + i, disppos, dim);
         } // for Node parallel
 
+        // TODO: STOP CRITERION
+        this->CheckStopCriterion(rModelPart);
+        
         KRATOS_CATCH("")
     }
 

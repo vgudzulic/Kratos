@@ -100,8 +100,8 @@ public:
      * @brief Default constructor.
      * @details The ExplicitVelocityVerletScheme method
      */
-    ExplicitVelocityVerletScheme(const double MassFactor = 1.0)
-        : ExplicitSymplecticEulerScheme<TSparseSpace, TDenseSpace>(MassFactor)
+    ExplicitVelocityVerletScheme(const double MassFactor, const double L2Tolerance)
+        : ExplicitSymplecticEulerScheme<TSparseSpace, TDenseSpace>(MassFactor,L2Tolerance)
     {
 
     }
@@ -237,6 +237,9 @@ public:
             // Current step information "N+1" (before step update).
             this->UpdateTranslationalDegreesOfFreedom(it_node_begin + i, disppos, dim);
         } // for Node parallel
+
+        // TODO: STOP CRITERION
+        this->CheckStopCriterion(rModelPart);
 
         KRATOS_CATCH("")
     }

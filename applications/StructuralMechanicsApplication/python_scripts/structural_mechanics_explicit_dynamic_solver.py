@@ -34,7 +34,8 @@ class ExplicitMechanicalSolver(MechanicalSolver):
             "delta_time_refresh"         : 1000,
             "max_delta_time"             : 1.0e0,
             "fraction_delta_time"        : 0.333333333333333333333333333333333333,
-            "mass_factor"                : 0.0,
+            "mass_factor"                : 1.0,
+            "l2_tolerance"               : 1.0e-3,
             "rayleigh_alpha"             : 0.0,
             "rayleigh_beta"              : 0.0
         }""")
@@ -115,13 +116,13 @@ class ExplicitMechanicalSolver(MechanicalSolver):
             mechanical_scheme = StructuralMechanicsApplication.ExplicitMultiStageKimScheme(self.settings["fraction_delta_time"].GetDouble())
         elif(scheme_type == "forward_euler_fic"):
             self.main_model_part.ProcessInfo[KratosMultiphysics.DELTA_TIME] = self.settings["time_stepping"]["time_step"].GetDouble()
-            mechanical_scheme = StructuralMechanicsApplication.ExplicitForwardEulerFICScheme(self.settings["mass_factor"].GetDouble())
+            mechanical_scheme = StructuralMechanicsApplication.ExplicitForwardEulerFICScheme(self.settings["mass_factor"].GetDouble(), self.settings["l2_tolerance"].GetDouble())
         elif(scheme_type == "symplectic_euler"):
             self.main_model_part.ProcessInfo[KratosMultiphysics.DELTA_TIME] = self.settings["time_stepping"]["time_step"].GetDouble()
-            mechanical_scheme = StructuralMechanicsApplication.ExplicitSymplecticEulerScheme(self.settings["mass_factor"].GetDouble())
+            mechanical_scheme = StructuralMechanicsApplication.ExplicitSymplecticEulerScheme(self.settings["mass_factor"].GetDouble(), self.settings["l2_tolerance"].GetDouble())
         elif(scheme_type == "velocity_verlet"):
             self.main_model_part.ProcessInfo[KratosMultiphysics.DELTA_TIME] = self.settings["time_stepping"]["time_step"].GetDouble()
-            mechanical_scheme = StructuralMechanicsApplication.ExplicitVelocityVerletScheme(self.settings["mass_factor"].GetDouble())
+            mechanical_scheme = StructuralMechanicsApplication.ExplicitVelocityVerletScheme(self.settings["mass_factor"].GetDouble(), self.settings["l2_tolerance"].GetDouble())
 
         else:
             err_msg =  "The requested scheme type \"" + scheme_type + "\" is not available!\n"

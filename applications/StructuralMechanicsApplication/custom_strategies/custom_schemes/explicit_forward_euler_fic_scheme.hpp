@@ -98,10 +98,11 @@ public:
      * @brief Default constructor.
      * @details The ExplicitForwardEulerFICScheme method
      */
-    ExplicitForwardEulerFICScheme(const double MassFactor)
+    ExplicitForwardEulerFICScheme(const double MassFactor, const double L2Tolerance)
         : Scheme<TSparseSpace, TDenseSpace>()
     {
         mMassFactor = MassFactor;
+        mL2Tolerance = L2Tolerance;
     }
 
     /** Destructor.
@@ -318,18 +319,55 @@ public:
         // Getting dof position
         const IndexType disppos = it_node_begin->GetDofPosition(DISPLACEMENT_X);
 
-        // TODO
-        KRATOS_WATCH((it_node_begin+1)->GetValue(NODAL_DISPLACEMENT_DAMPING))
-        KRATOS_WATCH((it_node_begin+1)->GetValue(NODAL_DISPLACEMENT_DAMPING)*it_node_begin->GetValue(NODAL_MASS))
+        // KRATOS_WATCH((it_node_begin+i)->GetValue(NODAL_DISPLACEMENT_DAMPING))
+        // KRATOS_WATCH((it_node_begin+i)->GetValue(NODAL_DISPLACEMENT_DAMPING)*(it_node_begin+i)->GetValue(NODAL_MASS))
 
         #pragma omp parallel for schedule(guided,512)
         for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
             // Current step information "N+1" (before step update).
             this->UpdateTranslationalDegreesOfFreedom(it_node_begin + i, disppos, dim);
+
+            // TODO
+            // KRATOS_WATCH((it_node_begin+i)->GetValue(NODAL_DISPLACEMENT_DAMPING))
+            // KRATOS_WATCH((it_node_begin+i)->GetValue(NODAL_DISPLACEMENT_DAMPING)*(it_node_begin+i)->GetValue(NODAL_MASS))
         } // for Node parallel
 
-
+        // TODO: STOP CRITERION
+        this->CheckStopCriterion(rModelPart);
+        
         KRATOS_CATCH("")
+    }
+
+    void CheckStopCriterion(ModelPart& rModelPart)
+    {
+        const ProcessInfo& r_current_process_info = rModelPart.GetProcessInfo();
+        NodesArrayType& r_nodes = rModelPart.Nodes();
+        const auto it_node_begin = rModelPart.NodesBegin();
+
+        double l2_numerator = 0.0;
+        double l2_denominator = 0.0;
+        #pragma omp parallel for reduction(+:l2_numerator,l2_denominator)
+        for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
+            NodeIterator itCurrentNode = it_node_begin + i;
+            const array_1d<double, 3>& r_current_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT);
+            const array_1d<double, 3>& r_previous_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT,1);
+            array_1d<double, 3> delta_displacement;
+            noalias(delta_displacement) = r_current_displacement-r_previous_displacement;
+            const double norm_2_du = inner_prod(delta_displacement,delta_displacement);
+            const double norm_2_u_old = inner_prod(r_previous_displacement,r_previous_displacement);
+
+            l2_numerator += norm_2_du;
+            l2_denominator += norm_2_u_old;
+        }
+        if (l2_denominator > 1.0e-12) {
+            double l2_error = std::sqrt(l2_numerator)/std::sqrt(l2_denominator);
+
+            if (l2_error < mL2Tolerance) {
+                KRATOS_INFO("STOP CRITERION") << "L2 Error is: " << l2_error << " . The simulation is completed at step: " << r_current_process_info[STEP] << std::endl;
+                KRATOS_INFO("STOP CRITERION") << "L2 numerator is: " << std::sqrt(l2_numerator) << " . L2 denominator is: " << std::sqrt(l2_denominator) << std::endl;
+                // KRATOS_ERROR << "L2 Error is: " << l2_error << " . The simulation is completed at step: " << r_current_process_info[STEP] << std::endl;
+            }
+        }
     }
 
     /**
@@ -534,6 +572,7 @@ protected:
     // DeltaTimeParameters mDeltaTime; /// This struct contains the information related with the increment od time step
     double mDeltaTime;
     double mMassFactor;
+    double mL2Tolerance;
 
     ///@}
     ///@name Protected member Variables

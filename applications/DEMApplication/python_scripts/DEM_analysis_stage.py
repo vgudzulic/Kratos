@@ -195,15 +195,21 @@ class DEMAnalysisStage(AnalysisStage):
 
     def SelectTranslationalScheme(self):
         if self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Forward_Euler':
+            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-3)
             return ForwardEulerScheme()
         elif self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Symplectic_Euler':
+            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-3)
             return SymplecticEulerScheme()
         elif self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Taylor_Scheme':
+            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-3)
             return TaylorScheme()
         elif self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Velocity_Verlet':
+            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-3)
             return VelocityVerletScheme()
         elif self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Split_Forward_Euler':
             self.spheres_model_part.ProcessInfo.SetValue(INERTIAL_FACTOR, 1.0)
+            # TODO: POWER_LAW_TOLERANCE is used as an L2 Tolerance variable
+            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-3)
             return SplitForwardEulerScheme()
 
         return None
