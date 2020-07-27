@@ -319,9 +319,6 @@ public:
         // Getting dof position
         const IndexType disppos = it_node_begin->GetDofPosition(DISPLACEMENT_X);
 
-        // KRATOS_WATCH((it_node_begin+i)->GetValue(NODAL_DISPLACEMENT_DAMPING))
-        // KRATOS_WATCH((it_node_begin+i)->GetValue(NODAL_DISPLACEMENT_DAMPING)*(it_node_begin+i)->GetValue(NODAL_MASS))
-
         #pragma omp parallel for schedule(guided,512)
         for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
             // Current step information "N+1" (before step update).

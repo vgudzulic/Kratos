@@ -119,6 +119,8 @@ class DEMAnalysisStage(AnalysisStage):
         self.AddVariables()
         super(DEMAnalysisStage, self).__init__(model, self.DEM_parameters)
 
+        self.step_number = 0
+
     def CreateModelParts(self):
         self.spheres_model_part = self.model.CreateModelPart("SpheresPart")
         self.rigid_face_model_part = self.model.CreateModelPart("RigidFacePart")
@@ -195,21 +197,21 @@ class DEMAnalysisStage(AnalysisStage):
 
     def SelectTranslationalScheme(self):
         if self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Forward_Euler':
-            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-3)
+            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-4)
             return ForwardEulerScheme()
         elif self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Symplectic_Euler':
-            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-3)
+            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-4)
             return SymplecticEulerScheme()
         elif self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Taylor_Scheme':
-            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-3)
+            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-4)
             return TaylorScheme()
         elif self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Velocity_Verlet':
-            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-3)
+            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-4)
             return VelocityVerletScheme()
         elif self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Split_Forward_Euler':
             self.spheres_model_part.ProcessInfo.SetValue(INERTIAL_FACTOR, 1.0)
             # TODO: POWER_LAW_TOLERANCE is used as an L2 Tolerance variable
-            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-3)
+            self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-4)
             return SplitForwardEulerScheme()
 
         return None
@@ -508,6 +510,9 @@ class DEMAnalysisStage(AnalysisStage):
                 if self.spheres_model_part.ProcessInfo[IMPOSED_Z_STRAIN_OPTION]:
                     t = self.time
                     self.spheres_model_part.ProcessInfo.SetValue(IMPOSED_Z_STRAIN_VALUE, eval(self.DEM_parameters["ZStrainValue"].GetString()))
+        
+        self.step_number += 1
+        self.spheres_model_part.ProcessInfo.SetValue(STEP, self.step_number)
 
 
     def UpdateIsTimeToPrintInModelParts(self, is_time_to_print):
