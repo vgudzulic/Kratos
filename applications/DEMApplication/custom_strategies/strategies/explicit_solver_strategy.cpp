@@ -710,8 +710,15 @@ namespace Kratos {
             l2_numerator += norm_2_du;
         }
 
+        // if (l2_denominator > 1.0e-12 && StepFlag==2) {
         if (l2_denominator > 1.0e-12) {
             double l2_error = std::sqrt(l2_numerator)/std::sqrt(l2_denominator);
+
+            std::fstream l2_error_file;
+            l2_error_file.open ("l2_error_time.txt", std::fstream::out | std::fstream::app);
+            l2_error_file.precision(12);
+            l2_error_file << r_process_info[TIME] << " " << l2_error << std::endl;
+            l2_error_file.close();
 
             if (l2_error < r_process_info[POWER_LAW_TOLERANCE]) {
                 KRATOS_INFO("STOP CRITERION") << "L2 Error is: " << l2_error << " . The simulation is completed at step: " << r_process_info[STEP] << std::endl;
