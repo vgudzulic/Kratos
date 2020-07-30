@@ -119,10 +119,10 @@ void SplitForwardEulerSphericContinuumParticle::CalculateRightHandSide(ProcessIn
 
     ComputeBallToRigidFaceStiffnessAndDamping(data_buffer, num_sum, nodal_stiffness, nodal_damping, nodal_rotational_stiffness, nodal_rotational_damping);
 
-    if (num_sum > 0) {
-        nodal_damping = nodal_damping / num_sum;
-        nodal_rotational_damping = nodal_rotational_damping / num_sum;
-    }
+    // if (num_sum > 0) {
+    //     nodal_damping = nodal_damping / num_sum;
+    //     nodal_rotational_damping = nodal_rotational_damping / num_sum;
+    // }
     // TODO: should I calculate the nodal_damping proportional to the mass in case that there are no neighbors ?
 
     if (nodal_damping > std::numeric_limits<double>::epsilon()) {
