@@ -326,8 +326,8 @@ public:
             this->UpdateTranslationalDegreesOfFreedom(it_node_begin + i, disppos, dim);
 
             // TODO
-            // KRATOS_WATCH((it_node_begin+i)->GetValue(NODAL_DISPLACEMENT_DAMPING))
-            // KRATOS_WATCH((it_node_begin+i)->GetValue(NODAL_DISPLACEMENT_DAMPING)*(it_node_begin+i)->GetValue(NODAL_MASS))
+            KRATOS_WATCH((it_node_begin+i)->GetValue(NODAL_DISPLACEMENT_DAMPING))
+            KRATOS_WATCH(0.5*(it_node_begin+i)->GetValue(NODAL_DISPLACEMENT_DAMPING)*(it_node_begin+i)->GetValue(NODAL_MASS))
         } // for Node parallel
 
         // TODO: STOP CRITERION

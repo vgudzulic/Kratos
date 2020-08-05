@@ -92,18 +92,29 @@ void TrussSymplecticEulerElementLinear3D2N::AddExplicitContribution(
 
     if (rRHSVariable == RESIDUAL_VECTOR && rDestinationVariable == FORCE_RESIDUAL) {
 
-        VectorType element_damping_vector(msLocalSize);
-        CalculateLumpedDampingVector(element_damping_vector, rCurrentProcessInfo);
-
+        BoundedVector<double, msLocalSize> damping_residual_contribution = ZeroVector(msLocalSize);
         Vector current_nodal_velocities = ZeroVector(msLocalSize);
         GetFirstDerivativesVector(current_nodal_velocities);
+        Matrix damping_matrix;
+        ProcessInfo temp_process_information = rCurrentProcessInfo; // cant pass const ProcessInfo
+        CalculateDampingMatrix(damping_matrix, temp_process_information);
+        // current residual contribution due to damping
+        noalias(damping_residual_contribution) = prod(damping_matrix, current_nodal_velocities);
+
+        // KRATOS_WATCH(damping_matrix)
+        // KRATOS_WATCH(damping_residual_contribution)
+
+        // VectorType element_damping_vector(msLocalSize);
+        // CalculateLumpedDampingVector(element_damping_vector, rCurrentProcessInfo);
+
+        // KRATOS_WATCH(element_damping_vector)
 
         for (size_t i = 0; i < msNumberOfNodes; ++i) {
             size_t index = msDimension * i;
             array_1d<double, 3>& r_force_residual = GetGeometry()[i].FastGetSolutionStepValue(FORCE_RESIDUAL);
             for (size_t j = 0; j < msDimension; ++j) {
                 #pragma omp atomic
-                r_force_residual[j] += rRHSVector[index + j] - element_damping_vector[index + j]*current_nodal_velocities[index + j];
+                r_force_residual[j] += rRHSVector[index + j] - damping_residual_contribution[index + j];
             }
         }
     }
