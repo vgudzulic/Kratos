@@ -116,16 +116,10 @@ void SplitForwardEulerSphericContinuumParticle::CalculateRightHandSide(ProcessIn
 
     ComputeBallToRigidFaceContactForce(data_buffer, elastic_force, contact_force, RollingResistance, rigid_element_force, r_process_info, search_control);
 
-    unsigned int num_sum = 0;
+    ComputeBallToBallStiffnessAndDamping(data_buffer, nodal_stiffness, nodal_damping, nodal_rotational_stiffness, nodal_rotational_damping);
 
-    ComputeBallToBallStiffnessAndDamping(data_buffer, num_sum, nodal_stiffness, nodal_damping, nodal_rotational_stiffness, nodal_rotational_damping);
+    ComputeBallToRigidFaceStiffnessAndDamping(data_buffer, nodal_stiffness, nodal_damping, nodal_rotational_stiffness, nodal_rotational_damping);
 
-    ComputeBallToRigidFaceStiffnessAndDamping(data_buffer, num_sum, nodal_stiffness, nodal_damping, nodal_rotational_stiffness, nodal_rotational_damping);
-
-    // if (num_sum > 0) {
-    //     nodal_damping = nodal_damping / num_sum;
-    //     nodal_rotational_damping = nodal_rotational_damping / num_sum;
-    // }
     // TODO: should I calculate the nodal_damping proportional to the mass in case that there are no neighbors ?
 
     if (nodal_damping > std::numeric_limits<double>::epsilon()) {
@@ -184,7 +178,6 @@ void SplitForwardEulerSphericContinuumParticle::CalculateRightHandSide(ProcessIn
 }
 
 void SplitForwardEulerSphericContinuumParticle::ComputeBallToBallStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
-                                                                            unsigned int& r_num_sum,
                                                                             double& r_nodal_stiffness,
                                                                             double& r_nodal_damping,
                                                                             double& r_nodal_rotational_stiffness,
@@ -232,7 +225,6 @@ void SplitForwardEulerSphericContinuumParticle::ComputeBallToBallStiffnessAndDam
         }
         r_nodal_stiffness += CalculateStiffnessNorm(normal_stiffness,tangential_stiffness);
         r_nodal_damping += CalculateDampingNorm(normal_damping_coeff,tangential_damping_coeff);
-        r_num_sum ++;
 
         if (this->Is(DEMFlags::HAS_ROTATION)) {
             if (i < (int)mContinuumInitialNeighborsSize && mIniNeighbourFailureId[i] == 0) {
@@ -253,7 +245,6 @@ void SplitForwardEulerSphericContinuumParticle::ComputeBallToBallStiffnessAndDam
 }
 
 void SplitForwardEulerSphericContinuumParticle::ComputeBallToRigidFaceStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
-                                                                                unsigned int& r_num_sum,
                                                                                 double& r_nodal_stiffness,
                                                                                 double& r_nodal_damping,
                                                                                 double& r_nodal_rotational_stiffness,
@@ -303,7 +294,6 @@ void SplitForwardEulerSphericContinuumParticle::ComputeBallToRigidFaceStiffnessA
 
                 r_nodal_stiffness += CalculateStiffnessNorm(normal_stiffness,tangential_stiffness);
                 r_nodal_damping += CalculateDampingNorm(normal_damping_coeff,tangential_damping_coeff);
-                r_num_sum ++;
 
                 if (this->Is(DEMFlags::HAS_ROTATION)) {
                     // TODO: is this right ?
