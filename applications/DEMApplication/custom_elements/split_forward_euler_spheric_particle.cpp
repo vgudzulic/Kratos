@@ -62,6 +62,9 @@ void SplitForwardEulerSphericParticle::Initialize(const ProcessInfo& r_process_i
     node.SetValue(NODAL_AUX_MASS,0.0);
     node.SetValue(NODAL_ROTATIONAL_DAMPING,0.0);
     node.SetValue(NODAL_AUX_INERTIA,0.0);
+    array_1d<double,3> zero_vector = ZeroVector(3);
+    node.SetValue(AUX_DISPLACEMENT,zero_vector);
+    node.SetValue(AUX_ROTATION,zero_vector);
 
     KRATOS_CATCH( "" )
 }

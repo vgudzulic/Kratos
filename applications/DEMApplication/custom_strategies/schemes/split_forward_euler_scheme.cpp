@@ -31,7 +31,7 @@ namespace Kratos {
 
         if (nodal_damping > std::numeric_limits<double>::epsilon()) {
             const double nodal_aux_mass = i.GetValue(NODAL_AUX_MASS);
-            array_1d<double, 3 >& aux_displacement = i.FastGetSolutionStepValue(AUX_DISPLACEMENT);
+            array_1d<double, 3 >& aux_displacement = i.GetValue(AUX_DISPLACEMENT);
             for (int k = 0; k < 3; k++) {
                 if (Fix_vel[k] == false) {
                     aux_displacement[k] += delta_t * force[k] / nodal_damping;
@@ -78,7 +78,7 @@ namespace Kratos {
 
         if (nodal_rotational_damping > std::numeric_limits<double>::epsilon()) {
             const double nodal_aux_inertia = i.GetValue(NODAL_AUX_INERTIA);
-            array_1d<double, 3 >& aux_rotated_angle = i.FastGetSolutionStepValue(AUX_ROTATION);
+            array_1d<double, 3 >& aux_rotated_angle = i.GetValue(AUX_ROTATION);
             for (int k = 0; k < 3; k++) {
                 if (Fix_Ang_vel[k] == false) {
                     aux_rotated_angle[k] += delta_t * torque[k] / nodal_rotational_damping;
