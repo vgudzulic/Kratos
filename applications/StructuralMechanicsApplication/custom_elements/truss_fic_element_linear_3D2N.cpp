@@ -97,7 +97,7 @@ void TrussFICElementLinear3D2N::AddExplicitContribution(
 
         VectorType element_damping_vector(msLocalSize);
         CalculateLumpedDampingVector(element_damping_vector, rCurrentProcessInfo);
-
+        
         VectorType element_mass_vector(msLocalSize);
         CalculateLumpedMassVector(element_mass_vector);
 
@@ -110,7 +110,7 @@ void TrussFICElementLinear3D2N::AddExplicitContribution(
             r_nodal_damping += element_damping_vector[index];
 
             #pragma omp atomic
-            r_nodal_mass += rCurrentProcessInfo[MASS_FACTOR]*element_mass_vector[index]/element_damping_vector[index];
+            r_nodal_mass += rCurrentProcessInfo[MASS_FACTOR]*element_mass_vector[index];
 
 
         }
@@ -129,9 +129,6 @@ void TrussFICElementLinear3D2N::AddExplicitContribution(
 
     if (rRHSVariable == RESIDUAL_VECTOR && rDestinationVariable == FORCE_RESIDUAL) {
 
-        VectorType element_damping_vector(msLocalSize);
-        CalculateLumpedDampingVector(element_damping_vector, rCurrentProcessInfo);
-
         VectorType element_mass_vector(msLocalSize);
         CalculateLumpedMassVector(element_mass_vector);
 
@@ -147,7 +144,7 @@ void TrussFICElementLinear3D2N::AddExplicitContribution(
                 r_force_residual[j] += rRHSVector[index + j];
 
                 #pragma omp atomic
-                r_inertial_residual[j] += rCurrentProcessInfo[MASS_FACTOR]*element_mass_vector[index + j]*current_nodal_displacements[index + j]/element_damping_vector[index + j];
+                r_inertial_residual[j] += rCurrentProcessInfo[MASS_FACTOR]*element_mass_vector[index + j]*current_nodal_displacements[index + j];
             }
         }
     }

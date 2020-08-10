@@ -327,7 +327,7 @@ public:
 
             // TODO
             KRATOS_WATCH((it_node_begin+i)->GetValue(NODAL_DISPLACEMENT_DAMPING))
-            KRATOS_WATCH(0.5*(it_node_begin+i)->GetValue(NODAL_DISPLACEMENT_DAMPING)*(it_node_begin+i)->GetValue(NODAL_MASS))
+            KRATOS_WATCH((it_node_begin+i)->GetValue(NODAL_MASS))
         } // for Node parallel
 
         // TODO: STOP CRITERION
@@ -411,10 +411,10 @@ public:
             fix_displacements[2] = (itCurrentNode->GetDof(DISPLACEMENT_Z, DisplacementPosition + 2).IsFixed());
 
         // Solution of the explicit equation:
-        if (mDeltaTime + nodal_mass > numerical_limit){
+        if (nodal_damping > numerical_limit){
             for (IndexType j = 0; j < DomainSize; j++) {
                 if (fix_displacements[j] == false) {
-                    r_current_displacement[j] = (mDeltaTime * r_current_aux_displacement[j] + r_current_inertial_residual[j]) / (mDeltaTime + nodal_mass);
+                    r_current_displacement[j] = (mDeltaTime * r_current_aux_displacement[j] + r_current_inertial_residual[j]/nodal_damping) / (mDeltaTime + nodal_mass/nodal_damping);
                 }
             }
         }
