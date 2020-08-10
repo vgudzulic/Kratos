@@ -100,8 +100,8 @@ public:
      * @brief Default constructor.
      * @details The ExplicitVelocityVerletScheme method
      */
-    ExplicitVelocityVerletScheme(const double MassFactor, const double L2Tolerance)
-        : ExplicitSymplecticEulerScheme<TSparseSpace, TDenseSpace>(MassFactor,L2Tolerance)
+    ExplicitVelocityVerletScheme(const double L2Tolerance)
+        : ExplicitSymplecticEulerScheme<TSparseSpace, TDenseSpace>(L2Tolerance)
     {
 
     }

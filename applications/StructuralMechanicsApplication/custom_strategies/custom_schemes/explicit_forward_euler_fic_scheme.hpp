@@ -99,10 +99,9 @@ public:
      * @brief Default constructor.
      * @details The ExplicitForwardEulerFICScheme method
      */
-    ExplicitForwardEulerFICScheme(const double MassFactor, const double L2Tolerance)
+    ExplicitForwardEulerFICScheme(const double L2Tolerance)
         : Scheme<TSparseSpace, TDenseSpace>()
     {
-        mMassFactor = MassFactor;
         mL2Tolerance = L2Tolerance;
     }
 
@@ -151,7 +150,6 @@ public:
         // dt)
         // mTime.Current = r_current_process_info[TIME] + r_current_process_info[DELTA_TIME];
         mDeltaTime = r_current_process_info[DELTA_TIME];
-        rModelPart.GetProcessInfo().SetValue(MASS_FACTOR,mMassFactor);
 
         /// Working in 2D/3D (the definition of DOMAIN_SIZE is check in the Check method)
         const SizeType dim = r_current_process_info[DOMAIN_SIZE];
@@ -414,7 +412,7 @@ public:
         if (mDeltaTime + nodal_mass > numerical_limit){
             for (IndexType j = 0; j < DomainSize; j++) {
                 if (fix_displacements[j] == false) {
-                    r_current_displacement[j] = (mDeltaTime * r_current_aux_displacement[j] + r_current_inertial_residual[j]) / (mDeltaTime + nodal_mass);
+                    r_current_displacement[j] = (mDeltaTime * r_current_aux_displacement[j] + r_current_inertial_residual[j]/nodal_damping) / (mDeltaTime + nodal_mass/nodal_damping);
                 }
             }
         }
@@ -575,7 +573,6 @@ protected:
     // TimeVariables mTime;            /// This struct contains the details of the time variables
     // DeltaTimeParameters mDeltaTime; /// This struct contains the information related with the increment od time step
     double mDeltaTime;
-    double mMassFactor;
     double mL2Tolerance;
 
     ///@}
