@@ -268,12 +268,12 @@ public:
             auto it_node = (it_node_begin + i);
             it_node->SetValue(NODAL_MASS, 0.0);
             it_node->SetValue(NODAL_DISPLACEMENT_DAMPING, 0.0);
-            array_1d<double, 3>& r_current_aux_displacement = it_node->FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS);
-            array_1d<double, 3>& r_previous_aux_displacement = it_node->FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS,1);
+            array_1d<double, 3>& r_current_aux_velocity = it_node->FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS);
+            array_1d<double, 3>& r_previous_aux_velocity = it_node->FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS,1);
             array_1d<double, 3>& r_current_residual = it_node->FastGetSolutionStepValue(FORCE_RESIDUAL);
             array_1d<double, 3>& r_current_inertial_residual = it_node->FastGetSolutionStepValue(NODAL_INERTIA);
-            noalias(r_current_aux_displacement) = it_node->FastGetSolutionStepValue(DISPLACEMENT);
-            noalias(r_previous_aux_displacement) = it_node->FastGetSolutionStepValue(DISPLACEMENT,1);
+            noalias(r_current_aux_velocity) = it_node->FastGetSolutionStepValue(VELOCITY);
+            noalias(r_previous_aux_velocity) = it_node->FastGetSolutionStepValue(VELOCITY,1);
             noalias(r_current_residual) = ZeroVector(3);
             noalias(r_current_inertial_residual) = ZeroVector(3);
         }
@@ -325,7 +325,7 @@ public:
 
             // TODO
             KRATOS_WATCH((it_node_begin+i)->GetValue(NODAL_DISPLACEMENT_DAMPING))
-            KRATOS_WATCH(0.5*(it_node_begin+i)->GetValue(NODAL_DISPLACEMENT_DAMPING)*(it_node_begin+i)->GetValue(NODAL_MASS))
+            KRATOS_WATCH((it_node_begin+i)->GetValue(NODAL_MASS))
         } // for Node parallel
 
         // TODO: STOP CRITERION
@@ -384,23 +384,24 @@ public:
         const SizeType DomainSize = 3
         )
     {
-        const double nodal_damping = itCurrentNode->GetValue(NODAL_DISPLACEMENT_DAMPING);
+        array_1d<double, 3>& r_current_aux_velocity = itCurrentNode->FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS);
         const array_1d<double, 3>& r_current_residual = itCurrentNode->FastGetSolutionStepValue(FORCE_RESIDUAL);
-        array_1d<double, 3>& r_current_aux_displacement = itCurrentNode->FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS);
-        // const array_1d<double, 3>& r_previous_aux_displacement = itCurrentNode->FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS,1);
+        const double nodal_mass = itCurrentNode->GetValue(NODAL_MASS);
+        const double nodal_damping = itCurrentNode->GetValue(NODAL_DISPLACEMENT_DAMPING);
+        // const array_1d<double, 3>& r_current_inertial_residual = itCurrentNode->FastGetSolutionStepValue(NODAL_INERTIA);
 
         // Solution of the explicit equation:
-        if (nodal_damping > numerical_limit){
-            // noalias(r_current_aux_displacement) = r_previous_aux_displacement + mDeltaTime * r_current_residual / nodal_damping;
-            noalias(r_current_aux_displacement) += mDeltaTime * r_current_residual / nodal_damping;
+        if (nodal_mass > numerical_limit){
+            // TODO: check algorithm
+            // noalias(r_current_aux_velocity) += mDeltaTime * r_current_residual / nodal_mass + mDeltaTime * nodal_damping * r_current_inertial_residual / (nodal_mass * nodal_mass);
+            noalias(r_current_aux_velocity) += mDeltaTime * r_current_residual / nodal_mass;
         }
         else{
-            noalias(r_current_aux_displacement) = ZeroVector(3);
+            noalias(r_current_aux_velocity) = ZeroVector(3);
         }
 
-        const double nodal_mass = itCurrentNode->GetValue(NODAL_MASS);
-        const array_1d<double, 3>& r_current_inertial_residual = itCurrentNode->FastGetSolutionStepValue(NODAL_INERTIA);
         array_1d<double, 3>& r_current_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT);
+        const array_1d<double, 3>& r_previous_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT,1);
 
         std::array<bool, 3> fix_displacements = {false, false, false};
         fix_displacements[0] = (itCurrentNode->GetDof(DISPLACEMENT_X, DisplacementPosition).IsFixed());
@@ -409,18 +410,21 @@ public:
             fix_displacements[2] = (itCurrentNode->GetDof(DISPLACEMENT_Z, DisplacementPosition + 2).IsFixed());
 
         // Solution of the explicit equation:
-        if (mDeltaTime + nodal_mass > numerical_limit){
+        if (nodal_mass > numerical_limit){
             for (IndexType j = 0; j < DomainSize; j++) {
                 if (fix_displacements[j] == false) {
-                    r_current_displacement[j] = (mDeltaTime * r_current_aux_displacement[j] + r_current_inertial_residual[j]/nodal_damping) / (mDeltaTime + nodal_mass/nodal_damping);
+                    r_current_displacement[j] = (mDeltaTime * r_current_aux_velocity[j] + r_previous_displacement[j]) / (1.0 + mDeltaTime * nodal_damping/nodal_mass);
                 }
             }
         }
         else{
-            noalias(r_current_displacement) = ZeroVector(3);
+            for (IndexType j = 0; j < DomainSize; j++) {
+                if (fix_displacements[j] == false) {
+                    r_current_displacement[j] = 0.0;
+                }
+            }
         }
-
-        const array_1d<double, 3>& r_previous_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT,1);
+        
         const array_1d<double, 3>& r_previous_velocity = itCurrentNode->FastGetSolutionStepValue(VELOCITY,1);
         array_1d<double, 3>& r_current_velocity = itCurrentNode->FastGetSolutionStepValue(VELOCITY);
         array_1d<double, 3>& r_current_acceleration = itCurrentNode->FastGetSolutionStepValue(ACCELERATION);

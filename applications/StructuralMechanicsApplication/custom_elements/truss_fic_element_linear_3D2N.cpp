@@ -31,6 +31,9 @@ TrussFICElementLinear3D2N::TrussFICElementLinear3D2N(
     PropertiesType::Pointer pProperties)
     : TrussElementLinear3D2N(NewId, pGeometry, pProperties) {}
 
+
+TrussFICElementLinear3D2N::~TrussFICElementLinear3D2N() {}
+
 Element::Pointer
 TrussFICElementLinear3D2N::Create(IndexType NewId,
                                NodesArrayType const& rThisNodes,
@@ -48,38 +51,6 @@ TrussFICElementLinear3D2N::Create(IndexType NewId,
 {
     return Kratos::make_intrusive<TrussFICElementLinear3D2N>(
                NewId, pGeom, pProperties);
-}
-
-TrussFICElementLinear3D2N::~TrussFICElementLinear3D2N() {}
-
-
-int TrussFICElementLinear3D2N::Check(const ProcessInfo& rCurrentProcessInfo) const
-{
-    KRATOS_TRY
-
-    int ierr = TrussElement3D2N::Check(rCurrentProcessInfo);
-    if(ierr != 0) return ierr;
-
-    double alpha = 0.0;
-    if( GetProperties().Has(RAYLEIGH_ALPHA) )
-        alpha = GetProperties()[RAYLEIGH_ALPHA];
-    else if( rCurrentProcessInfo.Has(RAYLEIGH_ALPHA) )
-        alpha = rCurrentProcessInfo[RAYLEIGH_ALPHA];
-
-    double beta  = 0.0;
-    if( GetProperties().Has(RAYLEIGH_BETA) )
-        beta = GetProperties()[RAYLEIGH_BETA];
-    else if( rCurrentProcessInfo.Has(RAYLEIGH_BETA) )
-        beta = rCurrentProcessInfo[RAYLEIGH_BETA];
-
-    if( std::abs(alpha) < std::numeric_limits<double>::epsilon() &&
-        std::abs(beta) < std::numeric_limits<double>::epsilon() ) {
-        KRATOS_ERROR << "Rayleigh Alpha and Rayleigh Beta are zero and this element needs the damping matrix (estimated with the rayleigh method) to be different from zero." << std::endl;
-    }
-
-    return ierr;
-
-    KRATOS_CATCH("")
 }
 
 void TrussFICElementLinear3D2N::AddExplicitContribution(
@@ -132,11 +103,17 @@ void TrussFICElementLinear3D2N::AddExplicitContribution(
         Matrix non_diagonal_damping_matrix;
         ProcessInfo temp_process_information = rCurrentProcessInfo; // cant pass const ProcessInfo
         CalculateNoDiagonalDampingMatrix(non_diagonal_damping_matrix, temp_process_information);
-        
-        Vector current_auxiliary_velocities = ZeroVector(msLocalSize);
-        GetAuxiliaryVelocityVector(current_auxiliary_velocities);
+
+        Vector current_nodal_velocities = ZeroVector(msLocalSize);
+        GetFirstDerivativesVector(current_nodal_velocities);
         BoundedVector<double, msLocalSize> damping_residual_contribution = ZeroVector(msLocalSize);
-        noalias(damping_residual_contribution) = prod(non_diagonal_damping_matrix, current_auxiliary_velocities);
+        noalias(damping_residual_contribution) = prod(non_diagonal_damping_matrix, current_nodal_velocities);
+
+        // TODO: check algorithm
+        // Vector current_auxiliary_velocities = ZeroVector(msLocalSize);
+        // GetAuxiliaryVelocityVector(current_auxiliary_velocities,0);
+        // BoundedVector<double, msLocalSize> damping_residual_contribution = ZeroVector(msLocalSize);
+        // noalias(damping_residual_contribution) = prod(non_diagonal_damping_matrix, current_auxiliary_velocities);
 
         Vector current_nodal_displacements = ZeroVector(msLocalSize);
         GetValuesVector(current_nodal_displacements);
@@ -160,43 +137,32 @@ void TrussFICElementLinear3D2N::AddExplicitContribution(
     KRATOS_CATCH("")
 }
 
-void TrussFICElementLinear3D2N::CalculateNoDiagonalDampingMatrix(MatrixType& rDampingMatrix, const ProcessInfo& rCurrentProcessInfo)
+int TrussFICElementLinear3D2N::Check(const ProcessInfo& rCurrentProcessInfo) const
 {
     KRATOS_TRY
 
-    // Clear Vector
-    if (rStiffnessVector.size() != msLocalSize) {
-        rStiffnessVector.resize(msLocalSize, false);
+    int ierr = TrussElement3D2N::Check(rCurrentProcessInfo);
+    if(ierr != 0) return ierr;
+
+    double alpha = 0.0;
+    if( GetProperties().Has(RAYLEIGH_ALPHA) )
+        alpha = GetProperties()[RAYLEIGH_ALPHA];
+    else if( rCurrentProcessInfo.Has(RAYLEIGH_ALPHA) )
+        alpha = rCurrentProcessInfo[RAYLEIGH_ALPHA];
+
+    double beta  = 0.0;
+    if( GetProperties().Has(RAYLEIGH_BETA) )
+        beta = GetProperties()[RAYLEIGH_BETA];
+    else if( rCurrentProcessInfo.Has(RAYLEIGH_BETA) )
+        beta = rCurrentProcessInfo[RAYLEIGH_BETA];
+
+    if( std::abs(alpha) < std::numeric_limits<double>::epsilon() &&
+        std::abs(beta) < std::numeric_limits<double>::epsilon() ) {
+        KRATOS_ERROR << "Rayleigh Alpha and Rayleigh Beta are zero and this element needs the damping matrix (estimated with the rayleigh method) to be different from zero." << std::endl;
     }
 
-    MatrixType stiffness_matrix( msLocalSize, msLocalSize );
-    noalias(stiffness_matrix) = ZeroMatrix(msLocalSize,msLocalSize);
-    ProcessInfo temp_process_information = rCurrentProcessInfo;
-    noalias(stiffness_matrix) = CreateElementStiffnessMatrix(temp_process_information);
-    // TODO: this is a first approximation
-    for (IndexType i = 0; i < msLocalSize; ++i)
-        rStiffnessVector[i] = stiffness_matrix(i,i);
+    return ierr;
 
-    KRATOS_CATCH("")
-}
-
-void TrussFICElementLinear3D2N::GetAuxiliaryVelocityVector(Vector& rValues, int Step) const
-{
-
-    KRATOS_TRY
-    if (rValues.size() != msLocalSize) {
-        rValues.resize(msLocalSize, false);
-    }
-
-    for (int i = 0; i < msNumberOfNodes; ++i) {
-        int index = i * msDimension;
-        const auto& aux_vel =
-            GetGeometry()[i].FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS, Step);
-
-        rValues[index] = aux_vel[0];
-        rValues[index + 1] = aux_vel[1];
-        rValues[index + 2] = aux_vel[2];
-    }
     KRATOS_CATCH("")
 }
 
@@ -239,7 +205,6 @@ void TrussFICElementLinear3D2N::CalculateLumpedStiffnessVector(VectorType& rStif
     noalias(stiffness_matrix) = ZeroMatrix(msLocalSize,msLocalSize);
     ProcessInfo temp_process_information = rCurrentProcessInfo;
     noalias(stiffness_matrix) = CreateElementStiffnessMatrix(temp_process_information);
-    // TODO: this is a first approximation
     for (IndexType i = 0; i < msLocalSize; ++i)
         rStiffnessVector[i] = stiffness_matrix(i,i);
 
@@ -292,6 +257,56 @@ void TrussFICElementLinear3D2N::CalculateLumpedDampingVector(
     }
 
     KRATOS_CATCH( "" )
+}
+
+void TrussFICElementLinear3D2N::CalculateNoDiagonalDampingMatrix(MatrixType& rDampingMatrix, const ProcessInfo& rCurrentProcessInfo)
+{
+    KRATOS_TRY
+
+    // Clear matrix
+    if (rDampingMatrix.size1() != msLocalSize || rDampingMatrix.size2() != msLocalSize) {
+        rDampingMatrix.resize(msLocalSize, msLocalSize, false);
+    }
+    rDampingMatrix = ZeroMatrix(msLocalSize, msLocalSize);
+
+    double beta  = 0.0;
+    if( GetProperties().Has(RAYLEIGH_BETA) )
+        beta = GetProperties()[RAYLEIGH_BETA];
+    else if( rCurrentProcessInfo.Has(RAYLEIGH_BETA) )
+        beta = rCurrentProcessInfo[RAYLEIGH_BETA];
+
+    if (beta > std::numeric_limits<double>::epsilon()) {
+        MatrixType non_diagonal_stiffness_matrix( msLocalSize, msLocalSize );
+        noalias(non_diagonal_stiffness_matrix) = ZeroMatrix(msLocalSize,msLocalSize);
+        ProcessInfo temp_process_information = rCurrentProcessInfo;
+        noalias(non_diagonal_stiffness_matrix) = CreateElementStiffnessMatrix(temp_process_information);
+        for (IndexType i = 0; i < msLocalSize; ++i) {
+            non_diagonal_stiffness_matrix(i,i) = 0.0;
+        }
+        noalias(rDampingMatrix) = beta * non_diagonal_stiffness_matrix;
+    }
+
+    KRATOS_CATCH("")
+}
+
+void TrussFICElementLinear3D2N::GetAuxiliaryVelocityVector(Vector& rValues, int Step) const
+{
+
+    KRATOS_TRY
+    if (rValues.size() != msLocalSize) {
+        rValues.resize(msLocalSize, false);
+    }
+
+    for (int i = 0; i < msNumberOfNodes; ++i) {
+        int index = i * msDimension;
+        const auto& aux_vel =
+            GetGeometry()[i].FastGetSolutionStepValue(NODAL_DISPLACEMENT_STIFFNESS, Step);
+
+        rValues[index] = aux_vel[0];
+        rValues[index + 1] = aux_vel[1];
+        rValues[index + 2] = aux_vel[2];
+    }
+    KRATOS_CATCH("")
 }
 
 void TrussFICElementLinear3D2N::save(Serializer& rSerializer) const

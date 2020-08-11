@@ -166,15 +166,15 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
         ;
 
     py::class_< ExplicitForwardEulerFICSchemeType,typename ExplicitForwardEulerFICSchemeType::Pointer, BaseSchemeType >(m,"ExplicitForwardEulerFICScheme")
-        .def(py::init< const double, const double>())
+        .def(py::init< const double>())
         ;
 
     py::class_< ExplicitSymplecticEulerSchemeType,typename ExplicitSymplecticEulerSchemeType::Pointer, BaseSchemeType >(m,"ExplicitSymplecticEulerScheme")
-        .def(py::init< const double, const double>())
+        .def(py::init< const double>())
         ;
 
     py::class_< ExplicitVelocityVerletSchemeType,typename ExplicitVelocityVerletSchemeType::Pointer, BaseSchemeType >(m,"ExplicitVelocityVerletScheme")
-        .def(py::init< const double, const double>())
+        .def(py::init< const double>())
         ;
 
 

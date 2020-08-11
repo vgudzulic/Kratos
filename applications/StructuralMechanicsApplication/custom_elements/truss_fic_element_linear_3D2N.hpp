@@ -124,6 +124,11 @@ protected:
      */
     void CalculateLumpedDampingVector(VectorType& rDampingVector, const ProcessInfo& rCurrentProcessInfo);
 
+    void CalculateNoDiagonalDampingMatrix(MatrixType& rDampingMatrix, const ProcessInfo& rCurrentProcessInfo);
+
+    void GetAuxiliaryVelocityVector(Vector& rValues, int Step) const;
+
+
 private:
 
     friend class Serializer;
