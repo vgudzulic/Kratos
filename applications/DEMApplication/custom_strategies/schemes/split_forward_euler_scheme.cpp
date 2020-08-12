@@ -29,13 +29,13 @@ namespace Kratos {
 
         const double nodal_damping = i.GetValue(NODAL_DAMPING);
 
-        if (nodal_damping > std::numeric_limits<double>::epsilon()) {
-            const double nodal_aux_mass = i.GetValue(NODAL_AUX_MASS);
-            array_1d<double, 3 >& aux_displacement = i.GetValue(AUX_DISPLACEMENT);
+        if (mass > std::numeric_limits<double>::epsilon()) {
+            // const double nodal_aux_mass = i.GetValue(NODAL_AUX_MASS);
+            array_1d<double, 3 >& aux_velocity = i.GetValue(AUX_DISPLACEMENT);
             for (int k = 0; k < 3; k++) {
                 if (Fix_vel[k] == false) {
-                    aux_displacement[k] += delta_t * force[k] / nodal_damping;
-                    delta_displ[k] = (delta_t * aux_displacement[k] + nodal_aux_mass * displ[k]) / (delta_t + nodal_aux_mass) - displ[k];
+                    aux_velocity[k] += delta_t * force[k] / mass;
+                    delta_displ[k] = (delta_t * aux_velocity[k] + displ[k]) / (1.0 + delta_t * nodal_damping/mass) - displ[k];
                     displ[k] += delta_displ[k];
                     coor[k] = initial_coor[k] + displ[k];
                     vel[k] = delta_displ[k] / delta_t;
