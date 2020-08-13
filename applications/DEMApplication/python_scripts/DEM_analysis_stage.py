@@ -209,9 +209,10 @@ class DEMAnalysisStage(AnalysisStage):
             self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-4)
             return VelocityVerletScheme()
         elif self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Split_Forward_Euler':
-            self.spheres_model_part.ProcessInfo.SetValue(INERTIAL_FACTOR, 1.0)
             # TODO: POWER_LAW_TOLERANCE is used as an L2 Tolerance variable
             self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-4)
+            self.spheres_model_part.ProcessInfo.SetValue(ALPHA_RAYLEIGH, 1.19e8)
+            self.spheres_model_part.ProcessInfo.SetValue(BETA_RAYLEIGH, 0.0)
             return SplitForwardEulerScheme()
 
         return None

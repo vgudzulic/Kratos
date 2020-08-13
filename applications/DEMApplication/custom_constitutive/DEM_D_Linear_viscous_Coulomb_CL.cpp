@@ -106,6 +106,61 @@ namespace Kratos {
 
     }
 
+    void DEM_D_Linear_viscous_Coulomb::CalculateForcesRayleigh(const ProcessInfo& r_process_info,
+                                                       const double OldLocalElasticContactForce[3],
+                                                       double LocalElasticContactForce[3],
+                                                       double LocalDeltDisp[3],
+                                                       double LocalRelVel[3],
+                                                       double indentation,
+                                                       double previous_indentation,
+                                                       double ViscoDampingLocalContactForce[3],
+                                                       double& cohesive_force,
+                                                       SphericParticle* element1,
+                                                       SphericParticle* element2,
+                                                       bool& sliding, double LocalCoordSystem[3][3]) {
+
+        InitializeContact(element1, element2, indentation);
+
+        LocalElasticContactForce[2]  = CalculateNormalForce(element1, element2, indentation, LocalCoordSystem );
+        cohesive_force               = CalculateCohesiveNormalForce(element1, element2, indentation);
+
+        CalculateViscoDampingForceRayleigh(LocalRelVel, ViscoDampingLocalContactForce, r_process_info[BETA_RAYLEIGH]);
+
+        double normal_contact_force = LocalElasticContactForce[2] + ViscoDampingLocalContactForce[2];
+
+        if (normal_contact_force < 0.0) {
+            normal_contact_force = 0.0;
+            ViscoDampingLocalContactForce[2] = -1.0 * LocalElasticContactForce[2];
+        }
+
+        double ElasticShearForceModulus;
+        double MaximumAdmisibleShearForce;
+
+        CalculateTangentialForceWithNeighbour(normal_contact_force, OldLocalElasticContactForce, LocalElasticContactForce, ViscoDampingLocalContactForce, LocalDeltDisp,
+                                              sliding, element1, element2, indentation, previous_indentation, ElasticShearForceModulus, MaximumAdmisibleShearForce);
+
+        double& elastic_energy = element1->GetElasticEnergy();
+        CalculateElasticEnergyDEM(elastic_energy, indentation, LocalElasticContactForce);
+
+        if (ElasticShearForceModulus > MaximumAdmisibleShearForce && MaximumAdmisibleShearForce != 0.0){
+            double& inelastic_frictional_energy = element1->GetInelasticFrictionalEnergy();
+            CalculateInelasticFrictionalEnergyDEM(inelastic_frictional_energy, ElasticShearForceModulus, LocalElasticContactForce);
+        }
+
+        double& inelastic_viscodamping_energy = element1->GetInelasticViscodampingEnergy();
+        CalculateInelasticViscodampingEnergyDEM(inelastic_viscodamping_energy, ViscoDampingLocalContactForce, LocalDeltDisp);
+
+    }
+
+    void DEM_D_Linear_viscous_Coulomb::CalculateViscoDampingForceRayleigh(double LocalRelVel[3],
+                                                                  double ViscoDampingLocalContactForce[3],
+                                                                  const double beta_rayleigh) {
+
+        ViscoDampingLocalContactForce[0] = - beta_rayleigh * mKt * LocalRelVel[0];
+        ViscoDampingLocalContactForce[1] = - beta_rayleigh * mKt * LocalRelVel[1];
+        ViscoDampingLocalContactForce[2] = - beta_rayleigh * mKn * LocalRelVel[2];
+    }
+
     void DEM_D_Linear_viscous_Coulomb::CalculateViscoDampingForce(double LocalRelVel[3],
                                                                   double ViscoDampingLocalContactForce[3],
                                                                   SphericParticle* const element1,
@@ -241,6 +296,51 @@ namespace Kratos {
         CalculateInelasticViscodampingEnergyFEM(inelastic_viscodamping_energy, ViscoDampingLocalContactForce, LocalDeltDisp);
     }
 
+    void DEM_D_Linear_viscous_Coulomb::CalculateForcesRayleighWithFEM(ProcessInfo& r_process_info,
+                                                              const double OldLocalElasticContactForce[3],
+                                                              double LocalElasticContactForce[3],
+                                                              double LocalDeltDisp[3],
+                                                              double LocalRelVel[3],
+                                                              double indentation,
+                                                              double previous_indentation,
+                                                              double ViscoDampingLocalContactForce[3],
+                                                              double& cohesive_force,
+                                                              SphericParticle* const element,
+                                                              Condition* const wall,
+                                                              bool& sliding) {
+
+        InitializeContactWithFEM(element, wall, indentation);
+
+        LocalElasticContactForce[2] = CalculateNormalForce(element, wall, indentation);
+        cohesive_force              = CalculateCohesiveNormalForceWithFEM(element, wall, indentation);
+
+        CalculateViscoDampingForceRayleighWithFEM(LocalRelVel, ViscoDampingLocalContactForce, r_process_info[BETA_RAYLEIGH]);
+
+        double normal_contact_force = LocalElasticContactForce[2] + ViscoDampingLocalContactForce[2];
+
+        if (normal_contact_force < 0.0) {
+            normal_contact_force = 0.0;
+            ViscoDampingLocalContactForce[2] = -1.0 * LocalElasticContactForce[2];
+        }
+
+        double ElasticShearForceModulus;
+        double MaximumAdmisibleShearForce;
+
+        CalculateTangentialForceWithNeighbour(normal_contact_force, OldLocalElasticContactForce, LocalElasticContactForce, ViscoDampingLocalContactForce, LocalDeltDisp,
+                                              sliding, element, wall, indentation, previous_indentation, ElasticShearForceModulus, MaximumAdmisibleShearForce);
+
+        double& elastic_energy = element->GetElasticEnergy();
+        CalculateElasticEnergyFEM(elastic_energy, indentation, LocalElasticContactForce);//MSIMSI
+
+        if (ElasticShearForceModulus > MaximumAdmisibleShearForce && MaximumAdmisibleShearForce != 0.0){
+            double& inelastic_frictional_energy = element->GetInelasticFrictionalEnergy();
+            CalculateInelasticFrictionalEnergyFEM(inelastic_frictional_energy, ElasticShearForceModulus, LocalElasticContactForce);
+        }
+
+        double& inelastic_viscodamping_energy = element->GetInelasticViscodampingEnergy();
+        CalculateInelasticViscodampingEnergyFEM(inelastic_viscodamping_energy, ViscoDampingLocalContactForce, LocalDeltDisp);
+    }
+
     template<class NeighbourClassType>
 
     void DEM_D_Linear_viscous_Coulomb::CalculateTangentialForceWithNeighbour(const double normal_contact_force,
@@ -321,6 +421,16 @@ namespace Kratos {
             }
             sliding = true;
         }
+    }
+
+    void DEM_D_Linear_viscous_Coulomb::CalculateViscoDampingForceRayleighWithFEM(double LocalRelVel[3],
+                                                                         double ViscoDampingLocalContactForce[3],
+                                                                         const double beta_rayleigh) {
+
+        ViscoDampingLocalContactForce[0] = - beta_rayleigh * mKt * LocalRelVel[0];
+        ViscoDampingLocalContactForce[1] = - beta_rayleigh * mKt * LocalRelVel[1];
+        ViscoDampingLocalContactForce[2] = - beta_rayleigh * mKn * LocalRelVel[2];
+
     }
 
     void DEM_D_Linear_viscous_Coulomb::CalculateViscoDampingForceWithFEM(double LocalRelVel[3],

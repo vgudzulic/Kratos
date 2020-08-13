@@ -59,12 +59,10 @@ void SplitForwardEulerSphericParticle::Initialize(const ProcessInfo& r_process_i
     NodeType& node = GetGeometry()[0];
 
     node.SetValue(NODAL_DAMPING,0.0);
-    node.SetValue(NODAL_AUX_MASS,0.0);
     node.SetValue(NODAL_ROTATIONAL_DAMPING,0.0);
-    node.SetValue(NODAL_AUX_INERTIA,0.0);
     array_1d<double,3> zero_vector = ZeroVector(3);
-    node.SetValue(AUX_DISPLACEMENT,zero_vector);
-    node.SetValue(AUX_ROTATION,zero_vector);
+    node.SetValue(AUX_VELOCITY,zero_vector);
+    node.SetValue(AUX_ANGULAR_VELOCITY,zero_vector);
 
     KRATOS_CATCH( "" )
 }
@@ -93,11 +91,9 @@ void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_pro
     double nodal_stiffness;
     double& nodal_damping = this_node.GetValue(NODAL_DAMPING);
     const double& mass = this_node.FastGetSolutionStepValue(NODAL_MASS);
-    double& nodal_aux_mass = this_node.GetValue(NODAL_AUX_MASS);
     double nodal_rotational_stiffness;
     double& nodal_rotational_damping = this_node.GetValue(NODAL_ROTATIONAL_DAMPING);
     const double& moment_of_inertia = this_node.FastGetSolutionStepValue(PARTICLE_MOMENT_OF_INERTIA);
-    double& nodal_aux_inertia = this_node.GetValue(NODAL_AUX_INERTIA);
 
     mContactMoment.clear();
     elastic_force.clear();
@@ -121,13 +117,6 @@ void SplitForwardEulerSphericParticle::CalculateRightHandSide(ProcessInfo& r_pro
     ComputeBallToRigidFaceStiffnessAndDamping(data_buffer, nodal_stiffness, nodal_damping, nodal_rotational_stiffness, nodal_rotational_damping);
 
     // TODO: should I calculate the nodal_damping proportional to the mass in case that there are no neighbors ?
-
-    if (nodal_damping > std::numeric_limits<double>::epsilon()) {
-        nodal_aux_mass = r_process_info[INERTIAL_FACTOR] * mass/nodal_damping;
-    }
-    if (nodal_rotational_damping > std::numeric_limits<double>::epsilon()) {
-        nodal_aux_inertia = r_process_info[INERTIAL_FACTOR] * moment_of_inertia/nodal_rotational_damping;
-    }
 
     if (this->IsNot(DEMFlags::BELONGS_TO_A_CLUSTER)){
         ComputeAdditionalForces(additional_forces, additionally_applied_moment, r_process_info, gravity);
