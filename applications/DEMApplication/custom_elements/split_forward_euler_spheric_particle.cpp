@@ -521,7 +521,7 @@ void SplitForwardEulerSphericParticle::ComputeBallToBallStiffness(SphericParticl
     KRATOS_CATCH("")
 }
 
-void SplitForwardEulerSphericParticle::ComputeBallToRigidFaceStiffnessAndDamping(SphericParticle::ParticleDataBuffer & data_buffer,
+void SplitForwardEulerSphericParticle::ComputeBallToRigidFaceStiffness(SphericParticle::ParticleDataBuffer & data_buffer,
                                                                                 double& r_nodal_stiffness,
                                                                                 double& r_nodal_rotational_stiffness)
 {

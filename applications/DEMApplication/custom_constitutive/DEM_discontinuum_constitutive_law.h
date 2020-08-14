@@ -121,6 +121,40 @@ namespace Kratos {
         virtual double CalculateCohesiveNormalForceWithFEM(SphericParticle* const element, Condition* const wall, const double indentation);
         virtual double LocalPeriod(const int i, SphericParticle* element1,SphericParticle* element2);
 
+        virtual void CalculateForcesRayleigh(const ProcessInfo& r_process_info,
+                                    const double OldLocalElasticContactForce[3],
+                                    double LocalElasticContactForce[3],
+                                    double LocalDeltDisp[3],
+                                    double LocalRelVel[3],
+                                    double indentation,
+                                    double previous_indentation,
+                                    double ViscoDampingLocalContactForce[3],
+                                    double& cohesive_force,
+                                    SphericParticle* element1,
+                                    SphericParticle* element2,
+                                    bool& sliding, double LocalCoordSystem[3][3]){}
+
+        virtual void CalculateViscoDampingForceRayleigh(double LocalRelVel[3],
+                                                        double ViscoDampingLocalContactForce[3],
+                                                        const double beta_rayleigh){}
+
+        virtual void CalculateForcesRayleighWithFEM(ProcessInfo& r_process_info,
+                                                    const double OldLocalElasticContactForce[3],
+                                                    double LocalElasticContactForce[3],
+                                                    double LocalDeltDisp[3],
+                                                    double LocalRelVel[3],
+                                                    double indentation,
+                                                    double previous_indentation,
+                                                    double ViscoDampingLocalContactForce[3],
+                                                    double& cohesive_force,
+                                                    SphericParticle* const element,
+                                                    Condition* const wall,
+                                                    bool& sliding){}
+
+        virtual void CalculateViscoDampingForceRayleighWithFEM(double LocalRelVel[3],
+                                                            double ViscoDampingLocalContactForce[3],
+                                                            const double beta_rayleigh){}
+
     private:
 
         friend class Serializer;

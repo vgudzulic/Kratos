@@ -294,7 +294,7 @@ virtual void ComputeBallToRigidFaceContactForce(ParticleDataBuffer & data_buffer
                                                 double& RollingResistance,
                                                 array_1d<double, 3>& rigid_element_force,
                                                 ProcessInfo& r_process_info,
-                                                int search_control) ;
+                                                int search_control);
 
 virtual void InitializeSolutionStep(ProcessInfo& r_process_info) override;
 

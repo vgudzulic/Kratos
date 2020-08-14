@@ -81,7 +81,7 @@ void ComputeBallToBallContactForce(SphericParticle::ParticleDataBuffer& data_buf
                                         array_1d<double, 3>& rContactForce,
                                         double& RollingResistance) override;
 
-void ComputeBallToRigidFaceContactForce(ParticleDataBuffer & data_buffer,
+void ComputeBallToRigidFaceContactForce(SphericParticle::ParticleDataBuffer & data_buffer,
                                             array_1d<double, 3>& rElasticForce,
                                             array_1d<double, 3>& rContactForce,
                                             double& RollingResistance,
@@ -95,7 +95,6 @@ virtual void ComputeBallToBallStiffness(SphericParticle::ParticleDataBuffer & da
 
 virtual void ComputeBallToRigidFaceStiffness(SphericParticle::ParticleDataBuffer & data_buffer,
                                                                                 double& r_nodal_stiffness,
-                                                                                double& r_nodal_damping,
                                                                                 double& r_nodal_rotational_stiffness);
 
 virtual double CalculateStiffnessNorm(const double& r_normal_stiffness, const double& r_tangential_stiffness);

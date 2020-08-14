@@ -134,6 +134,40 @@ namespace Kratos {
                                                      double ViscoDampingLocalContactForce[3],
                                                      double LocalDeltDisp[3]);
 
+        void CalculateForcesRayleigh(const ProcessInfo& r_process_info,
+                                        const double OldLocalElasticContactForce[3],
+                                        double LocalElasticContactForce[3],
+                                        double LocalDeltDisp[3],
+                                        double LocalRelVel[3],
+                                        double indentation,
+                                        double previous_indentation,
+                                        double ViscoDampingLocalContactForce[3],
+                                        double& cohesive_force,
+                                        SphericParticle* element1,
+                                        SphericParticle* element2,
+                                        bool& sliding, double LocalCoordSystem[3][3]) override;
+
+        void CalculateViscoDampingForceRayleigh(double LocalRelVel[3],
+                                                double ViscoDampingLocalContactForce[3],
+                                                const double beta_rayleigh) override;
+
+        void CalculateForcesRayleighWithFEM(ProcessInfo& r_process_info,
+                                            const double OldLocalElasticContactForce[3],
+                                            double LocalElasticContactForce[3],
+                                            double LocalDeltDisp[3],
+                                            double LocalRelVel[3],
+                                            double indentation,
+                                            double previous_indentation,
+                                            double ViscoDampingLocalContactForce[3],
+                                            double& cohesive_force,
+                                            SphericParticle* const element,
+                                            Condition* const wall,
+                                            bool& sliding) override;
+
+        void CalculateViscoDampingForceRayleighWithFEM(double LocalRelVel[3],
+                                                        double ViscoDampingLocalContactForce[3],
+                                                        const double beta_rayleigh) override;
+
     private:
 
         friend class Serializer;
