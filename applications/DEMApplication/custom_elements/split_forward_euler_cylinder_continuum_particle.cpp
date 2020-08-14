@@ -126,8 +126,4 @@ double SplitForwardEulerCylinderContinuumParticle::CalculateStiffnessNorm(const 
     return std::sqrt(r_normal_stiffness*r_normal_stiffness+r_tangential_stiffness*r_tangential_stiffness);
 }
 
-double SplitForwardEulerCylinderContinuumParticle::CalculateDampingNorm(const double& r_normal_damping_coeff, const double& r_tangential_damping_coeff) {
-    return std::sqrt(r_normal_damping_coeff*r_normal_damping_coeff+r_tangential_damping_coeff*r_tangential_damping_coeff);
-}
-
 }  // namespace Kratos.

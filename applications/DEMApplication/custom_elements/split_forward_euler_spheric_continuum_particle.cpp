@@ -153,7 +153,7 @@ void SplitForwardEulerSphericContinuumParticle::CalculateRightHandSide(ProcessIn
     // TODO: check sign of diagonal damping force
     // TODO: can be diagonal damping force added globally ? I think it must be added globally. However, 
     //       if the local damping force is used to calculate other local forces, there will be a small
-    //       error because the diagonal damping force won't have been added.
+    //       error because the diagonal damping force won't have been added until now.
     total_forces[0] = contact_force[0] + additional_forces[0] + r_process_info[BETA_RAYLEIGH] * nodal_stiffness * velocity[0];
     total_forces[1] = contact_force[1] + additional_forces[1] + r_process_info[BETA_RAYLEIGH] * nodal_stiffness * velocity[1];
     total_forces[2] = contact_force[2] + additional_forces[2] + r_process_info[BETA_RAYLEIGH] * nodal_stiffness * velocity[2];
@@ -710,7 +710,6 @@ void SplitForwardEulerSphericContinuumParticle::ComputeBallToBallStiffness(Spher
         if (i < (int)mContinuumInitialNeighborsSize) {
             mContinuumConstitutiveLawArray[i]->GetContactArea(GetRadius(), other_radius, cont_ini_neigh_area, i, calculation_area);
             mContinuumConstitutiveLawArray[i]->CalculateElasticConstants(normal_stiffness, tangential_stiffness, initial_dist, equiv_young, equiv_poisson, calculation_area, this, neighbour_iterator);
-            // mContinuumConstitutiveLawArray[i]->CalculateViscoDampingCoeff(normal_damping_coeff, tangential_damping_coeff, this, neighbour_iterator, normal_stiffness, tangential_stiffness);
         }
         r_nodal_stiffness += CalculateStiffnessNorm(normal_stiffness,tangential_stiffness);
 
@@ -773,7 +772,6 @@ void SplitForwardEulerSphericContinuumParticle::ComputeBallToRigidFaceStiffness(
                 mDiscontinuumConstitutiveLaw->InitializeContactWithFEM(this,wall,indentation);
                 normal_stiffness = mDiscontinuumConstitutiveLaw->mKn;
                 tangential_stiffness = mDiscontinuumConstitutiveLaw->mKt;
-                // mDiscontinuumConstitutiveLaw->CalculateViscoDampingCoeffWithFEM(normal_damping_coeff, tangential_damping_coeff, this, wall,normal_stiffness,tangential_stiffness);
 
                 r_nodal_stiffness += CalculateStiffnessNorm(normal_stiffness,tangential_stiffness);
 
@@ -795,98 +793,5 @@ void SplitForwardEulerSphericContinuumParticle::ComputeBallToRigidFaceStiffness(
 double SplitForwardEulerSphericContinuumParticle::CalculateStiffnessNorm(const double& r_normal_stiffness, const double& r_tangential_stiffness) {
     return std::sqrt(r_normal_stiffness*r_normal_stiffness+2.0*r_tangential_stiffness*r_tangential_stiffness);
 }
-
-// void SplitForwardEulerSphericContinuumParticle::AddUpForcesAndProject(double OldCoordSystem[3][3],
-//                                             double LocalCoordSystem[3][3],
-//                                             double LocalContactForce[3],
-//                                             double LocalElasticContactForce[3],
-//                                             double LocalElasticExtraContactForce[3],
-//                                             double GlobalContactForce[3],
-//                                             double GlobalElasticContactForce[3],
-//                                             double GlobalElasticExtraContactForce[3],
-//                                             double TotalGlobalElasticContactForce[3],
-//                                             double ViscoDampingLocalContactForce[3],
-//                                             const double cohesive_force,
-//                                             array_1d<double, 3>& other_ball_to_ball_forces,
-//                                             array_1d<double, 3>& r_elastic_force,
-//                                             array_1d<double, 3>& r_contact_force,
-//                                             const unsigned int i_neighbour_count,
-//                                             ProcessInfo& r_process_info)
-// {
-
-//     for (unsigned int index = 0; index < 3; index++) {
-//         // NOTE: In this element we don't have damping forces
-//         // LocalContactForce[index] = LocalElasticContactForce[index] + ViscoDampingLocalContactForce[index] + other_ball_to_ball_forces[index];
-//         LocalContactForce[index] = LocalElasticContactForce[index] + other_ball_to_ball_forces[index];
-//     }
-//     LocalContactForce[2] -= cohesive_force;
-
-//     DEM_ADD_SECOND_TO_FIRST(LocalElasticContactForce, other_ball_to_ball_forces);
-
-//     GeometryFunctions::VectorLocal2Global(LocalCoordSystem, LocalElasticContactForce, GlobalElasticContactForce);
-//     GeometryFunctions::VectorLocal2Global(LocalCoordSystem, LocalContactForce, GlobalContactForce);
-//     GeometryFunctions::VectorLocal2Global(LocalCoordSystem, LocalElasticExtraContactForce, GlobalElasticExtraContactForce);
-
-//     // Saving contact forces (We need to, since tangential elastic force is history-dependent)
-//     DEM_COPY_SECOND_TO_FIRST_3(mNeighbourElasticContactForces[i_neighbour_count], GlobalElasticContactForce)
-//     DEM_COPY_SECOND_TO_FIRST_3(mNeighbourElasticExtraContactForces[i_neighbour_count], GlobalElasticExtraContactForce)
-
-//     TotalGlobalElasticContactForce[0] = GlobalElasticContactForce[0] + GlobalElasticExtraContactForce[0];
-//     TotalGlobalElasticContactForce[1] = GlobalElasticContactForce[1] + GlobalElasticExtraContactForce[1];
-//     TotalGlobalElasticContactForce[2] = GlobalElasticContactForce[2] + GlobalElasticExtraContactForce[2];
-//     DEM_ADD_SECOND_TO_FIRST(r_elastic_force, TotalGlobalElasticContactForce)
-
-//     double TotalGlobalContactForce[3];
-//     TotalGlobalContactForce[0] = GlobalContactForce[0] + GlobalElasticExtraContactForce[0];
-//     TotalGlobalContactForce[1] = GlobalContactForce[1] + GlobalElasticExtraContactForce[1];
-//     TotalGlobalContactForce[2] = GlobalContactForce[2] + GlobalElasticExtraContactForce[2];
-//     DEM_ADD_SECOND_TO_FIRST(r_contact_force, TotalGlobalContactForce )
-// }
-
-// void SplitForwardEulerSphericContinuumParticle::AddUpMomentsAndProject(double LocalCoordSystem[3][3],
-//                                              double LocalElasticRotationalMoment[3],
-//                                              double LocalViscoRotationalMoment[3]) {
-
-//     double LocalContactRotationalMoment[3] = {0.0};
-//     double GlobalContactRotationalMoment[3] = {0.0};
-
-//     for (unsigned int index = 0; index < 3; index++) {
-//         // NOTE: In this element we don't have damping forces
-//         // LocalContactRotationalMoment[index] = LocalElasticRotationalMoment[index] + LocalViscoRotationalMoment[index];
-//         LocalContactRotationalMoment[index] = LocalElasticRotationalMoment[index];
-//     }
-
-//     GeometryFunctions::VectorLocal2Global(LocalCoordSystem, LocalContactRotationalMoment, GlobalContactRotationalMoment);
-
-//     DEM_ADD_SECOND_TO_FIRST(mContactMoment, GlobalContactRotationalMoment)
-// }
-
-// void SplitForwardEulerSphericContinuumParticle::AddUpFEMForcesAndProject(double LocalCoordSystem[3][3],
-//                                                double LocalContactForce[3],
-//                                                double LocalElasticContactForce[3],
-//                                                double GlobalContactForce[3],
-//                                                double GlobalElasticContactForce[3],
-//                                                double ViscoDampingLocalContactForce[3],
-//                                                const double cohesive_force,
-//                                                array_1d<double, 3>& r_elastic_force,
-//                                                array_1d<double, 3>& r_contact_force,
-//                                                array_1d<double, 3>& elastic_force_backup,
-//                                                array_1d<double, 3>& total_force_backup) {
-//     for (unsigned int index = 0; index < 3; index++) {
-//         // NOTE: In this element we don't have damping forces
-//         // LocalContactForce[index] = LocalElasticContactForce[index] + ViscoDampingLocalContactForce[index];
-//         LocalContactForce[index] = LocalElasticContactForce[index];
-//     }
-//     LocalContactForce[2] -= cohesive_force;
-
-//     GeometryFunctions::VectorLocal2Global(LocalCoordSystem, LocalElasticContactForce, GlobalElasticContactForce);
-//     GeometryFunctions::VectorLocal2Global(LocalCoordSystem, LocalContactForce, GlobalContactForce);
-//     // Saving contact forces (We need to, since tangential elastic force is history-dependent)
-//     DEM_COPY_SECOND_TO_FIRST_3(elastic_force_backup,GlobalElasticContactForce)
-//     DEM_COPY_SECOND_TO_FIRST_3(total_force_backup,GlobalContactForce)
-//     DEM_ADD_SECOND_TO_FIRST(r_elastic_force, GlobalElasticContactForce)
-//     DEM_ADD_SECOND_TO_FIRST(r_contact_force, GlobalContactForce)
-
-// }
 
 }  // namespace Kratos.

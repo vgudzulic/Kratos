@@ -79,8 +79,6 @@ void AddContributionToRepresentativeVolume(const double distance, const double r
 
 double CalculateStiffnessNorm(const double& r_normal_stiffness, const double& r_tangential_stiffness) override;
 
-double CalculateDampingNorm(const double& r_normal_damping_coeff, const double& r_tangential_damping_coeff) override;
-
 private:
 
 friend class Serializer;

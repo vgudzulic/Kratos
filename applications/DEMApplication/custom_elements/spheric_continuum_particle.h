@@ -154,11 +154,11 @@ namespace Kratos
 
         virtual void Initialize(const ProcessInfo& r_process_info) override;
         virtual double GetInitialDeltaWithFEM(int index) override;
-        virtual void ComputeBallToBallContactForce(SphericParticle::ParticleDataBuffer &,
+        void ComputeBallToBallContactForce(SphericParticle::ParticleDataBuffer& data_buffer,
                                                    ProcessInfo& r_process_info,
                                                    array_1d<double, 3>& rElasticForce,
                                                    array_1d<double, 3>& rContactForce,
-                                                   double& RollingResistance) override final;
+                                                   double& RollingResistance) override;
 
         virtual void ComputeRollingResistance(double& RollingResistance,
                                               const double& NormalLocalContactForce,
