@@ -119,7 +119,12 @@ class DEMAnalysisStage(AnalysisStage):
         self.AddVariables()
         super(DEMAnalysisStage, self).__init__(model, self.DEM_parameters)
 
+        # TODO: convergence check
         self.step_number = 0
+        # TODO: Incremental EXTERNAL_APPLIED_FORCE
+        # self.increase_load_count = 0
+        # self.f_old = 0.0
+        # self.t_old = 0.0
 
     def CreateModelParts(self):
         self.spheres_model_part = self.model.CreateModelPart("SpheresPart")
@@ -211,8 +216,8 @@ class DEMAnalysisStage(AnalysisStage):
         elif self.DEM_parameters["TranslationalIntegrationScheme"].GetString() == 'Split_Forward_Euler':
             # TODO: POWER_LAW_TOLERANCE is used as an L2 Tolerance variable
             self.spheres_model_part.ProcessInfo.SetValue(POWER_LAW_TOLERANCE, 1.0e-4)
-            self.spheres_model_part.ProcessInfo.SetValue(ALPHA_RAYLEIGH, 0.298e8)
-            self.spheres_model_part.ProcessInfo.SetValue(BETA_RAYLEIGH, 0.7665e-6)
+            self.spheres_model_part.ProcessInfo.SetValue(ALPHA_RAYLEIGH, 0.4764e8)
+            self.spheres_model_part.ProcessInfo.SetValue(BETA_RAYLEIGH, 1.06128e-6)
             return SplitForwardEulerScheme()
 
         return None
@@ -512,9 +517,22 @@ class DEMAnalysisStage(AnalysisStage):
                     t = self.time
                     self.spheres_model_part.ProcessInfo.SetValue(IMPOSED_Z_STRAIN_VALUE, eval(self.DEM_parameters["ZStrainValue"].GetString()))
         
+        # TODO: convergence check
         self.step_number += 1
         self.spheres_model_part.ProcessInfo.SetValue(STEP, self.step_number)
 
+        # TODO: Incremental EXTERNAL_APPLIED_FORCE
+        # for node in self.spheres_model_part.Nodes:
+        #     if node.Id == 10 or node.Id == 20 or node.Id == 30:
+        #         final_force = 5e4
+        #         final_time = 1.0e-4
+        #         slope = final_force/final_time
+        #         force_x = slope * self.time
+        #         values = Array3()
+        #         values[0] = force_x
+        #         values[1] = 0.0
+        #         values[2] = 0.0
+        #         node.SetSolutionStepValue(EXTERNAL_APPLIED_FORCE, values)
 
     def UpdateIsTimeToPrintInModelParts(self, is_time_to_print):
         self.UpdateIsTimeToPrintInOneModelPart(self.spheres_model_part, is_time_to_print)
