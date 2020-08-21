@@ -2,7 +2,7 @@
 import KratosMultiphysics as KM
 
 # Importing the base class
-from KratosMultiphysics.CoSimulationApplication.base_classes.co_simulation_coupled_solver import CoSimulationCoupledSolver
+from KratosMultiphysics.CoSimulationApplication.coupled_solvers.co_simulation_coupled_solver import CoSimulationCoupledSolver
 
 # CoSimulation imports
 import KratosMultiphysics.CoSimulationApplication.co_simulation_tools as cs_tools
