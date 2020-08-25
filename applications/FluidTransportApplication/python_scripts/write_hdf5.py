@@ -21,7 +21,7 @@ class WriteHdf5(KratosMultiphysics.Process):
 
         self.times = []
 
-        self.f = h5py.File("sp_data.hdf5", 'w')
+        self.f = h5py.File("data.hdf5", 'w')
 
     def DeleteDataSet(self, file_or_group, dset_name):
         if dset_name in file_or_group:
