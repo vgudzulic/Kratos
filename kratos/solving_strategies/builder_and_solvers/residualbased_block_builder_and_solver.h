@@ -91,6 +91,9 @@ public:
     /// Definition of the base class
     typedef BuilderAndSolver<TSparseSpace, TDenseSpace, TLinearSolver> BaseType;
 
+    /// The definition of the current class
+    typedef ResidualBasedBlockBuilderAndSolver<TSparseSpace, TDenseSpace, TLinearSolver> ClassType;
+
     // The size_t types
     typedef std::size_t SizeType;
     typedef std::size_t IndexType;
@@ -123,6 +126,13 @@ public:
     ///@}
     ///@name Life Cycle
     ///@{
+
+    /**
+     * @brief Default constructor
+     */
+    explicit ResidualBasedBlockBuilderAndSolver() : BaseType()
+    {
+    }
 
     /**
      * @brief Default constructor. (with parameters)
@@ -181,6 +191,19 @@ public:
      */
     ~ResidualBasedBlockBuilderAndSolver() override
     {
+    }
+
+    /**
+     * @brief Create method
+     * @param pNewLinearSystemSolver The linear solver for the system of equations
+     * @param ThisParameters The configuration parameters
+     */
+    typename BaseType::Pointer Create(
+        typename TLinearSolver::Pointer pNewLinearSystemSolver,
+        Parameters ThisParameters
+        ) const override
+    {
+        return Kratos::make_shared<ClassType>(pNewLinearSystemSolver,ThisParameters);
     }
 
     ///@}
@@ -670,11 +693,7 @@ public:
     {
         KRATOS_TRY
 
-        Timer::Start("BuildRHS");
-
         BuildRHS(pScheme, rModelPart, rb);
-
-        Timer::Stop("BuildRHS");
 
         if(rModelPart.MasterSlaveConstraints().size() != 0) {
             Timer::Start("ApplyRHSConstraints");
@@ -713,6 +732,8 @@ public:
     {
         KRATOS_TRY
 
+        Timer::Start("BuildRHS");
+
         BuildRHSNoDirichlet(pScheme,rModelPart,b);
 
         const int ndofs = static_cast<int>(BaseType::mDofSet.size());
@@ -727,6 +748,8 @@ public:
             if (dof_iterator->IsFixed())
                 b[i] = 0.0;
         }
+
+        Timer::Stop("BuildRHS");
 
         KRATOS_CATCH("")
     }
@@ -1224,6 +1247,15 @@ public:
         KRATOS_CATCH("");
     }
 
+    /**
+     * @brief Returns the name of the class as used in the settings (snake_case format)
+     * @return The name of the class
+     */
+    static std::string Name()
+    {
+        return "block_builder_and_solver";
+    }
+
     ///@}
     ///@name Access
     ///@{
@@ -1366,6 +1398,7 @@ protected:
     virtual void ConstructMasterSlaveConstraintsStructure(ModelPart& rModelPart)
     {
         if (rModelPart.MasterSlaveConstraints().size() > 0) {
+            Timer::Start("ConstraintsRelationMatrixStructure");
             const ProcessInfo& r_current_process_info = rModelPart.GetProcessInfo();
 
             // Vector containing the localization in the system of the different terms
