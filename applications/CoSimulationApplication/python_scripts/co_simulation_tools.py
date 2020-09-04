@@ -21,11 +21,15 @@ def SettingsTypeCheck(settings):
         raise TypeError("Expected input shall be a Parameters object, encapsulating a json string")
 
 
-def AllocateHistoricalVariablesFromCouplingData(data_list, model, solver_name):
+def AllocateHistoricalVariablesFromCouplingData(data_settings, model, solver_name):
     '''This function retrieves the historical variables that are needed for the ModelParts from the
     specified CouplingInterfaceDatas and allocates them on the ModelParts
     Note that it can only be called after the (Main-)ModelParts are created
     '''
+    data_settings = data_settings.Clone() # to not mess with the later validation
+    for data_name, data_config in data_settings.items():
+        print(data_name)
+    stop
     for data in data_list:
         hist_var_dict = data.GetHistoricalVariableDict()
         for full_model_part_name, variable in hist_var_dict.items():
@@ -37,9 +41,21 @@ def AllocateHistoricalVariablesFromCouplingData(data_list, model, solver_name):
                 cs_print_info("CoSimTools", 'Allocating historical variable "{}" in ModelPart "{}" for solver "{}"'.format(variable.Name(), main_model_part_name, solver_name))
                 main_model_part.AddNodalSolutionStepVariable(variable)
 
-def CreateMainModelPartsFromCouplingData(data_list, model, solver_name):
+def CreateMainModelPartsFromCouplingData(data_settings, model, solver_name):
     '''This function creates the Main-ModelParts that are used in the specified CouplingInterfaceDatas
     '''
+
+    print(data_settings)
+
+    for i in data_settings:
+        print(i.PrettyPrintJsonString())
+    errr
+    data_settings = data_settings.Clone() # to not mess with the later validation
+    for data_name, data_config in data_settings.items():
+        print(data_name)
+    stop
+
+
     for data in data_list:
         main_model_part_name = data.model_part_name.split(".")[0]
         if not model.HasModelPart(main_model_part_name):

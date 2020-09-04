@@ -883,7 +883,7 @@ public:
     /// Print object's data.
     virtual void PrintData(std::ostream& rOStream) const
     {
-//         rOStream << "Parameters Object " << Info();
+        rOStream << PrettyPrintJsonString();
     };
 
 protected:

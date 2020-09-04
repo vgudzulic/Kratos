@@ -13,12 +13,7 @@ class CouplingInterfaceData(object):
     """
     def __init__(self, custom_settings, model, name="default", solver_name="default_solver"):
 
-        default_config = KM.Parameters("""{
-            "model_part_name" : "",
-            "variable_name"   : "",
-            "location"        : "node_historical",
-            "dimension"       : -1
-        }""")
+        default_config = CouplingInterfaceData.GetDefaultParameters()
         custom_settings.ValidateAndAssignDefaults(default_config)
 
         self.settings = custom_settings
@@ -63,7 +58,6 @@ class CouplingInterfaceData(object):
         if not self.location in admissible_locations:
             self.__RaiseException('"{}" is not allowed as "location", only the following options are possible:\n{}'.format(self.location, ", ".join(admissible_locations)))
 
-    def Initialize(self):
         # This can only be called after the ModelPart are read, i.e. after the solvers are initialized
         if not self.model.HasModelPart(self.model_part_name):
             self.__RaiseException('The specified ModelPart is not in the Model, only the following ModelParts are available:\n{}'.format(self.model.GetModelPartNames()))
@@ -93,6 +87,20 @@ class CouplingInterfaceData(object):
             self.__RaiseException('"{}" is missing as SolutionStepVariable in ModelPart "{}"'.format(self.variable.Name(), self.model_part_name))
 
         self.is_initialized = True
+
+    @staticmethod
+    def GetDefaultParameters():
+        default_params = KM.Parameters("""{
+            "model_part_name" : "",
+            "variable_name"   : "",
+            "location"        : "node_historical",
+            "dimension"       : -1
+        }""")
+        return default_params.Clone()
+
+
+    def Initialize(self):
+        pass
 
     def _RequiresInitialization(fct_ptr):
         # to be used as a decorator for functions that require the
